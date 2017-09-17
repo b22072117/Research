@@ -12,7 +12,6 @@ except ImportError:
 from os import listdir
 from os.path import isfile, join
 
-
 #def GAN_discriminator():
 	
 
@@ -270,15 +269,32 @@ def Training_and_Validation(
 		# Trained Weight Parameters (For Saving Trained Weight)
 		parameters				,
 		
-		# Session
-		sess					):
+		# (GAN) Parameter
+		IS_GAN					= False,
+		DISCRIMINATOR_STEP		= 1,
 
-	# Loading Pre-trained Model
+		# (GAN) tensor
+		train_step_Gen			= None,			
+		train_step_Dis			= None,
+		loss_Gen				= None,
+		loss_Dis				= None,
+		prediction_Gen			= None,
+		prediction_Dis_0		= None,
+		prediction_Dis_1		= None,
+
+		# Session
+		sess					= None):
+	#-------------------------------#
+	#	Loading Pre-trained Model	#
+	#-------------------------------#
 	if TRAINED_WEIGHT_FILE!=None:
 		print ""
 		print("Loading Pre-trained weights ...")
 		load_pre_trained_weights(parameters, pre_trained_weight_file=TRAINED_WEIGHT_FILE, sess=sess)
-
+	
+	#---------------#
+	#	Per Epoch	#
+	#---------------#
 	for epoch in range(EPOCH_TIME):
 		data_shape = np.shape(train_data)
 		train_data, train_target = shuffle_image(train_data, train_target)
@@ -289,32 +305,50 @@ def Training_and_Validation(
 		print("")
 		print("Training ... ")
 		for i in range(int(data_shape[0]/BATCH_SIZE)):
-			# Train data in BATCH SIZR
+			# Train data in BATCH SIZE
 			batch_xs    = train_data   [i*BATCH_SIZE : (i+1)*BATCH_SIZE]
 			batch_ys    = train_target [i*BATCH_SIZE : (i+1)*BATCH_SIZE]
 			
-			# Run Training Step
-			_, Loss, Prediction = sess.run([train_step, loss, prediction], 
-													feed_dict={xs: batch_xs, ys: batch_ys, learning_rate: lr, is_training: True, is_testing: False})
+			#-----------------------#
+			#	Run Training Step	#
+			#-----------------------#
+			if IS_GAN:
+				# (GAN) Generator
+				_, Loss, Prediction, Prediction_Dis_0 = sess.run([train_step_Gen, loss_Gen, prediction_Gen, prediction_Dis_0], feed_dict={xs: batch_xs, ys: batch_ys, learning_rate: lr, is_training: True, is_testing: False})
+				# (GAN) Discriminator
+				if i % DISCRIMINATOR_STEP==0:
+					_, Loss_Dis, Prediction_Dis_1 = sess.run([train_step_Dis, loss_Dis, prediction_Dis_1], feed_dict={xs: batch_xs, ys: batch_ys, learning_rate: lr, is_training: True, is_testing: False})
+
+			else:
+				# (Normal)
+				_, Loss, Prediction = sess.run([train_step, loss, prediction], feed_dict={xs: batch_xs, ys: batch_ys, learning_rate: lr, is_training: True, is_testing: False})
 			
-			# Result
+			#-----------#
+			#	Result	#
+			#-----------#
 			y_pre = np.argmax(Prediction, -1)
 			batch_accuracy = np.mean(np.equal(np.argmax(batch_ys, -1), y_pre))
 			
 			Train_acc  = Train_acc  + batch_accuracy
 			Train_loss = Train_loss + np.mean(Loss)
 
-			# Print Training Process
+			# Print Training Result Per Batch Size
 			print("Epoch : {ep}" .format(ep = epoch))
 			print("Batch Iteration : {Iter}" .format(Iter = i))
 			print("  Batch Accuracy : {acc}".format(acc = batch_accuracy))
 			print("  Loss : {loss}".format(loss = np.mean(Loss)))
 			print("  Learning Rate : {LearningRate}".format(LearningRate = lr))
-			
+
+			# GAN Discriminator Result
+			if IS_GAN:
+				batch_accuracy_Dis = np.mean(np.concatenate([Prediction_Dis_0, Prediction_Dis_1], axis=0))
+				print("  Discriminator Output : {Dis_Out}" ,format(Dis_Out=batch_accuracy_Dis))
+
 			# Per Class Accuracy
 			per_class_accuracy(Prediction, batch_ys)
+			
 
-		# Per Epoch Training Result
+		# Record Per Epoch Training Result (Finally this will save as the .csv file)
 		if epoch==0:
 			Train_acc_per_epoch  = np.array([Train_acc ])
 			Train_loss_per_epoch = np.array([Train_loss])
@@ -323,8 +357,9 @@ def Training_and_Validation(
 			Train_loss_per_epoch = np.concatenate([Train_loss_per_epoch, np.array([Train_loss])], axis=0)
 
 		
-
-	# Validation
+		#---------------#
+		#	Validation	#
+		#---------------#
 		print("")
 		print("Epoch : {ep}".format(ep = epoch))
 		print("Validation ... ")
@@ -334,18 +369,24 @@ def Training_and_Validation(
 		print("")
 		print("Validation Accuracy = {Valid_Accuracy}".format(Valid_Accuracy=valid_accuracy))
 		
-		if ((epoch%EPOCH_DECADE==0) and (epoch!=0)):
+		# Learning Rate Decay
+		if ((epoch % EPOCH_DECADE==0) and (epoch != 0)):
 			lr = lr / LR_DECADE
 			
-	# Save trained weights
+		#---------------------------#
+		#	Saving trained weights	#
+		#---------------------------#
 		print("Saving Trained Weights ... ")
 		batch_xs = train_data[0 : BATCH_SIZE]
-		assign_trained_mean_and_var(mean_collection, var_collection, trained_mean_collection, trained_var_collection, params, 
-										xs, ys, is_training, is_testing, batch_xs, sess)
+		assign_trained_mean_and_var(mean_collection, var_collection, trained_mean_collection, trained_var_collection, params, xs, ys, is_training, is_testing, batch_xs, sess)
+		
+		# Every 10 epoch 
 		if (((epoch+1)%10==0) and ((epoch+1)>=10)):
 			save_pre_trained_weights( (TRAINING_WEIGHT_FILE+'_'+str(epoch+1)), parameters, xs, batch_xs, sess)
-	
-	# Save Train info as csv file
+
+	#-----------------------------------#
+	#	Saving Train info as csv file	#
+	#-----------------------------------#
 	Train_acc_per_epoch  = np.expand_dims(Train_acc_per_epoch , axis=1)
 	Train_loss_per_epoch = np.expand_dims(Train_loss_per_epoch, axis=1)
 	Train_info = np.concatenate([Train_acc_per_epoch, Train_loss_per_epoch], axis=1)
@@ -637,12 +678,11 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 					tf.add_to_collection("params", weights)
 					tf.add_to_collection("params", biases)
 
-					if stride != 1:
-						# convolution
-						shortcut = tf.nn.conv2d(net, weights, strides=[1, stride, stride, 1], padding="SAME")
-					elif is_dilated:
-						# convolution
+					# convolution
+					if is_dilated: 
 						shortcut = tf.nn.atrous_conv2d(net, weights, rate=rate, padding="SAME")
+					else:
+						shortcut = tf.nn.conv2d(net, weights, strides=[1, stride, stride, 1], padding="SAME")
 
 					# add bias
 					shortcut = tf.nn.bias_add(shortcut, biases)
@@ -861,52 +901,75 @@ def indice_unpool(net, stride, output_shape, indices, scope="unPool"):
 		return net
 				
 def batch_norm(net, output_channel, is_training, is_testing):
-	with tf.variable_scope("Batch_Norm", reuse=None):
-		batch_mean, batch_var = tf.nn.moments(net, axes=[0, 1, 2])
-		
-		ema = tf.train.ExponentialMovingAverage(decay=0.95)
-		
-		def mean_var_with_update():
-			ema_apply_op = ema.apply([batch_mean, batch_var])
-			with tf.control_dependencies([ema_apply_op]):
-				return tf.identity(batch_mean), tf.identity(batch_var)
-		
-		trained_mean = tf.Variable(tf.zeros([output_channel]))
-		trained_var = tf.Variable(tf.zeros([output_channel]))
-		
-		mean, var = tf.cond(is_testing,
-						lambda: (
-							trained_mean, 
-							trained_var
-								),
-						lambda: (
-							tf.cond(is_training,    
-								mean_var_with_update,
-								lambda:(
-									ema.average(batch_mean), 
-									ema.average(batch_var)
-										)    
-									)
-								)
-							)
-		
-		scale = tf.Variable(tf.ones([output_channel]))
-		shift = tf.Variable(tf.ones([output_channel])*0.01)
-				
-		tf.add_to_collection("batch_mean", mean)
-		tf.add_to_collection("batch_var", var)
-		tf.add_to_collection("batch_scale", scale)
-		tf.add_to_collection("batch_shift", shift)
-		tf.add_to_collection("trained_mean", trained_mean)
-		tf.add_to_collection("trained_var", trained_var)
-		tf.add_to_collection("params", trained_mean)
-		tf.add_to_collection("params", trained_var)
-		tf.add_to_collection("params", scale)
-		tf.add_to_collection("params", shift)
-
-		
-		epsilon = 0.001
-	return tf.nn.batch_normalization(net, mean, var, shift, scale, epsilon)
+	with tf.variable_scope("Batch_Norm"):
+		return tf.contrib.layers.batch_norm(
+		   			 inputs 				= net, 
+		   			 decay					= 0.95,
+		   			 center					= True,
+		   			 scale					= False,
+		   			 epsilon				= 0.001,
+		   			 activation_fn			= None,
+		   			 param_initializers		= None,
+		   			 param_regularizers		= None,
+		   			 updates_collections	= tf.GraphKeys.UPDATE_OPS,
+		   			 is_training			= True,
+		   			 reuse					= None,
+		   			 variables_collections	= "params",
+		   			 outputs_collections	= None,
+		   			 trainable				= True,
+		   			 batch_weights			= None,
+		   			 fused					= False,
+		   			 #data_format			= DATA_FORMAT_NHWC,
+		   			 zero_debias_moving_mean= False,
+		   			 scope					= None,
+		   			 renorm					= False,
+		   			 renorm_clipping		= None,
+		   			 renorm_decay			= 0.99)
+#		batch_mean, batch_var = tf.nn.moments(net, axes=[0, 1, 2])
+#
+#		trained_mean = tf.Variable(tf.zeros([output_channel]))
+#		trained_var = tf.Variable(tf.zeros([output_channel]))
+#		
+#		ema = tf.train.ExponentialMovingAverage(decay=0.95, zero_debias=False)
+#		
+#		def mean_var_with_update():
+#			ema_apply_op = ema.apply([batch_mean, batch_var])
+#			with tf.control_dependencies([ema_apply_op]):
+#				return tf.identity(batch_mean), tf.identity(batch_var)
+#			
+#		mean, var = tf.cond(is_testing,
+#						lambda: (
+#							trained_mean, 
+#							trained_var
+#								),
+#						lambda: (
+#							tf.cond(is_training,    
+#								mean_var_with_update,
+#								lambda:(
+#									ema.average(batch_mean), 
+#									ema.average(batch_var)
+#										)    
+#									)
+#								)
+#							)
+#		
+#		scale = tf.Variable(tf.ones([output_channel]))
+#		shift = tf.Variable(tf.ones([output_channel])*0.01)
+#				
+#		tf.add_to_collection("batch_mean", mean)
+#		tf.add_to_collection("batch_var", var)
+#		tf.add_to_collection("batch_scale", scale)
+#		tf.add_to_collection("batch_shift", shift)
+#		tf.add_to_collection("trained_mean", trained_mean)
+#		tf.add_to_collection("trained_var", trained_var)
+#		tf.add_to_collection("params", trained_mean)
+#		tf.add_to_collection("params", trained_var)
+#		tf.add_to_collection("params", scale)
+#		tf.add_to_collection("params", shift)
+#
+#		
+#		epsilon = 0.001
+#	return tf.nn.batch_normalization(net, mean, var, shift, scale, epsilon)
 	
 
 def softmax_with_weighted_cross_entropy(prediction, ys, class_weight):

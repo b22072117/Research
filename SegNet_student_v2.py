@@ -6,12 +6,14 @@ import math
 from PIL import Image
 from scipy import misc
 import utils
+import Model
 
 #=======================#
 #	Global Parameter	#
 #=======================#
 BATCH_SIZE = 3
 EPOCH_TIME = 200
+
 IS_TRAINING = True 
 IS_TESTING  = True
 IS_STUDENT  = True
@@ -20,6 +22,10 @@ LEARNING_RATE = 1e-3
 EPOCH_DECADE = 200
 LR_DECADE = 10
 LAMBDA = 0.
+
+# (optional)
+IS_GAN				= True 
+DISCRIMINATOR_STEP 	= 5
 
 #=======================#
 #	Training File Name	#
@@ -227,41 +233,61 @@ def main(argv=None):
 #	Graph	#
 #===========#
 	net = xImage
-	prediction = SegNet_VGG_16_student(net, class_num, is_training=is_training, is_testing=is_testing, reuse=None, scope="SegNet_VGG_16_student")
+	prediction = SegNet_VGG_16_student(net, class_num, is_training=is_training, is_testing=is_testing)
 	#prediction = tf.nn.softmax(net)
 	
+	params = tf.get_collection("params", scope=None) 
+	
+	pdb.set_trace()
+
+	if IS_GAN:
+		prediction = tf.nn.softmax(prediction) # (if no softmax)
+		prediction_Gen			= prediction
+		with tf.variable_scope('scope'):
+			prediction_Dis_0		= Model.Discriminator(prediction_Gen, is_training, is_testing)
+		params_Dis = tf.get_collection("params", scope=None)[np.shape(params)[0]:] 
+		pdb.set_trace()
+		with tf.variable_scope('scope', reuse=True):
+			prediction_Dis_1		= Model.Discriminator(ys			, is_training, is_testing)
+		params_Dis = tf.get_collection("params", scope=None)[np.shape(params)[0]:] 
+		pdb.set_trace()	
 
 #===============#
 #	Collection	#
 #===============#	
-	weights_collection = tf.get_collection("weights", scope=None)
-	bias_collection = tf.get_collection("bais", scope=None)
-	mean_collection = tf.get_collection("batch_mean", scope=None)
-	var_collection = tf.get_collection("batch_var", scope=None)
-	scale_collection = tf.get_collection("batch_scale", scope=None)
-	shift_collection = tf.get_collection("batch_shift", scope=None)
+	weights_collection	 	= tf.get_collection("weights", scope=None)
+	bias_collection  	    = tf.get_collection("bais", scope=None)
+	mean_collection  	    = tf.get_collection("batch_mean", scope=None)
+	var_collection 	 	    = tf.get_collection("batch_var", scope=None)
+	scale_collection 		= tf.get_collection("batch_scale", scope=None)
+	shift_collection 		= tf.get_collection("batch_shift", scope=None)
 	trained_mean_collection = tf.get_collection("trained_mean", scope=None)
-	trained_var_collection = tf.get_collection("trained_var", scope=None)
-	params = tf.get_collection("params", scope=None) 
-	
+	trained_var_collection 	= tf.get_collection("trained_var", scope=None)
+
 #=======================#
 #	Training Strategy	#
 #=======================#	
-	#regression_lambda     = tf.constant(2*BATCH_SIZE, dtype=tf.float32)
-	#regression_square_sum = tf.reduce_sum(tf.square(tf.subtract(prediction, ys)), 0)
-	#regression_loss       = tf.multiply(regression_lambda, regression_square_sum)
+	# KL divergence
 	KL = tf.nn.softmax_cross_entropy_with_logits(labels = ys, logits = prediction) 
 	cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=tf.argmax(ys, -1), logits=prediction)
+	
+	# L2 Regularization
+	l2_norm  	= tf.reduce_mean(tf.stack([tf.nn.l2_loss(x) for x in weights_collection]))
+	l2_lambda 	= tf.constant(LAMBDA)
+	l2_norm   	= tf.multiply(l2_lambda, l2_norm)
 
-	l2_norm   = tf.reduce_mean(tf.stack([tf.nn.l2_loss(x) for x in weights_collection]))
-	l2_lambda = tf.constant(LAMBDA)
+	# Loss
+	if IS_GAN:
+		loss_Gen		= KL 
+#		loss_Dis_0		= tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits = prediction_Dis_0, labels = tf.ones_like(prediciton_Dis_0)))
+#		loss_Dis_1		= tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits = prediction_Dis_1, labels = tf.zeros_like(prediction_Dis_1)))
+#		train_step_Gen	= tf.train.AdamOptimizer(learning_rate).minimize(loss_Gen, var_list=g_vars)
+#		train_step_Dis	= tf.train.AdamOptimizer(learning_rate).minimize(loss_Dis, var_list=d_vars)
+	else:
+		loss = KL
+		train_step = tf.train.AdamOptimizer(learning_rate).minimize(loss)
 	
-	loss = cross_entropy
-	#loss = tf.add(loss, tf.multiply(l2_lambda, l2_norm))
-	train_step = tf.train.AdamOptimizer(learning_rate).minimize(loss)
-	
-	init = tf.global_variables_initializer()
-	
+
 #=======================#
 #	Weight Parameters	#
 #=======================#	
@@ -294,7 +320,7 @@ def main(argv=None):
 
 	if np.shape(params)[0] != np.shape(keys)[0]:
 		print("Number of Parameters is not equal to the number of Keys!")
-		exit()
+#		exit()
 
 	parameters = {keys[x]: params[x] for x in range(len(params))}
 
@@ -304,6 +330,7 @@ def main(argv=None):
 #===============#
 	with tf.Session() as sess:
 	# Initialize
+		init = tf.global_variables_initializer()
 		sess.run(init)
 		
 	# Learning Rate	

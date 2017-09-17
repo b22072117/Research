@@ -7,6 +7,176 @@ from PIL import Image
 from scipy import misc
 import utils
 
+def Discriminator(net, is_training, is_testing, reuse=None, scope="Discriminator"):
+	with tf.variable_scope(scope, reuse=reuse):
+		net = residual_50(net, 
+						class_num		= 1, 
+						is_training		= is_training, 
+						is_testing		= is_testing)
+	return net
+
+def VGG_16(net, class_num, is_training, is_testing, reuse=None, scope="VGG_16"):
+	with tf.variable_scope(scope, reuse=reuse):
+		with tf.variable_scope("224X224"): # 1/1
+			net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
+						is_shortcut		= False, 
+						is_bottleneck	= False, 
+						is_batch_norm	= True, 
+						is_training		= is_training, 
+						is_testing		= is_testing, 
+						is_dilated		= False, 
+						scope			= "conv1")
+						
+			net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
+						is_shortcut		= False, 
+						is_bottleneck	= False, 
+						is_batch_norm	= True, 
+						is_training		= is_training, 
+						is_testing		= is_testing, 
+						is_dilated		= False, 
+						scope			= "conv2")	
+						
+			net, indices1, output_shape1 = utils.indice_pool(net, stride=2, scope="Pool1")
+			
+		with tf.variable_scope("112X112"): # 1/2
+			net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
+						is_shortcut		= False, 
+						is_bottleneck	= False, 
+						is_batch_norm	= True, 
+						is_training		= is_training, 
+						is_testing		= is_testing, 
+						is_dilated		= False, 
+						scope			= "conv1")
+						
+			net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
+						is_shortcut		= False, 
+						is_bottleneck	= False, 
+						is_batch_norm	= True, 
+						is_training		= is_training, 
+						is_testing		= is_testing, 
+						is_dilated		= False, 
+						scope			= "conv2")	
+						
+			net, indices2, output_shape2 = utils.indice_pool(net, stride=2, scope="Pool2")
+			
+		with tf.variable_scope("56X56"): # 1/4
+			net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1, 
+						is_shortcut		= False, 
+						is_bottleneck	= False, 
+						is_batch_norm	= True, 
+						is_training		= is_training, 
+						is_testing		= is_testing, 
+						is_dilated		= False, 
+						scope			= "conv1")
+						
+			net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
+						is_shortcut		= False, 
+						is_bottleneck	= False, 
+						is_batch_norm	= True, 
+						is_training		= is_training, 
+						is_testing		= is_testing, 
+						is_dilated		= False, 
+						scope			= "conv2")	
+						
+			net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
+						is_shortcut		= False, 
+						is_bottleneck	= False, 
+						is_batch_norm	= True, 
+						is_training		= is_training, 
+						is_testing		= is_testing, 
+						is_dilated		= False, 
+						scope			= "conv3")	
+						
+			net, indices3, output_shape3 = utils.indice_pool(net, stride=2, scope="Pool3")
+			
+		with tf.variable_scope("28X28"): # 1/8
+			net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
+						is_shortcut		= False, 
+						is_bottleneck	= False, 
+						is_batch_norm	= True, 
+						is_training		= is_training, 
+						is_testing		= is_testing, 
+						is_dilated		= False, 
+						scope			= "conv1")
+						
+			net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
+						is_shortcut		= False, 
+						is_bottleneck	= False, 
+						is_batch_norm	= True, 
+						is_training		= is_training, 
+						is_testing		= is_testing, 
+						is_dilated		= False, 
+						scope			= "conv2")	
+						
+			net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
+						is_shortcut		= False, 
+						is_bottleneck	= False, 
+						is_batch_norm	= True, 
+						is_training		= is_training, 
+						is_testing		= is_testing, 
+						is_dilated		= False, 
+						scope			= "conv3")		
+						
+			net, indices4, output_shape4 = utils.indice_pool(net, stride=2, scope="Pool4")
+			
+		with tf.variable_scope("14X14"): # 1/16
+			net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
+						is_shortcut		= False, 
+						is_bottleneck	= False, 
+						is_batch_norm	= True, 
+						is_training		= is_training, 
+						is_testing		= is_testing, 
+						is_dilated		= False, 
+						scope			= "conv1")
+						
+			net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
+						is_shortcut		= False, 
+						is_bottleneck	= False, 
+						is_batch_norm	= True, 
+						is_training		= is_training, 
+						is_testing		= is_testing, 
+						is_dilated		= False, 
+						scope			= "conv2")	
+						
+			net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
+						is_shortcut		= False, 
+						is_bottleneck	= False, 
+						is_batch_norm	= True, 
+						is_training		= is_training, 
+						is_testing		= is_testing, 
+						is_dilated		= False, 
+						scope			= "conv3")		
+						
+			net, indices5, output_shape5 = utils.indice_pool(net, stride=2, scope="Pool5")
+		with tf.variable_scope("7X7"): # 1/32 Fully Connected Layers
+			net = utils.conv2D(net, kernel_size=7, stride=1, output_channel=1, rate=1,
+						is_shortcut		= False, 
+						is_bottleneck	= False, 
+						is_batch_norm	= True, 
+						is_training		= is_training, 
+						is_testing		= is_testing, 
+						is_dilated		= False, 
+						scope			= "fc1")		
+
+			net = utils.conv2D(net, kernel_size=1, stride=1, output_channel=4096, rate=1,
+						is_shortcut		= False, 
+						is_bottleneck	= False, 
+						is_batch_norm	= True, 
+						is_training		= is_training, 
+						is_testing		= is_testing, 
+						is_dilated		= False, 
+						scope			= "fc2")		
+
+			net = utils.conv2D(net, kernel_size=1, stride=1, output_channel=class_num, rate=1,
+						is_shortcut		= False, 
+						is_bottleneck	= False, 
+						is_batch_norm	= False, 
+						is_training		= is_training, 
+						is_testing		= is_testing, 
+						is_dilated		= False, 
+						scope			= "fc3")		
+						
+	return net
 
 def residual_50(net, class_num, is_training, is_testing, reuse=None, scope="Residual_50"):
 	with tf.variable_scope(scope, reuse=reuse):
