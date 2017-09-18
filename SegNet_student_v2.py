@@ -238,19 +238,12 @@ def main(argv=None):
 	
 	params = tf.get_collection("params", scope=None) 
 	
-	pdb.set_trace()
-
 	if IS_GAN:
 		prediction = tf.nn.softmax(prediction) # (if no softmax)
 		prediction_Gen			= prediction
-		with tf.variable_scope('scope'):
-			prediction_Dis_0		= Model.Discriminator(prediction_Gen, is_training, is_testing)
+		prediction_Dis_0		= Model.Discriminator(prediction_Gen, is_training, is_testing)
 		params_Dis = tf.get_collection("params", scope=None)[np.shape(params)[0]:] 
-		pdb.set_trace()
-		with tf.variable_scope('scope', reuse=True):
-			prediction_Dis_1		= Model.Discriminator(ys			, is_training, is_testing)
-		params_Dis = tf.get_collection("params", scope=None)[np.shape(params)[0]:] 
-		pdb.set_trace()	
+		prediction_Dis_1		= Model.Discriminator(ys			, is_training, is_testing, reuse=True)
 
 #===============#
 #	Collection	#
@@ -278,11 +271,14 @@ def main(argv=None):
 
 	# Loss
 	if IS_GAN:
-		loss_Gen		= KL 
-#		loss_Dis_0		= tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits = prediction_Dis_0, labels = tf.ones_like(prediciton_Dis_0)))
-#		loss_Dis_1		= tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits = prediction_Dis_1, labels = tf.zeros_like(prediction_Dis_1)))
-#		train_step_Gen	= tf.train.AdamOptimizer(learning_rate).minimize(loss_Gen, var_list=g_vars)
-#		train_step_Dis	= tf.train.AdamOptimizer(learning_rate).minimize(loss_Dis, var_list=d_vars)
+		loss_Dis_0		= tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits = prediction_Dis_0, labels = tf.ones_like(prediciton_Dis_0)))
+		loss_Dis_1		= tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits = prediction_Dis_1, labels = tf.zeros_like(prediction_Dis_1)))
+		
+		loss_Gen		= KL
+		loss_Dis		=
+
+		train_step_Gen	= tf.train.AdamOptimizer(learning_rate).minimize(loss_Gen, var_list=params)
+		train_step_Dis	= tf.train.AdamOptimizer(learning_rate).minimize(loss_Dis, var_list=params_Dis)
 	else:
 		loss = KL
 		train_step = tf.train.AdamOptimizer(learning_rate).minimize(loss)
@@ -324,6 +320,7 @@ def main(argv=None):
 
 	parameters = {keys[x]: params[x] for x in range(len(params))}
 
+	saver = tf.train.Saver()
 
 #===============#
 #	Session Run	#
@@ -371,6 +368,19 @@ def main(argv=None):
 				 TRAINING_WEIGHT_FILE		= TRAINING_WEIGHT_FILE		,
 				# Trained Weight Parameters (For Saving Trained Weight)
 				 parameters					= parameters				,
+				 saver						= saver						,
+				# (GAN) Parameter
+				IS_GAN						= IS_GAN					,
+				DISCRIMINATOR_STEP			= DISCRIMINATOR_STEP		,
+
+				# (GAN) tensor
+				train_step_Gen				= ,			
+				train_step_Dis				= ,
+				loss_Gen					= ,
+				loss_Dis					= ,
+				prediction_Gen				= ,
+				prediction_Dis_0			= ,
+				prediction_Dis_1			= ,
 				# Session
 				 sess						= sess						)
 	
@@ -413,6 +423,7 @@ def main(argv=None):
 					TESTING_WEIGHT_FILE			= TESTING_WEIGHT_FILE		,
 				# Trained Weight Parameters (For Loading Trained Weight)
 					parameters					= parameters				,
+					saver 						= saver						,
 				# File Path (For Saving Result)
 					train_target_path 			= train_target_path 		,
 					train_Y_pre_path  			= train_Y_pre_path  		,

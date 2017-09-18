@@ -23,9 +23,11 @@ def CamVid_data_parser(
 	# Parameter
 	IS_STUDENT,
 	IS_TRAINING
-):
-
-# Training file
+	):
+	
+	#-------------------#
+	#   Training file   #
+	#-------------------#
 	print("")
 	print("Loading Training Data ...")
 	# CamVid
@@ -47,7 +49,9 @@ def CamVid_data_parser(
 	print("Shape of train data	: {Shape}" .format(Shape = np.shape(CamVid_train_data)))
 	print("Shape of train target	: {Shape}" .format(Shape = np.shape(CamVid_train_target)))
 	
-# Validation file
+	#---------------------#
+	#   Validation file   #
+	#---------------------#
 	print("")
 	print("Loading Validation Data ...")
 	# CamVid
@@ -66,8 +70,10 @@ def CamVid_data_parser(
 	CamVid_valid_target = one_of_k(CamVid_valid_target, class_num)
 	print("Shape of valid data	: {Shape}" .format(Shape = np.shape(CamVid_valid_data)))
 	print("Shape of valid target	: {Shape}" .format(Shape = np.shape(CamVid_valid_target)))
-
-# Testing file
+	
+	#------------------#
+	#   Testing file   #
+	#------------------#
 	print("")
 	print("Loading Testing Data ...")
 	# CamVid 
@@ -145,28 +151,30 @@ def Testing(
 	is_testing					,
 		
 	# File Path (For Loading Trained Weight)
-	TESTING_WEIGHT_FILE			,
+	TESTING_WEIGHT_FILE			= None,
 		
 	# Trained Weight Parameters (For Loading Trained Weight)
-	parameters					,
-	
+	parameters					= None,
+	saver						= None,
+
 	# File Path (For Saving Result)
-	train_target_path 			,
-	train_Y_pre_path  			,
-	valid_target_path 			,
-	valid_Y_pre_path  			,
-	test_target_path 			,
-	test_Y_pre_path  			,
+	train_target_path 			= None,
+	train_Y_pre_path  			= None,
+	valid_target_path 			= None,
+	valid_Y_pre_path  			= None,
+	test_target_path 			= None,
+	test_Y_pre_path  			= None,
 		
 	# Session
-	sess						):
+	sess						= None):
 	
 	is_validation = False
 # Load trained weights and save all the results of the wanted image
 	if IS_TRAINING == False:
 		print("")
 		print("Loading the trained weights ... ")
-		load_pre_trained_weights(parameters, pre_trained_weight_file=TESTING_WEIGHT_FILE, sess=sess) 
+		save_path = saver.restore(sess, TESTING_WEIGHT_FILE + ".ckpt")
+		#load_pre_trained_weights(parameters, pre_trained_weight_file=TESTING_WEIGHT_FILE, sess=sess) 
 	
 	#***********#
 	#	TRAIN	#
@@ -256,18 +264,19 @@ def Training_and_Validation(
 		is_testing				,
 		
 		# Collection (For Saving Trained Weight)
-		mean_collection			,
-		var_collection			,
-		trained_mean_collection	,
-		trained_var_collection	,
-		params					,
+		mean_collection			= None,
+		var_collection			= None,
+		trained_mean_collection	= None,
+		trained_var_collection	= None,
+		params					= None,
 		
 		# File Path (For Saving Trained Weight)
-		TRAINED_WEIGHT_FILE		,
-		TRAINING_WEIGHT_FILE	,
+		TRAINED_WEIGHT_FILE		= None,
+		TRAINING_WEIGHT_FILE	= None,
 		
 		# Trained Weight Parameters (For Saving Trained Weight)
-		parameters				,
+		parameters				= None,
+		saver					= None,
 		
 		# (GAN) Parameter
 		IS_GAN					= False,
@@ -290,7 +299,9 @@ def Training_and_Validation(
 	if TRAINED_WEIGHT_FILE!=None:
 		print ""
 		print("Loading Pre-trained weights ...")
-		load_pre_trained_weights(parameters, pre_trained_weight_file=TRAINED_WEIGHT_FILE, sess=sess)
+		save_path = saver.save(sess, TRAINED_WEIGHT_FILE + ".ckpt")
+		print(save_path)
+	#	load_pre_trained_weights(parameters, pre_trained_weight_file=TRAINED_WEIGHT_FILE, sess=sess)
 	
 	#---------------#
 	#	Per Epoch	#
@@ -377,12 +388,14 @@ def Training_and_Validation(
 		#	Saving trained weights	#
 		#---------------------------#
 		print("Saving Trained Weights ... ")
-		batch_xs = train_data[0 : BATCH_SIZE]
-		assign_trained_mean_and_var(mean_collection, var_collection, trained_mean_collection, trained_var_collection, params, xs, ys, is_training, is_testing, batch_xs, sess)
+	#	batch_xs = train_data[0 : BATCH_SIZE]
+	#	assign_trained_mean_and_var(mean_collection, var_collection, trained_mean_collection, trained_var_collection, params, xs, ys, is_training, is_testing, batch_xs, sess)
 		
 		# Every 10 epoch 
 		if (((epoch+1)%10==0) and ((epoch+1)>=10)):
-			save_pre_trained_weights( (TRAINING_WEIGHT_FILE+'_'+str(epoch+1)), parameters, xs, batch_xs, sess)
+			save_path = saver.save(sess, TRAINING_WEIGHT_FILE + '_' + str(epoch+1) + ".ckpt")
+			print(save_path)
+	#		save_pre_trained_weights( (TRAINING_WEIGHT_FILE+'_'+str(epoch+1)), parameters, xs, batch_xs, sess)
 
 	#-----------------------------------#
 	#	Saving Train info as csv file	#
