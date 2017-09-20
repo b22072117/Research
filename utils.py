@@ -291,6 +291,14 @@ def Training_and_Validation(
 		prediction_Dis_0		= None,
 		prediction_Dis_1		= None,
 
+		# (Tenary) Parameter	
+		IS_TENARY				= None,
+		TENARY_EPOCH			= None,
+
+		# (Tenary) Collection
+		weights_collection		= None,
+		bias_collection			= None,
+
 		# Session
 		sess					= None):
 	#-------------------------------#
@@ -320,18 +328,32 @@ def Training_and_Validation(
 			batch_xs    = train_data   [i*BATCH_SIZE : (i+1)*BATCH_SIZE]
 			batch_ys    = train_target [i*BATCH_SIZE : (i+1)*BATCH_SIZE]
 			
+			#------------#
+			#   Tenary   #
+			#------------#
+			if IS_TENARY:
+				if epoch==TENARY_EPOCH:
+					"""
+					Calculate the tenary boundary of each layer's weights
+					"""
+					weights_bd, bias_bd, weights_table, bias_table =  tenarized_bd(weights_collection,  bias_collection, weights_bd_ratio, bias_bd_ratio)
+				if epoch>=TENARY_EPOCH:
+					"""
+					Tenarized each weights
+					"""
+					quantizing_weight_and_bias(weights_collection, bias_collection, weights_bd, bias_bd, weights_table, bias_table, sess)
+
 			#-----------------------#
 			#	Run Training Step	#
 			#-----------------------#
 			if IS_GAN:
-				# (GAN) Generator
+			# (GAN) Generator
 				_, Loss, Prediction, Prediction_Dis_0 = sess.run([train_step_Gen, loss_Gen, prediction_Gen, prediction_Dis_0], feed_dict={xs: batch_xs, ys: batch_ys, learning_rate: lr, is_training: True, is_testing: False})
-				# (GAN) Discriminator
+			# (GAN) Discriminator
 				if i % DISCRIMINATOR_STEP==0:
 					_, Loss_Dis, Prediction_Dis_1 = sess.run([train_step_Dis, loss_Dis, prediction_Dis_1], feed_dict={xs: batch_xs, ys: batch_ys, learning_rate: lr, is_training: True, is_testing: False})
-
 			else:
-				# (Normal)
+			# (Normal)
 				_, Loss, Prediction = sess.run([train_step, loss, prediction], feed_dict={xs: batch_xs, ys: batch_ys, learning_rate: lr, is_training: True, is_testing: False})
 			
 			#-----------#
@@ -661,7 +683,73 @@ def assign_trained_mean_and_var(mean_collection,
 	for i in range(NUM):
 		sess.run(trained_mean_collection[i].assign(sess.run(mean_collection[i], feed_dict={xs: batch_xs, is_training: False, is_testing: False})))
 		sess.run(trained_var_collection[i].assign(sess.run(var_collection[i], feed_dict={xs: batch_xs, is_training: False, is_testing: False})))
-	
+
+def tenarized_bd(weights_collection,
+                 bias_collection,
+				 #lower_bd # percentage. Ex 20=20%
+				 #upper_bd # percentage. Ex 80=80%
+				 weights_bd_ratio, # percentage. Ex 50=50%
+				 bias_bd_ratio     # percentage. Ex 50=50%
+				):
+	NUM = len(weights_collection)
+
+	for i in range(NUM):
+		w     = np.absolute(sess.run(weights[i]))
+		b     = np.absolute(sess.run(bias   [i]))
+		
+		w_bd  = np.percentile(w, weights_bd_ratio) 
+		b_bd  = np.percentile(b, bias_bd_ratio   )
+
+		if i==0:
+			weights_bd = np.array([-w_bd, w_bd])
+			bias_bd    = np.array([-b_bd, b_bd])
+		else:
+			weights_bd = np.concatenate([weights_bd, np.array([-w_bd, w_bd])], axis=1)
+			bias_bd    = np.concatenate([bias_bd   , np.array([-b_bd, b_bd])], axis=1)
+
+	weights_table = [-1, 0, 1]
+	bias_table    = [-1, 0, 1]
+
+	return weights_bd, bias_bd, weights_table, bias_table
+
+def quantizing_weight_and_bias(weights_collection, 
+							  bias_collection,
+							  weights_bd,
+							  bias_bd,
+							  weights_table,
+							  bias_table,
+							  sess):
+	NUM = len(weights_collection)
+	for i in range(NUM):
+		w                 = sess.run(weights[i])
+		b                 = sess.run(bias   [i])
+
+		w_bd              = weights_bd[i]
+		b_bd              = bias_bd   [i]
+
+		w_table           = weights_table[i]
+		b_table           = bias_table   [i]
+
+		index_num         = len(weight_bd)
+		quantized_weights = np.zeros_like(weights)
+		quantized_bias    = np.zeros_like(bias)
+
+		for j in range(index_num):
+			if j==0:
+				quantized_weights = quantized_weights + (w <= w_bd[j]) * w_table[j]
+				quantized_bias    = quantized_bias    + (b <= b_bd[j]) * b_table[j]
+			else:
+				quantized_weights = quantized_weights + ((w <= w_bd[j]) & (w > w_bd[j-1])) * w_table[j]
+				quantized_bias    = quantized_bias    + ((b <= b_bd[j]) & (b > b_bd[j-1])) * b_table[j]
+			if j==(index_num-1):
+				quantized_weights = quantized_weights + (w > w_bd[j]) * w_table[j+1]
+				quantized_bias    = quantized_bias    + (b > b_bd[j]) * b_table[j+1]
+
+
+		sess.run(weights_collection[i].assign(quantized_weights))
+		sess.run(   bias_collection[i].assign(quantized_bias   ))
+
+
 def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64, rate=1,
 			initializer=tf.contrib.layers.variance_scaling_initializer(),
 			is_contant_init	= False, 		# For using constant value as weight initial; Only valid in Normal Convolution
@@ -670,7 +758,7 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 			is_batch_norm	= True,  		# For Batch Normalization
 			is_training		= True,  		# For Batch Normalization
 			is_testing		= False, 		# For getting the pretrained from caffemodel
-			is_dilated		= False, 		# For Dilated Convolution
+			is_dilated		= False, 		# For Dilated Convoution
 			padding			= "SAME",
 			scope			= "conv"):
 			
@@ -683,7 +771,8 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 		if is_shortcut:
 			with tf.variable_scope("shortcut"):
 				weights = tf.get_variable("weights", [1, 1, input_channel, output_channel], tf.float32, initializer=initializer)		
-				biases = tf.Variable(tf.constant(0.0, shape=[output_channel], dtype=tf.float32), trainable=True, name='biases')
+				biases = tf.Variable(tf.constant(0.0, shape=[output_channel], dtype=tf.float32), trainable=True, name='biases')	
+
 				if input_channel!=output_channel:
 
 					tf.add_to_collection("weights", weights)
