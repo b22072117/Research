@@ -149,6 +149,7 @@ def Testing(
 	ys							,
 	is_training					,
 	is_testing					,
+	is_quantized_activation		,
 		
 	# File Path (For Loading Trained Weight)
 	TESTING_WEIGHT_FILE			= None,
@@ -180,7 +181,7 @@ def Testing(
 	#	TRAIN	#
 	#***********#
 	print("train result ... ")
-	train_result, train_accuracy, train_accuracy_top2, train_accuracy_top3, Y_pre_train = compute_accuracy(xs, ys, is_training, is_testing, is_validation, prediction, train_data, train_target, BATCH_SIZE, sess)
+	train_result, train_accuracy, train_accuracy_top2, train_accuracy_top3, Y_pre_train = compute_accuracy(xs, ys, is_training, is_testing, is_validation, is_quantized_activation, True, prediction, train_data, train_target, BATCH_SIZE, sess)
 	print("Train Data Accuracy = {Train_Accuracy}, top2 = {top2}, top3 = {top3}"
 	.format(Train_Accuracy=train_accuracy, top2=train_accuracy_top2, top3=train_accuracy_top3))
 
@@ -189,7 +190,7 @@ def Testing(
 	#	VALID	#
 	#***********#
 	print(" valid result ... ")
-	valid_result, valid_accuracy, valid_accuracy_top2, valid_accuracy_top3, Y_pre_valid = compute_accuracy(xs, ys, is_training, is_testing, is_validation, prediction, valid_data, valid_target, BATCH_SIZE, sess)
+	valid_result, valid_accuracy, valid_accuracy_top2, valid_accuracy_top3, Y_pre_valid = compute_accuracy(xs, ys, is_training, is_testing, is_validation, is_quantized_activation, True, prediction, valid_data, valid_target, BATCH_SIZE, sess)
 	print("Valid Data Accuracy = {Valid_Accuracy}, top2 = {top2}, top3 = {top3}"
 	.format(Valid_Accuracy=valid_accuracy, top2=valid_accuracy_top2, top3=valid_accuracy_top3))
 	
@@ -198,7 +199,7 @@ def Testing(
 	#	TEST	#
 	#***********#
 	print(" test result ... ")
-	test_result, test_accuracy, test_accuracy_top2, test_accuracy_top3, Y_pre_test = compute_accuracy(xs, ys, is_training, is_testing, is_validation, prediction, test_data, test_target, BATCH_SIZE, sess)
+	test_result, test_accuracy, test_accuracy_top2, test_accuracy_top3, Y_pre_test = compute_accuracy(xs, ys, is_training, is_testing, is_validation, is_quantized_activation, True, prediction, test_data, test_target, BATCH_SIZE, sess)
 	print("Test Data Accuracy = {Test_Accuracy}, top2 = {top2}, top3 = {top3}"
 	.format(Test_Accuracy=test_accuracy, top2=test_accuracy_top2, top3=test_accuracy_top3))
 	
@@ -263,18 +264,18 @@ def Training_and_Validation(
 		is_training				,
 		is_testing				,
 		
-		# Collection (For Saving Trained Weight)
+		# (Saving Trained Weight) Collection
 		mean_collection					= None,
 		var_collection					= None,
 		trained_mean_collection			= None,
 		trained_var_collection			= None,
 		params							= None,
 		
-		# File Path (For Saving Trained Weight)
+		# (Saving Trained Weight) File Path
 		TRAINED_WEIGHT_FILE				= None,
 		TRAINING_WEIGHT_FILE			= None,
 		
-		# Trained Weight Parameters (For Saving Trained Weight)
+		# (Saving Trained Weight) Trained Weight Parameters 
 		parameters						= None,
 		saver							= None,
 				
@@ -311,6 +312,18 @@ def Training_and_Validation(
 		# (assign final weights)
 		assign_var_list_collection 		= None,
 		
+		# (quantize actvation) parameter
+		IS_QUANTIZED_ACTIVATION			= None,
+		QUANTIZED_ACTIVATION_EPOCH		= None,
+
+		# (quantize actvation) parameter
+		is_quantized_activation			= None,
+
+		# (quantize actvation) collection
+		activation_collection		    = None, 
+		mantissa_collection			    = None, 
+		fraction_collection     	    = None, 
+
 		# (debug)
 		final_weights_collection		= None,
 		
@@ -326,6 +339,11 @@ def Training_and_Validation(
 		print(save_path)
 	#	load_pre_trained_weights(parameters, pre_trained_weight_file=TRAINED_WEIGHT_FILE, sess=sess)
 	
+	#-----------------------------#
+	#   Some Controk Parameters   #
+	#-----------------------------#
+	QUANTIZED_NOW = False
+	TERNARY_NOW = False
 	#---------------#
 	#	Per Epoch	#
 	#---------------#
@@ -336,14 +354,31 @@ def Training_and_Validation(
 		Train_acc = 0
 		Train_loss = 0
 		
+		#--------------------------#
+		#   Quantizad Activation   #
+		#--------------------------#
+		if IS_QUANTIZED_ACTIVATION and epoch==QUANTIZED_ACTIVATION_EPOCH:
+			batch_xs = train_data[0 : BATCH_SIZE]
+			# Calculate Each Activation's appropriate mantissa and fractional bit
+			m, f = quantized_m_and_f(activation_collection, xs, is_training, is_testing, is_quantized_activation, batch_xs, sess)	
+			# Assign mantissa and fractional bit to the tensor
+			assign_quantized_m_and_f(mantissa_collection, fraction_collection, m, f, sess)
+			
+			# Start Quantize Activation
+			QUANTIZED_NOW = True
+		
 		#-------------#
-		#   ternary   #
+		#   Ternary   #
 		#-------------#
 		if IS_TERNARY and epoch==TERNARY_EPOCH:
 			# Calculate the ternary boundary of each layer's weights
-			weights_bd, biases_bd, weights_table, biases_table =  tenarized_bd(weights_collection,  biases_collection, weights_bd_ratio, biases_bd_ratio, sess)
+			weights_bd, biases_bd, weights_table, biases_table = tenarized_bd(weights_collection,  biases_collection, weights_bd_ratio, biases_bd_ratio, sess)
+
 			# assign ternary boundary to tensor
 			assign_ternary_boundary(ternary_weights_bd_collection, ternary_biases_bd_collection, weights_bd, biases_bd, sess)
+
+			# Start Quantize Activation
+			TERNARY_NOW = True
 
 		print("")
 		print("Training ... ")
@@ -362,16 +397,11 @@ def Training_and_Validation(
 				if i % DISCRIMINATOR_STEP==0:
 					_, Loss_Dis, Prediction_Dis_1 = sess.run([train_step_Dis, loss_Dis, prediction_Dis_1], feed_dict={xs: batch_xs, ys: batch_ys, learning_rate: lr, is_training: True, is_testing: False})
 			else:
-			# (Ternary)
-				if IS_TERNARY and epoch>=TERNARY_EPOCH:
-					_, Loss, Prediction = sess.run([train_step, loss, prediction], feed_dict={xs: batch_xs, ys: batch_ys, learning_rate: lr, is_training: True, is_testing: False, is_ternary: True})
-					for var_list_iter, var_list in enumerate(assign_var_list_collection):
-						sess.run(var_list, feed_dict={is_ternary: True})
 			# (Normal)
-				else:
-					_, Loss, Prediction = sess.run([train_step, loss, prediction], feed_dict={xs: batch_xs, ys: batch_ys, learning_rate: lr, is_training: True, is_testing: False, is_ternary: False})
-					for var_list_iter, var_list in enumerate(assign_var_list_collection):
-						sess.run(var_list, feed_dict={is_ternary: False})
+				_, Loss, Prediction = sess.run([train_step, loss, prediction], feed_dict={xs: batch_xs, ys: batch_ys, learning_rate: lr, is_training: True, is_testing: False, is_ternary: TERNARY_NOW, is_quantized_activation: QUANTIZED_NOW})
+
+				for assign_var_list_iter, assign_var_list in enumerate(assign_var_list_collection):
+					sess.run(assign_var_list, feed_dict={is_ternary: TERNARY_NOW})
 			
 			#-----------#
 			#	Result	#
@@ -416,7 +446,7 @@ def Training_and_Validation(
 		print("Epoch : {ep}".format(ep = epoch))
 		print("Validation ... ")
 		is_validation = True 
-		_, valid_accuracy, _, _, _ = compute_accuracy(xs, ys, is_training, is_testing, is_validation, prediction, valid_data, valid_target, BATCH_SIZE, sess)
+		_, valid_accuracy, _, _, _ = compute_accuracy(xs, ys, is_training, is_testing, is_validation, is_quantized_activation, QUANTIZED_NOW, prediction, valid_data, valid_target, BATCH_SIZE, sess)
 		is_validation = False
 		print("")
 		print("Validation Accuracy = {Valid_Accuracy}".format(Valid_Accuracy=valid_accuracy))
@@ -592,7 +622,7 @@ def per_class_accuracy(prediction, batch_ys):
 		print("    Class{Iter}	: {predict} / {target}".format(Iter = i, predict=correct_num, target=total_num))
 	
 		
-def compute_accuracy(xs, ys, is_training, is_testing, is_validation, predicton, v_xs, v_ys, BATCH_SIZE, sess):
+def compute_accuracy(xs, ys, is_training, is_testing, is_validation, is_quantized_activation, QUANTIZED_NOW, predicton, v_xs, v_ys, BATCH_SIZE, sess):
 	test_batch_size = BATCH_SIZE
 	batch_num = len(v_xs) / test_batch_size
 	result_accuracy_top1 = 0
@@ -602,7 +632,7 @@ def compute_accuracy(xs, ys, is_training, is_testing, is_validation, predicton, 
 		v_xs_part = v_xs[i*test_batch_size : (i+1)*test_batch_size, :]
 		v_ys_part = v_ys[i*test_batch_size : (i+1)*test_batch_size, :]
 			
-		Y_pre = sess.run(predicton, feed_dict={xs: v_xs_part, is_training: False, is_testing: (not is_validation)})
+		Y_pre = sess.run(predicton, feed_dict={xs: v_xs_part, is_training: False, is_testing: (not is_validation), is_quantized_activation: QUANTIZED_NOW})
 				
 		# for post-processing
 		if i==0:
@@ -703,6 +733,31 @@ def assign_trained_mean_and_var(mean_collection,
 		sess.run(trained_mean_collection[i].assign(sess.run(mean_collection[i], feed_dict={xs: batch_xs, is_training: False, is_testing: False})))
 		sess.run(trained_var_collection[i].assign(sess.run(var_collection[i], feed_dict={xs: batch_xs, is_training: False, is_testing: False})))
 
+def quantized_m_and_f(activation_collection, xs, is_training, is_testing, is_quantized_activation, batch_xs, sess):
+	NUM = len(activation_collection)
+	for i in range(NUM):
+		"""
+		"""
+		activation = sess.run(activation_collection[i], feed_dict={xs: batch_xs, is_training: False, is_testing: False, is_quantized_activation: False})
+		var = np.var(activation)
+		mantissa = 4
+		fraction = -int(np.log2((var*2)/pow(2, mantissa)))
+
+		if i==0:
+			m = np.array([[mantissa]])
+			f = np.array([[fraction]])
+		else:
+			m = np.concatenate([m, np.array([[mantissa]])], axis=0)
+			f = np.concatenate([f, np.array([[fraction]])], axis=0)
+	pdb.set_trace()
+	return m, f
+
+def assign_quantized_m_and_f(mantissa_collection, fraction_collection, m, f, sess):
+	NUM = len(mantissa_collection)
+	for i in range(NUM):
+		sess.run(mantissa_collection[i].assign(m[i]))
+		sess.run(fraction_collection[i].assign(f[i]))
+
 def assign_ternary_boundary(ternary_weights_bd_collection, 
 							ternary_biases_bd_collection, 
 							ternary_weights_bd,
@@ -711,7 +766,7 @@ def assign_ternary_boundary(ternary_weights_bd_collection,
 	NUM = len(ternary_weights_bd_collection)
 	for i in range(NUM):
 		sess.run(ternary_weights_bd_collection[i].assign(ternary_weights_bd[i]))
-		sess.run(   ternary_biases_bd_collection[i].assign(ternary_biases_bd   [i]))
+		sess.run( ternary_biases_bd_collection[i].assign(ternary_biases_bd [i]))
 
 def tenarized_bd(weights_collection,
                  biases_collection,
@@ -725,31 +780,31 @@ def tenarized_bd(weights_collection,
 
 	for i in range(NUM):
 		w     = np.absolute(sess.run(weights_collection[i]))
-		b     = np.absolute(sess.run(biases_collection   [i]))
+		b     = np.absolute(sess.run(biases_collection [i]))
 		
 		w_bd  = np.percentile(w, weights_bd_ratio) 
-		b_bd  = np.percentile(b, biases_bd_ratio   )
+		b_bd  = np.percentile(b, biases_bd_ratio )
 
 
 		if i==0:
 			weights_bd = np.array([[-w_bd, w_bd]])
-			biases_bd    = np.array([[-b_bd, b_bd]])
+			biases_bd  = np.array([[-b_bd, b_bd]])
 		else:
 			weights_bd = np.concatenate([weights_bd, np.array([[-w_bd, w_bd]])], axis=0)
-			biases_bd    = np.concatenate([biases_bd   , np.array([[-b_bd, b_bd]])], axis=0)
+			biases_bd  = np.concatenate([biases_bd , np.array([[-b_bd, b_bd]])], axis=0)
 
 	weights_table = [-1, 0, 1]
-	biases_table    = [-1, 0, 1]
+	biases_table  = [-1, 0, 1]
 
 	return weights_bd, biases_bd, weights_table, biases_table
 
 def quantizing_weight_and_biases(weights_collection, 
-							  biases_collection,
-							  weights_bd,
-							  biases_bd,
-							  weights_table,
-							  biases_table,
-							  sess):
+							     biases_collection,
+							     weights_bd,
+							     biases_bd,
+							     weights_table,
+							     biases_table,
+							     sess):
 	NUM = len(weights_collection)
 	for i in range(NUM):
 		w                 = sess.run(weights_collection[i])
@@ -774,7 +829,24 @@ def quantizing_weight_and_biases(weights_collection,
 
 
 		sess.run(weights_collection[i].assign(quantized_weights))
-		sess.run(   biases_collection[i].assign(quantized_biases   ))
+		sess.run( biases_collection[i].assign(quantized_biases ))
+
+def quantize_activation(float32_activation):
+	m = tf.get_variable("mantissa", dtype=tf.float32, initializer=tf.constant([7], tf.float32))
+	f = tf.get_variable("fraction", dtype=tf.float32, initializer=tf.constant([0], tf.float32))
+	tf.add_to_collection("activation", float32_activation)
+	tf.add_to_collection("mantissa"  , m)
+	tf.add_to_collection("fraction"  , f)
+
+	upper_bd  =  tf.pow(tf.constant([2], tf.float32),  m)
+	lower_bd  = -tf.pow(tf.constant([2], tf.float32),  m)
+	step_size =  tf.pow(tf.constant([2], tf.float32), -f)
+	
+	step = tf.cast(tf.cast(tf.divide(float32_activation, step_size), tf.int32), tf.float32)
+	quantized_activation = tf.multiply(step, step_size)
+	quantized_activation = tf.maximum(lower_bd, tf.minimum(upper_bd, quantized_activation))
+	
+	return quantized_activation
 
 def ternarize_weights(float32_weights, ternary_weights_bd):
 	ternary_weights = tf.multiply(tf.cast(tf.less_equal(float32_weights, ternary_weights_bd[0]), tf.float32), tf.constant(-1, tf.float32))
@@ -787,19 +859,66 @@ def ternarize_biases(float32_biases, ternary_biases_bd):
 	ternary_biases = tf.add(ternary_biases, tf.multiply(tf.cast(tf.greater(float32_biases, ternary_biases_bd[1]), tf.float32), tf.constant( 1, tf.float32)))
 
 	return ternary_biases
-		
+
+
+def conv2D_Variable(kernel_size,
+					input_channel,
+					output_channel, 
+					initializer,
+					is_constant_init,
+					is_ternary,
+					):
+	# float32 Variable
+	if is_constant_init:
+		float32_weights = tf.get_variable("weights", dtype=tf.float32, initializer=initializer)
+	else:
+		float32_weights = tf.get_variable("weights", [kernel_size, kernel_size, input_channel, output_channel], tf.float32, initializer=initializer)
+	
+	float32_biases = tf.Variable(tf.constant(0.0, shape=[output_channel], dtype=tf.float32), trainable=True, name='biases')
+	tf.add_to_collection("weights", float32_weights)
+	tf.add_to_collection("biases" , float32_biases)
+	tf.add_to_collection("params" , float32_weights)
+	tf.add_to_collection("params" , float32_biases)
+	
+	
+	# Ternary Variable boundary
+	ternary_weights_bd = tf.get_variable("ternary_weights_bd", [2], tf.float32, initializer=initializer)
+	ternary_biases_bd  = tf.get_variable("ternary_biases_bd" , [2], tf.float32, initializer=initializer)
+	tf.add_to_collection("ternary_weights_bd", ternary_weights_bd)
+	tf.add_to_collection("ternary_biases_bd" , ternary_biases_bd)
+	
+	# Choose Precision
+	final_weights = tf.cond(is_ternary, lambda: ternarize_weights(float32_weights, ternary_weights_bd), lambda: float32_weights)
+	final_biases  = tf.cond(is_ternary, lambda: ternarize_biases (float32_biases , ternary_biases_bd) , lambda: float32_biases )
+	
+	
+	weights = tf.get_variable("final_weights", [kernel_size, kernel_size, input_channel, output_channel], tf.float32, initializer=initializer)
+	biases = tf.Variable(tf.constant(0.0, shape=[output_channel], dtype=tf.float32), trainable=True, name='final_biases')
+	tf.add_to_collection("final_weights", weights)
+	tf.add_to_collection("final_biases", biases)
+	tf.add_to_collection("var_list", weights)
+	tf.add_to_collection("var_list", biases)
+	
+	assign_final_weights = tf.assign(weights, final_weights)
+	assign_final_biases  = tf.assign(biases , final_biases )
+	tf.add_to_collection("assign_var_list", assign_final_weights)
+	tf.add_to_collection("assign_var_list", assign_final_biases)
+	
+	return weights, biases
+	
 def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64, rate=1,
 			initializer=tf.contrib.layers.variance_scaling_initializer(),
-			is_contant_init	= False, 		# For using constant value as weight initial; Only valid in Normal Convolution
-			is_shortcut		= False, 		# For Residual
-			is_bottleneck	= False, 		# For Residual
-			is_batch_norm	= True,  		# For Batch Normalization
-			is_training		= True,  		# For Batch Normalization
-			is_testing		= False, 		# For getting the pretrained from caffemodel
-			is_dilated		= False, 		# For Dilated Convoution
-			is_ternary		= False,
-			padding			= "SAME",
-			scope			= "conv"):
+			is_constant_init        = False, 		# For using constant value as weight initial; Only valid in Normal Convolution
+			is_shortcut		        = False, 		# For Residual
+			is_bottleneck	        = False, 		# For Residual
+			is_batch_norm	        = True,  		# For Batch Normalization
+			is_training		        = True,  		# For Batch Normalization
+			is_testing		        = False, 		# For getting the pretrained from caffemodel
+			is_dilated		        = False, 		# For Dilated Convoution
+			is_ternary		        = False,
+			is_quantized_activation = False,
+			padding			        = "SAME",
+			scope			        = "conv"):
 		
 	with tf.variable_scope(scope):
 		input_channel = net.get_shape()[-1]
@@ -810,14 +929,13 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 		if is_shortcut:
 			with tf.variable_scope("shortcut"):
 				if input_channel!=output_channel:
-					weights = tf.get_variable("weights", [1, 1, input_channel, output_channel], tf.float32, initializer=initializer)		
-					biases = tf.Variable(tf.constant(0.0, shape=[output_channel], dtype=tf.float32), trainable=True, name='biases')	
-					
-					tf.add_to_collection("weights", weights)
-					tf.add_to_collection("biases" , biases)
-					tf.add_to_collection("params" , weights)
-					tf.add_to_collection("params" , biases)
-
+					# Variable define
+					weights, biases = conv2D_Variable(kernel_size      = 1,
+													  input_channel	   = input_channel,		 
+													  output_channel   = output_channel, 
+													  initializer      = initializer,
+													  is_constant_init = is_constant_init,
+													  is_ternary       = is_ternary)
 					# convolution
 					if is_dilated: 
 						shortcut = tf.nn.atrous_conv2d(net, weights, rate=rate, padding="SAME")
@@ -839,13 +957,13 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 			if is_bottleneck: 
 				with tf.variable_scope("bottle_neck"):
 					with tf.variable_scope("conv1_1x1"):
-						weights = tf.get_variable("weights", [1, 1, input_channel, internal_channel], tf.float32, initializer=initializer)
-						biases = tf.Variable(tf.constant(0.0, shape=[internal_channel], dtype=tf.float32), trainable=True, name='biases')
-
-						tf.add_to_collection("weights", weights)
-						tf.add_to_collection("biases", biases)
-						tf.add_to_collection("params", weights)
-						tf.add_to_collection("params", biases)
+						# Variable define
+						weights, biases = conv2D_Variable(kernel_size      = 1,
+													      input_channel	   = input_channel,		 
+													      output_channel   = internal_channel, 
+													      initializer      = initializer,
+													      is_constant_init = is_constant_init,
+													      is_ternary       = is_ternary)
 
 						# convolution
 						if is_dilated:
@@ -863,13 +981,13 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 						net = tf.nn.relu(net)
 
 					with tf.variable_scope("conv2_3x3"):
-						weights = tf.get_variable("weights", [3, 3, internal_channel, internal_channel], tf.float32, initializer=initializer)
-						biases = tf.Variable(tf.constant(0.0, shape=[internal_channel], dtype=tf.float32), trainable=True, name='biases')
-
-						tf.add_to_collection("weights", weights)	
-						tf.add_to_collection("biases", biases)
-						tf.add_to_collection("params", weights)
-						tf.add_to_collection("params", biases)
+						# Variable define
+						weights, biases = conv2D_Variable(kernel_size      = 3,
+													      input_channel	   = internal_channel,		 
+													      output_channel   = internal_channel, 
+													      initializer      = initializer,
+													      is_constant_init = is_constant_init,
+													      is_ternary       = is_ternary)					
 
 						# convolution
 						if is_dilated:
@@ -886,13 +1004,13 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 							
 						net = tf.nn.relu(net)
 					with tf.variable_scope("conv3_1x1"):
-						weights = tf.get_variable("weights", [1, 1, internal_channel, output_channel], tf.float32, initializer=initializer)
-						biases = tf.Variable(tf.constant(0.0, shape=[output_channel], dtype=tf.float32), trainable=True, name='biases')
-
-						tf.add_to_collection("weights", weights)
-						tf.add_to_collection("biases", biases)
-						tf.add_to_collection("params", weights)
-						tf.add_to_collection("params", biases)
+						# Variable define
+						weights, biases = conv2D_Variable(kernel_size      = 1,
+													      input_channel	   = internal_channel,		 
+													      output_channel   = output_channel, 
+													      initializer      = initializer,
+													      is_constant_init = is_constant_init,
+													      is_ternary       = is_ternary)
 
 						# convolution
 						if is_dilated:
@@ -914,14 +1032,14 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 			#---------------------------#
 			else: 
 				with tf.variable_scope("conv1_3x3"):
-					float32_weights = tf.get_variable("weights", [3, 3, input_channel, internal_channel], tf.float32, initializer=initializer)
-					float32_biases = tf.Variable(tf.constant(0.0, shape=[internal_channel], dtype=tf.float32), trainable=True, name='biases')
-
-					tf.add_to_collection("weights", float32_weights)
-					tf.add_to_collection("biases" , float32_biases)
-					tf.add_to_collection("params" , float32_weights)
-					tf.add_to_collection("params" , float32_biases)
-										
+					# Variable define
+					weights, biases = conv2D_Variable(kernel_size      = 3,
+													  input_channel	   = input_channel,		 
+													  output_channel   = internal_channel, 
+													  initializer      = initializer,
+													  is_constant_init = is_constant_init,
+													  is_ternary       = is_ternary)
+													  
 					# convolution
 					if is_dilated:
 						net = tf.nn.atrous_conv2d(net, weights, rate=rate, padding="SAME")
@@ -938,13 +1056,14 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 					net = tf.nn.relu(net)
 
 				with tf.variable_scope("conv2_3x3"):
-					weights = tf.get_variable("weights", [3, 3, internal_channel, output_channel], tf.float32, initializer=initializer)
-					biases = tf.Variable(tf.constant(0.0, shape=[output_channel], dtype=tf.float32), trainable=True, name='biases')
-					tf.add_to_collection("weights", weights)
-					tf.add_to_collection("biases", biases)
-					tf.add_to_collection("params", weights)
-					tf.add_to_collection("params", biases)
-
+					# Variable define
+					weights, biases = conv2D_Variable(kernel_size      = 3,
+													  input_channel	   = internal_channel,		 
+													  output_channel   = output_channel, 
+													  initializer      = initializer,
+													  is_constant_init = is_constant_init,
+													  is_ternary       = is_ternary)
+					
 					# convolution
 					if is_dilated:
 						net = tf.nn.atrous_conv2d(net, weights, rate=rate, padding="SAME")
@@ -961,46 +1080,18 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 				#relu
 				net = tf.nn.relu(net + shortcut)
 
-		#=======================#
-		#	Normal Convolution	#
-		#=======================#
+		#==============================#
+		#	Normal Convolution Block   #
+		#==============================#
 		else:  
-			# Variable
-			if is_contant_init:
-				float32_weights = tf.get_variable("weights", dtype=tf.float32, initializer=initializer)
-			else:
-				float32_weights = tf.get_variable("weights", [kernel_size, kernel_size, input_channel, output_channel], tf.float32, initializer=initializer)
-
-			float32_biases = tf.Variable(tf.constant(0.0, shape=[output_channel], dtype=tf.float32), trainable=True, name='biases')
-			tf.add_to_collection("weights", float32_weights)
-			tf.add_to_collection("biases" , float32_biases)
-			tf.add_to_collection("params" , float32_weights)
-			tf.add_to_collection("params" , float32_biases)
-			
-			
-			# Ternary Variable boundary
-			ternary_weights_bd = tf.get_variable("ternary_weights_bd", [2], tf.float32, initializer=initializer)
-			ternary_biases_bd  = tf.get_variable("ternary_biases_bd" , [2], tf.float32, initializer=initializer)
-			tf.add_to_collection("ternary_weights_bd", ternary_weights_bd)
-			tf.add_to_collection("ternary_biases_bd" , ternary_biases_bd)
-			
-			# Choose Precision
-			final_weights = tf.cond(is_ternary, lambda: ternarize_weights(float32_weights, ternary_weights_bd), lambda: float32_weights)
-			final_biases  = tf.cond(is_ternary, lambda: ternarize_biases (float32_biases , ternary_biases_bd) , lambda: float32_biases )
-			
-			
-			weights = tf.get_variable("final_weights", [kernel_size, kernel_size, input_channel, output_channel], tf.float32, initializer=initializer)
-			biases = tf.Variable(tf.constant(0.0, shape=[output_channel], dtype=tf.float32), trainable=True, name='final_biases')
-			tf.add_to_collection("final_weights", weights)
-			tf.add_to_collection("final_biases", biases)
-			tf.add_to_collection("var_list", weights)
-			tf.add_to_collection("var_list", biases)
-			
-			assign_final_weights = tf.assign(weights, final_weights)
-			assign_final_biases  = tf.assign(biases , final_biases )
-			tf.add_to_collection("assign_var_list", assign_final_weights)
-			tf.add_to_collection("assign_var_list", assign_final_biases)
-				
+			# Variable define
+			weights, biases = conv2D_Variable(kernel_size      = kernel_size,
+											  input_channel	   = input_channel,		
+											  output_channel   = output_channel, 
+											  initializer      = initializer,
+											  is_constant_init = is_constant_init,
+											  is_ternary       = is_ternary)
+											  
 			# convolution
 			if is_dilated:
 				net = tf.nn.atrous_conv2d(net, weights, rate=rate, padding=padding)
@@ -1015,8 +1106,10 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 				net = batch_norm(net, output_channel, is_training, is_testing)
 			
 			#relu
-			net = tf.nn.relu(net)
-
+			net           = tf.nn.relu(net)
+			quantized_net = quantize_activation(net)
+			
+			net = tf.cond(is_quantized_activation, lambda: quantized_net, lambda: net)
 	return net
 
 def deconv2D(net, 

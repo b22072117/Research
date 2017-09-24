@@ -11,14 +11,15 @@ import Model
 #=======================#
 #	Global Parameter	#
 #=======================#
-BATCH_SIZE = 3
+BATCH_SIZE = 2
 EPOCH_TIME = 200
 
-IS_TRAINING = True 
+IS_TRAINING = True
 IS_TESTING  = True
-IS_STUDENT  = False
+IS_STUDENT  = True
 IS_GAN	    = False 
 IS_TERNARY  = True
+IS_QUANTIZED_ACTIVATION = IS_TERNARY
 
 LEARNING_RATE = 1e-3
 EPOCH_DECADE = 200
@@ -27,6 +28,12 @@ LAMBDA = 0.
 
 DISCRIMINATOR_STEP 	= 1
 TERNARY_EPOCH = 50
+QUANTIZED_ACTIVATION_EPOCH = TERNARY_EPOCH
+
+if ((not IS_TRAINING) and IS_TESTING):
+	BATCH_SIZE=1
+
+print("BATCH_SIZE = {BS}" .format(BS=BATCH_SIZE))
 
 #=======================#
 #	Training File Name	#
@@ -50,13 +57,12 @@ TESTING_WEIGHT_FILE = TESTING_WEIGHT_FILE + '_epoch' + str(EPOCH_DECADE)
 TESTING_WEIGHT_FILE = TESTING_WEIGHT_FILE + '_divide' + str(LR_DECADE)
 TESTING_WEIGHT_FILE = TESTING_WEIGHT_FILE + '_L20' + str(LAMBDA).split('.')[1]
 TESTING_WEIGHT_FILE = TESTING_WEIGHT_FILE + '_' + str(EPOCH_TIME)
-TESTING_WEIGHT_FILE = TESTING_WEIGHT_FILE + '.npz'
 
 
 #===========# 
 #	Define	#
 #===========#
-def SegNet_VGG_16_student(net, class_num, is_training, is_testing, is_ternary, reuse=None, scope="SegNet_VGG_16_student"):
+def SegNet_VGG_16_student(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, reuse=None, scope="SegNet_VGG_16_student"):
 	with tf.variable_scope(scope, reuse=reuse):
 		with tf.variable_scope("encoder"):
 			with tf.variable_scope("224X224"): # 1/1
@@ -68,6 +74,7 @@ def SegNet_VGG_16_student(net, class_num, is_training, is_testing, is_ternary, r
 							is_testing=is_testing, 
 							is_dilated=False, 
 							is_ternary=is_ternary,
+							is_quantized_activation = is_quantized_activation,
 							scope="conv1")
 				#if IS_TERNARY:
 				scale = tf.get_variable("scale1", [1], tf.float32, initializer=tf.contrib.layers.variance_scaling_initializer())
@@ -80,6 +87,7 @@ def SegNet_VGG_16_student(net, class_num, is_training, is_testing, is_ternary, r
 							is_testing=is_testing, 
 							is_dilated=False, 
 							is_ternary=is_ternary,
+							is_quantized_activation = is_quantized_activation,
 							scope="conv2")		
 				#if IS_TERNARY:
 				scale = tf.get_variable("scale2", [1], tf.float32, initializer=tf.contrib.layers.variance_scaling_initializer())
@@ -95,6 +103,7 @@ def SegNet_VGG_16_student(net, class_num, is_training, is_testing, is_ternary, r
 							is_testing=is_testing, 
 							is_dilated=True, 
 							is_ternary=is_ternary,
+							is_quantized_activation = is_quantized_activation,
 							scope="conv1")
 				#if IS_TERNARY:
 				scale = tf.get_variable("scale1", [1], tf.float32, initializer=tf.contrib.layers.variance_scaling_initializer())
@@ -107,6 +116,7 @@ def SegNet_VGG_16_student(net, class_num, is_training, is_testing, is_ternary, r
 							is_testing=is_testing, 
 							is_dilated=True, 
 							is_ternary=is_ternary,
+							is_quantized_activation = is_quantized_activation,
 							scope="conv2")	
 				#if IS_TERNARY:
 				scale = tf.get_variable("scale2", [1], tf.float32, initializer=tf.contrib.layers.variance_scaling_initializer())
@@ -122,6 +132,7 @@ def SegNet_VGG_16_student(net, class_num, is_training, is_testing, is_ternary, r
 							is_testing=is_testing, 
 							is_dilated=True, 
 							is_ternary=is_ternary,
+							is_quantized_activation = is_quantized_activation,
 							scope="conv1")
 				#if IS_TERNARY:
 				scale = tf.get_variable("scale1", [1], tf.float32, initializer=tf.contrib.layers.variance_scaling_initializer())
@@ -134,6 +145,7 @@ def SegNet_VGG_16_student(net, class_num, is_training, is_testing, is_ternary, r
 							is_testing=is_testing, 
 							is_dilated=True, 
 							is_ternary=is_ternary,
+							is_quantized_activation = is_quantized_activation,
 							scope="conv2")	
 				#if IS_TERNARY:
 				scale = tf.get_variable("scale2", [1], tf.float32, initializer=tf.contrib.layers.variance_scaling_initializer())
@@ -146,6 +158,7 @@ def SegNet_VGG_16_student(net, class_num, is_training, is_testing, is_ternary, r
 							is_testing=is_testing, 
 							is_dilated=True, 
 							is_ternary=is_ternary,
+							is_quantized_activation = is_quantized_activation,
 							scope="conv3")			
 				#if IS_TERNARY:
 				scale = tf.get_variable("scale3", [1], tf.float32, initializer=tf.contrib.layers.variance_scaling_initializer())
@@ -161,6 +174,7 @@ def SegNet_VGG_16_student(net, class_num, is_training, is_testing, is_ternary, r
 							is_testing=is_testing, 
 							is_dilated=True, 
 							is_ternary=is_ternary,
+							is_quantized_activation = is_quantized_activation,
 							scope="conv1")
 				#if IS_TERNARY:
 				scale = tf.get_variable("scale1", [1], tf.float32, initializer=tf.contrib.layers.variance_scaling_initializer())
@@ -173,6 +187,7 @@ def SegNet_VGG_16_student(net, class_num, is_training, is_testing, is_ternary, r
 							is_testing=is_testing, 
 							is_dilated=True, 
 							is_ternary=is_ternary,
+							is_quantized_activation = is_quantized_activation,
 							scope="conv2")	
 				#if IS_TERNARY:
 				scale = tf.get_variable("scale2", [1], tf.float32, initializer=tf.contrib.layers.variance_scaling_initializer())
@@ -185,6 +200,7 @@ def SegNet_VGG_16_student(net, class_num, is_training, is_testing, is_ternary, r
 							is_testing=is_testing, 
 							is_dilated=True, 
 							is_ternary=is_ternary,
+							is_quantized_activation = is_quantized_activation,
 							scope="conv3")			
 				#if IS_TERNARY:
 				scale = tf.get_variable("scale3", [1], tf.float32, initializer=tf.contrib.layers.variance_scaling_initializer())
@@ -200,6 +216,7 @@ def SegNet_VGG_16_student(net, class_num, is_training, is_testing, is_ternary, r
 							is_testing=is_testing, 
 							is_dilated=True, 
 							is_ternary=is_ternary,
+							is_quantized_activation = is_quantized_activation,
 							scope="conv1")
 				#if IS_TERNARY:
 				scale = tf.get_variable("scale1", [1], tf.float32, initializer=tf.contrib.layers.variance_scaling_initializer())
@@ -212,6 +229,7 @@ def SegNet_VGG_16_student(net, class_num, is_training, is_testing, is_ternary, r
 							is_testing=is_testing, 
 							is_dilated=True, 
 							is_ternary=is_ternary,
+							is_quantized_activation = is_quantized_activation,
 							scope="conv2")	
 				#if IS_TERNARY:
 				scale = tf.get_variable("scale2", [1], tf.float32, initializer=tf.contrib.layers.variance_scaling_initializer())
@@ -224,6 +242,7 @@ def SegNet_VGG_16_student(net, class_num, is_training, is_testing, is_ternary, r
 							is_testing=is_testing, 
 							is_dilated=True, 
 							is_ternary=is_ternary,
+							is_quantized_activation = is_quantized_activation,
 							scope="conv3")			
 				#if IS_TERNARY:
 				scale = tf.get_variable("scale3", [1], tf.float32, initializer=tf.contrib.layers.variance_scaling_initializer())
@@ -240,6 +259,7 @@ def SegNet_VGG_16_student(net, class_num, is_training, is_testing, is_ternary, r
 							is_testing=is_testing, 
 							is_dilated=True, 
 							is_ternary=is_ternary,
+							is_quantized_activation = is_quantized_activation,
 							scope="conv1")
 				#if IS_TERNARY:
 				scale = tf.get_variable("scale1", [1], tf.float32, initializer=tf.contrib.layers.variance_scaling_initializer())
@@ -252,6 +272,7 @@ def SegNet_VGG_16_student(net, class_num, is_training, is_testing, is_ternary, r
 							is_testing=is_testing, 
 							is_dilated=False, 
 							is_ternary=is_ternary,
+							is_quantized_activation = is_quantized_activation,
 							scope="conv2")	
 	return net
 	
@@ -278,13 +299,13 @@ def main(argv=None):
 #===========#
 	data_shape = np.shape(CamVid_train_data)
 # Placeholder
-	xs 			  = tf.placeholder(tf.float32, [BATCH_SIZE, data_shape[1], data_shape[2], data_shape[3]]) 
-	ys 			  = tf.placeholder(tf.float32, [BATCH_SIZE, data_shape[1], data_shape[2], class_num])
-	learning_rate = tf.placeholder(tf.float32)
-	is_training   = tf.placeholder(tf.bool)
-	is_testing 	  = tf.placeholder(tf.bool)
-	is_ternary    = tf.placeholder(tf.bool)
-	weight_bd	  = tf.placeholder(tf.float32)
+	xs 			            = tf.placeholder(tf.float32, [BATCH_SIZE, data_shape[1], data_shape[2], data_shape[3]]) 
+	ys 			            = tf.placeholder(tf.float32, [BATCH_SIZE, data_shape[1], data_shape[2], class_num])
+	learning_rate           = tf.placeholder(tf.float32)
+	is_training             = tf.placeholder(tf.bool)
+	is_testing 	            = tf.placeholder(tf.bool)
+	is_ternary              = tf.placeholder(tf.bool)
+	is_quantized_activation = tf.placeholder(tf.bool)
 
 # Data Preprocessing
 	xImage = xs
@@ -293,7 +314,7 @@ def main(argv=None):
 #	Graph	#
 #===========#
 	net = xImage
-	prediction = SegNet_VGG_16_student(net, class_num, is_training=is_training, is_testing=is_testing, is_ternary=is_ternary)
+	prediction = SegNet_VGG_16_student(net, class_num, is_training=is_training, is_testing=is_testing, is_ternary=is_ternary, is_quantized_activation=is_quantized_activation)
 	#prediction = tf.nn.softmax(net)
 	
 	params = tf.get_collection("params", scope=None) 
@@ -322,7 +343,10 @@ def main(argv=None):
 	final_biases_collection  = tf.get_collection("final_biases" , scope=None)
 	var_list_collection		 = tf.get_collection("var_list", scope=None)
 	assign_var_list_collection = tf.get_collection("assign_var_list", scope=None)
-	
+	activation_collection	= tf.get_collection("activation"  , scope=None)
+	mantissa_collection		= tf.get_collection("mantissa"    , scope=None)
+	fraction_collection     = tf.get_collection("fraction"    , scope=None)
+
 #=======================#
 #	Training Strategy	#
 #=======================#	
@@ -350,7 +374,7 @@ def main(argv=None):
 		opt = tf.train.AdamOptimizer(learning_rate)
 		train_step_compute_gradients = opt.compute_gradients(loss, var_list=var_list_collection)
 		gra_and_var = [(train_step_compute_gradients[i][0], params[i]) for i in range(np.shape(train_step_compute_gradients)[0])]
-		train_step = opt.apply_gradients  (gra_and_var)
+		train_step = opt.apply_gradients(gra_and_var)
 
 #===========#
 #   Saver   #
@@ -372,8 +396,8 @@ def main(argv=None):
 
 			utils.Training_and_Validation( 
 				# Training & Validation Data
-				 train_data					  = CamVid_train_data				, 
-				 train_target				  = CamVid_train_target				,
+				 train_data					  = Y_pre_train_data				, 
+				 train_target				  = Y_pre_train_target				,
 				 valid_data					  = CamVid_valid_data				,
 				 valid_target				  = CamVid_valid_target				,
 				# Parameter					  		
@@ -407,7 +431,6 @@ def main(argv=None):
 				# (GAN) Parameter		
 				IS_GAN						  = IS_GAN							,
 				DISCRIMINATOR_STEP			  = DISCRIMINATOR_STEP				,
-		
 				# (GAN) tensor		
 				train_step_Gen				  = None							,			
 				train_step_Dis				  = None							,
@@ -416,26 +439,29 @@ def main(argv=None):
 				prediction_Gen				  = None							,
 				prediction_Dis_0			  = None							,
 				prediction_Dis_1			  = None							,
-		
 				# (ternary) Parameter			
 				IS_TERNARY				      = IS_TERNARY						,
 				TERNARY_EPOCH			      = TERNARY_EPOCH					,
-						
 				# (ternary) Placeholder		
 				is_ternary					  = is_ternary						,
-						
 				# (ternary) Collection		
 				weights_collection		      = weights_collection				,
 				biases_collection			  = biases_collection				,
 				ternary_weights_bd_collection = ternary_weights_bd_collection	,
 				ternary_biases_bd_collection  = ternary_biases_bd_collection	,
-
 				# (assign final weights)
 				assign_var_list_collection	  = assign_var_list_collection		,
-				
+				# (quantize actvation) parameter
+				IS_QUANTIZED_ACTIVATION		  = IS_QUANTIZED_ACTIVATION			,
+				QUANTIZED_ACTIVATION_EPOCH	  = QUANTIZED_ACTIVATION_EPOCH		,
+				# (quantize actvation) parameter
+				is_quantized_activation		  = is_quantized_activation			,
+				# (quantize actvation) collection
+				activation_collection		  = activation_collection			, 
+				mantissa_collection			  = mantissa_collection 			,
+				fraction_collection     	  = fraction_collection				,
 				# (debug)
 				final_weights_collection	  = final_weights_collection		,
-				
 				# Session
 				 sess						  = sess							)
 	
@@ -464,7 +490,7 @@ def main(argv=None):
 					test_data_index				= CamVid_test_data_index	,
 				# Parameter	
 					BATCH_SIZE					= BATCH_SIZE				,
-					IS_SAVING_RESULT_AS_IMAGE	= False						,		
+					IS_SAVING_RESULT_AS_IMAGE	= False						,	
 					IS_SAVING_RESULT_AS_NPZ		= False						,
 					IS_TRAINING					= IS_TRAINING				,
 				# Tensor	
@@ -474,10 +500,11 @@ def main(argv=None):
 					ys							= ys						,
 					is_training					= is_training				,
 					is_testing					= is_testing				,
+					is_quantized_activation		= is_quantized_activation	,
 				# File Path (For Loading Trained Weight)
 					TESTING_WEIGHT_FILE			= TESTING_WEIGHT_FILE		,
 				# Trained Weight Parameters (For Loading Trained Weight)
-					parameters					= parameters				,
+					parameters					= None						,
 					saver 						= saver						,
 				# File Path (For Saving Result)
 					train_target_path 			= train_target_path 		,
@@ -488,7 +515,7 @@ def main(argv=None):
 					test_Y_pre_path  			= test_Y_pre_path  			,
 				# Session        
 					sess						= sess						)
-
+		pdb.set_trace()
 		print("")
 		print("Works are All Done !")
 if __name__ == "__main__":
