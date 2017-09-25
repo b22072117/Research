@@ -16,10 +16,10 @@ EPOCH_TIME = 200
 
 IS_TRAINING = True
 IS_TESTING  = True
-IS_STUDENT  = True
+IS_STUDENT  = False
 IS_GAN	    = False 
 IS_TERNARY  = True
-IS_QUANTIZED_ACTIVATION = IS_TERNARY
+IS_QUANTIZED_ACTIVATION = True
 
 LEARNING_RATE = 1e-3
 EPOCH_DECADE = 200
@@ -27,8 +27,8 @@ LR_DECADE = 10
 LAMBDA = 0.
 
 DISCRIMINATOR_STEP 	= 1
-TERNARY_EPOCH = 50
-QUANTIZED_ACTIVATION_EPOCH = TERNARY_EPOCH
+TERNARY_EPOCH = 100
+QUANTIZED_ACTIVATION_EPOCH = 100
 
 if ((not IS_TRAINING) and IS_TESTING):
 	BATCH_SIZE=1
@@ -293,6 +293,15 @@ def main(argv=None):
 				  # Parameter
 				  IS_STUDENT  = IS_STUDENT ,
 				  IS_TRAINING = IS_TRAINING)
+	
+	if IS_STUDENT:
+		train_data       = Y_pre_train_data
+		train_target     = Y_pre_train_target
+		train_data_index = Y_pre_data_index
+	else:
+		train_data       = CamVid_train_data
+		train_target     = CamVid_train_target
+		train_data_index = CamVid_train_data_index
 
 #===========#
 #	Data	#
@@ -346,6 +355,7 @@ def main(argv=None):
 	activation_collection	= tf.get_collection("activation"  , scope=None)
 	mantissa_collection		= tf.get_collection("mantissa"    , scope=None)
 	fraction_collection     = tf.get_collection("fraction"    , scope=None)
+	final_net_collection	= tf.get_collection("final_net"	  , scope=None)
 
 #=======================#
 #	Training Strategy	#
@@ -396,38 +406,38 @@ def main(argv=None):
 
 			utils.Training_and_Validation( 
 				# Training & Validation Data
-				 train_data					  = Y_pre_train_data				, 
-				 train_target				  = Y_pre_train_target				,
-				 valid_data					  = CamVid_valid_data				,
-				 valid_target				  = CamVid_valid_target				,
+				train_data					  = train_data						, 
+				train_target				  = train_target					,
+				valid_data					  = CamVid_valid_data				,
+				valid_target				  = CamVid_valid_target				,
 				# Parameter					  		
-				 EPOCH_TIME					  = EPOCH_TIME						,
-				 BATCH_SIZE					  = BATCH_SIZE						,
-				 LR_DECADE					  = LR_DECADE						,
-				 EPOCH_DECADE				  = EPOCH_DECADE					,
-				 lr							  = lr								,
+				EPOCH_TIME					  = EPOCH_TIME						,
+				BATCH_SIZE					  = BATCH_SIZE						,
+				LR_DECADE					  = LR_DECADE						,
+				EPOCH_DECADE				  = EPOCH_DECADE					,
+				lr							  = lr								,
 				# Tensor					  		
-				 train_step					  = train_step						,
-				 loss						  = loss							,
-				 prediction					  = prediction						,
+				train_step					  = train_step						,
+				loss						  = loss							,
+				prediction					  = prediction						,
 				# Placeholder				  			
-				 xs							  = xs								, 
-				 ys							  = ys								,
-				 learning_rate				  = learning_rate					,
-				 is_training				  = is_training						,
-				 is_testing					  = is_testing						,
+				xs							  = xs								, 
+				ys							  = ys								,
+				learning_rate				  = learning_rate					,
+				is_training					  = is_training						,
+				is_testing					  = is_testing						,
 				# Collection (For Saving Trained Weight)		
-				 mean_collection			  = mean_collection					,
-				 var_collection				  = var_collection					,
-				 trained_mean_collection	  = trained_mean_collection			,
-				 trained_var_collection		  = trained_var_collection			,
-				 params						  = params							,
+				mean_collection				  = mean_collection					,
+				var_collection				  = var_collection					,
+				trained_mean_collection		  = trained_mean_collection			,
+				trained_var_collection		  = trained_var_collection			,
+				params						  = params							,
 				# File Path (For Saving Trained Weight)		
-				 TRAINED_WEIGHT_FILE		  = None							,
-				 TRAINING_WEIGHT_FILE		  = TRAINING_WEIGHT_FILE			,
+				TRAINED_WEIGHT_FILE			  = TRAINING_WEIGHT_FILE+'_200'		,
+				TRAINING_WEIGHT_FILE		  = TRAINING_WEIGHT_FILE			,
 				# Trained Weight Parameters (For Saving Trained Weight)		
-				 parameters					  = None							,
-				 saver						  = saver							,
+				parameters					  = None							,
+				saver						  = saver							,
 				# (GAN) Parameter		
 				IS_GAN						  = IS_GAN							,
 				DISCRIMINATOR_STEP			  = DISCRIMINATOR_STEP				,
@@ -462,6 +472,7 @@ def main(argv=None):
 				fraction_collection     	  = fraction_collection				,
 				# (debug)
 				final_weights_collection	  = final_weights_collection		,
+				final_net_collection		  = final_net_collection			,
 				# Session
 				 sess						  = sess							)
 	
@@ -479,9 +490,9 @@ def main(argv=None):
 			
 			utils.Testing(
 				# Training & Validation & Testing Data
-					train_data					= CamVid_train_data			, 
-					train_target				= CamVid_train_target		,
-					train_data_index			= CamVid_train_data_index	,
+					train_data					= CamVid_train_data 			  	, 
+					train_target				= CamVid_train_target				,
+					train_data_index			= CamVid_train_data_index			,
 					valid_data					= CamVid_valid_data			,
 					valid_target				= CamVid_valid_target		,
 					valid_data_index			= CamVid_valid_data_index	,
@@ -493,6 +504,8 @@ def main(argv=None):
 					IS_SAVING_RESULT_AS_IMAGE	= False						,	
 					IS_SAVING_RESULT_AS_NPZ		= False						,
 					IS_TRAINING					= IS_TRAINING				,
+					IS_TERNARY					= IS_TERNARY					,
+					IS_QUANTIZED_ACTIVATION		= IS_QUANTIZED_ACTIVATION		,
 				# Tensor	
 					prediction					= prediction				,
 				# Placeholder

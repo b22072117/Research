@@ -140,6 +140,8 @@ def Testing(
 	IS_SAVING_RESULT_AS_IMAGE	,
 	IS_SAVING_RESULT_AS_NPZ		,
 	IS_TRAINING					,
+	IS_TERNARY					,
+	IS_QUANTIZED_ACTIVATION		,
 	
 	# Tensor	
 	prediction					,
@@ -181,7 +183,19 @@ def Testing(
 	#	TRAIN	#
 	#***********#
 	print("train result ... ")
-	train_result, train_accuracy, train_accuracy_top2, train_accuracy_top3, Y_pre_train = compute_accuracy(xs, ys, is_training, is_testing, is_validation, is_quantized_activation, True, prediction, train_data, train_target, BATCH_SIZE, sess)
+	train_result, train_accuracy, train_accuracy_top2, train_accuracy_top3, Y_pre_train = compute_accuracy(
+				xs                      = xs, 
+				ys                      = ys, 
+				is_training             = is_training, 
+				is_testing              = is_testing, 
+				is_validation           = is_validation, 
+				is_quantized_activation = is_quantized_activation, 
+				QUANTIZED_NOW           = IS_QUANTIZED_ACTIVATION, 
+				prediction              = prediction, 
+				v_xs                    = train_data, 
+				v_ys                    = train_target, 
+				BATCH_SIZE              = BATCH_SIZE, 
+				sess                    = sess)
 	print("Train Data Accuracy = {Train_Accuracy}, top2 = {top2}, top3 = {top3}"
 	.format(Train_Accuracy=train_accuracy, top2=train_accuracy_top2, top3=train_accuracy_top3))
 
@@ -190,7 +204,19 @@ def Testing(
 	#	VALID	#
 	#***********#
 	print(" valid result ... ")
-	valid_result, valid_accuracy, valid_accuracy_top2, valid_accuracy_top3, Y_pre_valid = compute_accuracy(xs, ys, is_training, is_testing, is_validation, is_quantized_activation, True, prediction, valid_data, valid_target, BATCH_SIZE, sess)
+	valid_result, valid_accuracy, valid_accuracy_top2, valid_accuracy_top3, Y_pre_valid = compute_accuracy(
+				xs                      = xs, 
+				ys                      = ys, 
+				is_training             = is_training, 
+				is_testing              = is_testing, 
+				is_validation           = is_validation, 
+				is_quantized_activation = is_quantized_activation, 
+				QUANTIZED_NOW           = IS_QUANTIZED_ACTIVATION, 
+				prediction              = prediction, 
+				v_xs                    = valid_data, 
+				v_ys                    = valid_target, 
+				BATCH_SIZE              = BATCH_SIZE, 
+				sess                    = sess)
 	print("Valid Data Accuracy = {Valid_Accuracy}, top2 = {top2}, top3 = {top3}"
 	.format(Valid_Accuracy=valid_accuracy, top2=valid_accuracy_top2, top3=valid_accuracy_top3))
 	
@@ -199,7 +225,19 @@ def Testing(
 	#	TEST	#
 	#***********#
 	print(" test result ... ")
-	test_result, test_accuracy, test_accuracy_top2, test_accuracy_top3, Y_pre_test = compute_accuracy(xs, ys, is_training, is_testing, is_validation, is_quantized_activation, True, prediction, test_data, test_target, BATCH_SIZE, sess)
+	test_result, test_accuracy, test_accuracy_top2, test_accuracy_top3, Y_pre_test = compute_accuracy(
+				xs                      = xs, 
+				ys                      = ys, 
+				is_training             = is_training, 
+				is_testing              = is_testing, 
+				is_validation           = is_validation, 
+				is_quantized_activation = is_quantized_activation, 
+				QUANTIZED_NOW           = IS_QUANTIZED_ACTIVATION, 
+				prediction              = prediction, 
+				v_xs                    = test_data, 
+				v_ys                    = test_target, 
+				BATCH_SIZE              = BATCH_SIZE, 
+				sess                    = sess)
 	print("Test Data Accuracy = {Test_Accuracy}, top2 = {top2}, top3 = {top3}"
 	.format(Test_Accuracy=test_accuracy, top2=test_accuracy_top2, top3=test_accuracy_top3))
 	
@@ -316,7 +354,7 @@ def Training_and_Validation(
 		IS_QUANTIZED_ACTIVATION			= None,
 		QUANTIZED_ACTIVATION_EPOCH		= None,
 
-		# (quantize actvation) parameter
+		# (quantize actvation) tensor
 		is_quantized_activation			= None,
 
 		# (quantize actvation) collection
@@ -326,7 +364,8 @@ def Training_and_Validation(
 
 		# (debug)
 		final_weights_collection		= None,
-		
+		final_net_collection			= None,
+
 		# Session
 		sess							= None):
 	#-------------------------------#
@@ -338,7 +377,7 @@ def Training_and_Validation(
 		save_path = saver.save(sess, TRAINED_WEIGHT_FILE + ".ckpt")
 		print(save_path)
 	#	load_pre_trained_weights(parameters, pre_trained_weight_file=TRAINED_WEIGHT_FILE, sess=sess)
-	
+
 	#-----------------------------#
 	#   Some Controk Parameters   #
 	#-----------------------------#
@@ -357,7 +396,7 @@ def Training_and_Validation(
 		#--------------------------#
 		#   Quantizad Activation   #
 		#--------------------------#
-		if IS_QUANTIZED_ACTIVATION and epoch==QUANTIZED_ACTIVATION_EPOCH:
+		if IS_QUANTIZED_ACTIVATION and (epoch+1)==QUANTIZED_ACTIVATION_EPOCH:
 			batch_xs = train_data[0 : BATCH_SIZE]
 			# Calculate Each Activation's appropriate mantissa and fractional bit
 			m, f = quantized_m_and_f(activation_collection, xs, is_training, is_testing, is_quantized_activation, batch_xs, sess)	
@@ -370,7 +409,7 @@ def Training_and_Validation(
 		#-------------#
 		#   Ternary   #
 		#-------------#
-		if IS_TERNARY and epoch==TERNARY_EPOCH:
+		if IS_TERNARY and (epoch+1)==TERNARY_EPOCH:
 			# Calculate the ternary boundary of each layer's weights
 			weights_bd, biases_bd, weights_table, biases_table = tenarized_bd(weights_collection,  biases_collection, weights_bd_ratio, biases_bd_ratio, sess)
 
@@ -427,7 +466,16 @@ def Training_and_Validation(
 			# Per Class Accuracy
 			per_class_accuracy(Prediction, batch_ys)
 
-			
+		#----------------------------------------------------------------------#
+		#    Show Difference between quanitzed and non-quantized activation    #
+		#----------------------------------------------------------------------#
+		print("")
+		if QUANTIZED_NOW:
+			batch_xs = train_data[0 : BATCH_SIZE]
+			for i, final_net in enumerate(final_net_collection):
+				TRUE   = sess.run(final_net, feed_dict={xs: batch_xs, is_quantized_activation: True })
+				FALSE  = sess.run(final_net, feed_dict={xs: batch_xs, is_quantized_activation: False})
+				print("{iter}: {TRUE_MEAN}	{FALSE_MEAN}	{DIFF_MEAN}" .format(iter=i, TRUE_MEAN=np.mean(TRUE), FALSE_MEAN=np.mean(FALSE), DIFF_MEAN=np.mean(np.absolute(TRUE-FALSE))))
 
 		# Record Per Epoch Training Result (Finally this will save as the .csv file)
 		if epoch==0:
@@ -446,13 +494,25 @@ def Training_and_Validation(
 		print("Epoch : {ep}".format(ep = epoch))
 		print("Validation ... ")
 		is_validation = True 
-		_, valid_accuracy, _, _, _ = compute_accuracy(xs, ys, is_training, is_testing, is_validation, is_quantized_activation, QUANTIZED_NOW, prediction, valid_data, valid_target, BATCH_SIZE, sess)
+		_, valid_accuracy, _, _, _ = compute_accuracy(
+					xs                      = xs, 
+					ys                      = ys, 
+					is_training             = is_training, 
+					is_testing              = is_testing, 
+					is_validation           = is_validation, 
+					is_quantized_activation = is_quantized_activation, 
+					QUANTIZED_NOW           = QUANTIZED_NOW, 
+					prediction              = prediction, 
+					v_xs                    = valid_data, 
+					v_ys                    = valid_target, 
+					BATCH_SIZE              = BATCH_SIZE, 
+					sess                    = sess)
 		is_validation = False
 		print("")
 		print("Validation Accuracy = {Valid_Accuracy}".format(Valid_Accuracy=valid_accuracy))
 		
 		# Learning Rate Decay
-		if ((epoch % EPOCH_DECADE==0) and (epoch != 0)):
+		if (((epoch+1) % EPOCH_DECADE==0) and (epoch != 0)):
 			lr = lr / LR_DECADE
 			
 		#---------------------------#
@@ -622,7 +682,7 @@ def per_class_accuracy(prediction, batch_ys):
 		print("    Class{Iter}	: {predict} / {target}".format(Iter = i, predict=correct_num, target=total_num))
 	
 		
-def compute_accuracy(xs, ys, is_training, is_testing, is_validation, is_quantized_activation, QUANTIZED_NOW, predicton, v_xs, v_ys, BATCH_SIZE, sess):
+def compute_accuracy(xs, ys, is_training, is_testing, is_validation, is_quantized_activation, QUANTIZED_NOW, prediction, v_xs, v_ys, BATCH_SIZE, sess):
 	test_batch_size = BATCH_SIZE
 	batch_num = len(v_xs) / test_batch_size
 	result_accuracy_top1 = 0
@@ -632,7 +692,7 @@ def compute_accuracy(xs, ys, is_training, is_testing, is_validation, is_quantize
 		v_xs_part = v_xs[i*test_batch_size : (i+1)*test_batch_size, :]
 		v_ys_part = v_ys[i*test_batch_size : (i+1)*test_batch_size, :]
 			
-		Y_pre = sess.run(predicton, feed_dict={xs: v_xs_part, is_training: False, is_testing: (not is_validation), is_quantized_activation: QUANTIZED_NOW})
+		Y_pre = sess.run(prediction, feed_dict={xs: v_xs_part, is_training: False, is_testing: (not is_validation), is_quantized_activation: QUANTIZED_NOW})
 				
 		# for post-processing
 		if i==0:
@@ -736,20 +796,19 @@ def assign_trained_mean_and_var(mean_collection,
 def quantized_m_and_f(activation_collection, xs, is_training, is_testing, is_quantized_activation, batch_xs, sess):
 	NUM = len(activation_collection)
 	for i in range(NUM):
-		"""
-		"""
-		activation = sess.run(activation_collection[i], feed_dict={xs: batch_xs, is_training: False, is_testing: False, is_quantized_activation: False})
+		activation = sess.run(activation_collection[i], feed_dict={xs: batch_xs, is_training: False, is_testing: True, is_quantized_activation: False})
 		var = np.var(activation)
-		mantissa = 4
-		fraction = -int(np.log2((var*2)/pow(2, mantissa)))
-
+		mantissa = 16
+		fraction = -int(np.log2((var*3)/pow(2, mantissa)))-1
+		#fraction = 3
+		#pdb.set_trace()
 		if i==0:
 			m = np.array([[mantissa]])
 			f = np.array([[fraction]])
 		else:
 			m = np.concatenate([m, np.array([[mantissa]])], axis=0)
 			f = np.concatenate([f, np.array([[fraction]])], axis=0)
-	pdb.set_trace()
+	#pdb.set_trace()
 	return m, f
 
 def assign_quantized_m_and_f(mantissa_collection, fraction_collection, m, f, sess):
@@ -1110,6 +1169,7 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 			quantized_net = quantize_activation(net)
 			
 			net = tf.cond(is_quantized_activation, lambda: quantized_net, lambda: net)
+			tf.add_to_collection("final_net", net)
 	return net
 
 def deconv2D(net, 
@@ -1339,7 +1399,7 @@ def read_Y_pre_file(Path, text_file_name):
 			data = np.concatenate([data, np.expand_dims(Y_pre, axis=0)], axis=0)
 	return data, data_index
 
-def compute_accuracy_TOP_K(xs, ys, is_training, is_testing, is_validation, predicton, v_xs, v_ys, table, BATCH_SIZE, sess):
+def compute_accuracy_TOP_K(xs, ys, is_training, is_testing, is_validation, prediction, v_xs, v_ys, table, BATCH_SIZE, sess):
 	test_batch_size = BATCH_SIZE
 	batch_num = len(v_xs) / test_batch_size
 	result_accuracy_top1 = 0
@@ -1350,7 +1410,7 @@ def compute_accuracy_TOP_K(xs, ys, is_training, is_testing, is_validation, predi
 		v_xs_part  = v_xs [i*test_batch_size : (i+1)*test_batch_size]
 		v_ys_part  = v_ys [i*test_batch_size : (i+1)*test_batch_size] # one-of-k
 		table_part = table[i*test_batch_size : (i+1)*test_batch_size]
-		Prediction = sess.run(predicton, feed_dict={xs: v_xs_part, is_training: False, is_testing: (not is_validation)})
+		Prediction = sess.run(prediction, feed_dict={xs: v_xs_part, is_training: False, is_testing: (not is_validation)})
 				
 		top1 = get_real_prediction(Prediction, table_part)
 	#	top1 = np.argsort(-Y_pre, axis=-1)[:, :, :, 0] 
