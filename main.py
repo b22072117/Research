@@ -12,10 +12,10 @@ import Model
 #	Global Parameter	#
 #=======================#
 Model_Name = 'SegNet_VGG_10'
-BATCH_SIZE = 8
+BATCH_SIZE = 4
 EPOCH_TIME = 200
 
-IS_TRAINING 			= False
+IS_TRAINING 			= True
 IS_TESTING  			= True
 IS_STUDENT  			= True
 IS_GAN	    			= False 
@@ -125,7 +125,7 @@ def main(argv=None):
 	#===========#
 	net = xImage
 	#prediction = SegNet_VGG_10_dilated(net, class_num, is_training, is_testing)
-	prediction = Model.SegNet_VGG_10(net, class_num, is_training, is_testing)
+	prediction = Model.SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION)
 	#prediction = tf.nn.softmax(net)
 	
 	params = tf.get_collection("params", scope=None) 

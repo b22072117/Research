@@ -929,6 +929,7 @@ def conv2D_Variable(kernel_size,
 					initializer,
 					is_constant_init,
 					is_ternary,
+					IS_TERNARY
 					):
 	# float32 Variable
 	if is_constant_init:
@@ -942,31 +943,35 @@ def conv2D_Variable(kernel_size,
 	tf.add_to_collection("params" , float32_weights)
 	tf.add_to_collection("params" , float32_biases)
 	
+	if IS_TERNARY:
+		# Ternary Variable boundary
+		ternary_weights_bd = tf.get_variable("ternary_weights_bd", [2], tf.float32, initializer=initializer)
+		ternary_biases_bd  = tf.get_variable("ternary_biases_bd" , [2], tf.float32, initializer=initializer)
+		tf.add_to_collection("ternary_weights_bd", ternary_weights_bd)
+		tf.add_to_collection("ternary_biases_bd" , ternary_biases_bd)
+		
+		# Choose Precision
+		final_weights = tf.cond(is_ternary, lambda: ternarize_weights(float32_weights, ternary_weights_bd), lambda: float32_weights)
+		final_biases  = tf.cond(is_ternary, lambda: ternarize_biases (float32_biases , ternary_biases_bd) , lambda: float32_biases )
 	
-	# Ternary Variable boundary
-	ternary_weights_bd = tf.get_variable("ternary_weights_bd", [2], tf.float32, initializer=initializer)
-	ternary_biases_bd  = tf.get_variable("ternary_biases_bd" , [2], tf.float32, initializer=initializer)
-	tf.add_to_collection("ternary_weights_bd", ternary_weights_bd)
-	tf.add_to_collection("ternary_biases_bd" , ternary_biases_bd)
 	
-	# Choose Precision
-	final_weights = tf.cond(is_ternary, lambda: ternarize_weights(float32_weights, ternary_weights_bd), lambda: float32_weights)
-	final_biases  = tf.cond(is_ternary, lambda: ternarize_biases (float32_biases , ternary_biases_bd) , lambda: float32_biases )
+		weights = tf.get_variable("final_weights", [kernel_size, kernel_size, input_channel, output_channel], tf.float32, initializer=initializer)
+		biases = tf.Variable(tf.constant(0.0, shape=[output_channel], dtype=tf.float32), trainable=True, name='final_biases')
+		tf.add_to_collection("final_weights", weights)
+		tf.add_to_collection("final_biases", biases)
+		tf.add_to_collection("var_list", weights)
+		tf.add_to_collection("var_list", biases)
 	
-	
-	weights = tf.get_variable("final_weights", [kernel_size, kernel_size, input_channel, output_channel], tf.float32, initializer=initializer)
-	biases = tf.Variable(tf.constant(0.0, shape=[output_channel], dtype=tf.float32), trainable=True, name='final_biases')
-	tf.add_to_collection("final_weights", weights)
-	tf.add_to_collection("final_biases", biases)
-	tf.add_to_collection("var_list", weights)
-	tf.add_to_collection("var_list", biases)
-	
-	assign_final_weights = tf.assign(weights, final_weights)
-	assign_final_biases  = tf.assign(biases , final_biases )
-	tf.add_to_collection("assign_var_list", assign_final_weights)
-	tf.add_to_collection("assign_var_list", assign_final_biases)
-	
-	return weights, biases
+		assign_final_weights = tf.assign(weights, final_weights)
+		assign_final_biases  = tf.assign(biases , final_biases )
+		tf.add_to_collection("assign_var_list", assign_final_weights)
+		tf.add_to_collection("assign_var_list", assign_final_biases)
+		
+		return weights, biases
+	else:
+		tf.add_to_collection("var_list", float32_weights)
+		tf.add_to_collection("var_list", float32_biases)
+		return float32_weights, float32_biases
 	
 def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64, rate=1,
 			initializer=tf.contrib.layers.variance_scaling_initializer(),
@@ -979,6 +984,8 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 			is_dilated		        = False, 		# For Dilated Convoution
 			is_ternary		        = False,
 			is_quantized_activation = False,
+			IS_TERNARY				= False,
+			IS_QUANTIZED_ACTIVATION = False, 
 			padding			        = "SAME",
 			scope			        = "conv"):
 		
@@ -992,12 +999,13 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 			with tf.variable_scope("shortcut"):
 				if input_channel!=output_channel:
 					# Variable define
-					weights, biases = conv2D_Variable(kernel_size      = 1,
-													  input_channel	   = input_channel,		 
-													  output_channel   = output_channel, 
-													  initializer      = initializer,
-													  is_constant_init = is_constant_init,
-													  is_ternary       = is_ternary)
+					weights, biases = conv2D_Variable(kernel_size       = 1,
+													  input_channel	    = input_channel,		 
+													  output_channel    = output_channel, 
+													  initializer       = initializer,
+													  is_constant_init  = is_constant_init,
+													  is_ternary        = is_ternary,
+													  IS_TERNARY		= IS_TERNARY)
 					# convolution
 					if is_dilated: 
 						shortcut = tf.nn.atrous_conv2d(net, weights, rate=rate, padding="SAME")
@@ -1020,12 +1028,13 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 				with tf.variable_scope("bottle_neck"):
 					with tf.variable_scope("conv1_1x1"):
 						# Variable define
-						weights, biases = conv2D_Variable(kernel_size      = 1,
-													      input_channel	   = input_channel,		 
-													      output_channel   = internal_channel, 
-													      initializer      = initializer,
-													      is_constant_init = is_constant_init,
-													      is_ternary       = is_ternary)
+						weights, biases = conv2D_Variable(kernel_size       = 1,
+													      input_channel	    = input_channel,		 
+													      output_channel    = internal_channel, 
+													      initializer       = initializer,
+													      is_constant_init  = is_constant_init,
+													      is_ternary        = is_ternary,
+														  IS_TERNARY		= IS_TERNARY)
 
 						# convolution
 						if is_dilated:
@@ -1044,12 +1053,13 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 
 					with tf.variable_scope("conv2_3x3"):
 						# Variable define
-						weights, biases = conv2D_Variable(kernel_size      = 3,
-													      input_channel	   = internal_channel,		 
-													      output_channel   = internal_channel, 
-													      initializer      = initializer,
-													      is_constant_init = is_constant_init,
-													      is_ternary       = is_ternary)					
+						weights, biases = conv2D_Variable(kernel_size       = 3,
+													      input_channel	    = internal_channel,		 
+													      output_channel    = internal_channel, 
+													      initializer       = initializer,
+													      is_constant_init  = is_constant_init,
+													      is_ternary        = is_ternary,
+														  IS_TERNARY		= IS_TERNARY)					
 
 						# convolution
 						if is_dilated:
@@ -1067,12 +1077,13 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 						net = tf.nn.relu(net)
 					with tf.variable_scope("conv3_1x1"):
 						# Variable define
-						weights, biases = conv2D_Variable(kernel_size      = 1,
-													      input_channel	   = internal_channel,		 
-													      output_channel   = output_channel, 
-													      initializer      = initializer,
-													      is_constant_init = is_constant_init,
-													      is_ternary       = is_ternary)
+						weights, biases = conv2D_Variable(kernel_size       = 1,
+													      input_channel	    = internal_channel,		 
+													      output_channel    = output_channel, 
+													      initializer       = initializer,
+													      is_constant_init  = is_constant_init,
+													      is_ternary        = is_ternary,
+														  IS_TERNARY		= IS_TERNARY)
 
 						# convolution
 						if is_dilated:
@@ -1095,12 +1106,13 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 			else: 
 				with tf.variable_scope("conv1_3x3"):
 					# Variable define
-					weights, biases = conv2D_Variable(kernel_size      = 3,
-													  input_channel	   = input_channel,		 
-													  output_channel   = internal_channel, 
-													  initializer      = initializer,
-													  is_constant_init = is_constant_init,
-													  is_ternary       = is_ternary)
+					weights, biases = conv2D_Variable(kernel_size       = 3,
+													  input_channel	    = input_channel,		 
+													  output_channel    = internal_channel, 
+													  initializer       = initializer,
+													  is_constant_init  = is_constant_init,
+													  is_ternary        = is_ternary,
+													  IS_TERNARY		= IS_TERNARY)
 													  
 					# convolution
 					if is_dilated:
@@ -1119,12 +1131,13 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 
 				with tf.variable_scope("conv2_3x3"):
 					# Variable define
-					weights, biases = conv2D_Variable(kernel_size      = 3,
-													  input_channel	   = internal_channel,		 
-													  output_channel   = output_channel, 
-													  initializer      = initializer,
-													  is_constant_init = is_constant_init,
-													  is_ternary       = is_ternary)
+					weights, biases = conv2D_Variable(kernel_size       = 3,
+													  input_channel	    = internal_channel,		 
+													  output_channel    = output_channel, 
+													  initializer       = initializer,
+													  is_constant_init  = is_constant_init,
+													  is_ternary        = is_ternary,
+													  IS_TERNARY		= IS_TERNARY)
 					
 					# convolution
 					if is_dilated:
@@ -1152,7 +1165,8 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 											  output_channel   = output_channel, 
 											  initializer      = initializer,
 											  is_constant_init = is_constant_init,
-											  is_ternary       = is_ternary)
+											  is_ternary       = is_ternary,
+											  IS_TERNARY	   = IS_TERNARY)
 											  
 			# convolution
 			if is_dilated:
@@ -1169,10 +1183,11 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 			
 			#relu
 			net           = tf.nn.relu(net)
-			quantized_net = quantize_activation(net)
 			
-			net = tf.cond(is_quantized_activation, lambda: quantized_net, lambda: net)
-			tf.add_to_collection("final_net", net)
+			if IS_QUANTIZED_ACTIVATION:
+				quantized_net = quantize_activation(net)
+				net = tf.cond(is_quantized_activation, lambda: quantized_net, lambda: net)
+				tf.add_to_collection("final_net", net)
 	return net
 
 def deconv2D(net, 
