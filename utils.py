@@ -465,7 +465,7 @@ def Training_and_Validation(
 
 			# Per Class Accuracy
 			per_class_accuracy(Prediction, batch_ys)
-
+		
 		#----------------------------------------------------------------------#
 		#    Show Difference between quanitzed and non-quantized activation    #
 		#----------------------------------------------------------------------#
@@ -478,6 +478,9 @@ def Training_and_Validation(
 				print("{iter}: {TRUE_MEAN}	{FALSE_MEAN}	{DIFF_MEAN}" .format(iter=i, TRUE_MEAN=np.mean(TRUE), FALSE_MEAN=np.mean(FALSE), DIFF_MEAN=np.mean(np.absolute(TRUE-FALSE))))
 
 		# Record Per Epoch Training Result (Finally this will save as the .csv file)
+		Train_acc  = Train_acc  / float(int(data_shape[0]/BATCH_SIZE))
+		Train_loss = Train_loss / float(int(data_shape[0]/BATCH_SIZE))
+
 		if epoch==0:
 			Train_acc_per_epoch  = np.array([Train_acc ])
 			Train_loss_per_epoch = np.array([Train_loss])

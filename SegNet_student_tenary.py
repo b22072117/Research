@@ -14,9 +14,9 @@ import Model
 BATCH_SIZE = 2
 EPOCH_TIME = 200
 
-IS_TRAINING = True
+IS_TRAINING = False
 IS_TESTING  = True
-IS_STUDENT  = False
+IS_STUDENT  = True
 IS_GAN	    = False 
 IS_TERNARY  = True
 IS_QUANTIZED_ACTIVATION = True
@@ -27,8 +27,8 @@ LR_DECADE = 10
 LAMBDA = 0.
 
 DISCRIMINATOR_STEP 	= 1
-TERNARY_EPOCH = 100
-QUANTIZED_ACTIVATION_EPOCH = 100
+TERNARY_EPOCH = 50
+QUANTIZED_ACTIVATION_EPOCH = 150
 
 if ((not IS_TRAINING) and IS_TESTING):
 	BATCH_SIZE=1
@@ -297,7 +297,7 @@ def main(argv=None):
 	if IS_STUDENT:
 		train_data       = Y_pre_train_data
 		train_target     = Y_pre_train_target
-		train_data_index = Y_pre_data_index
+		train_data_index = Y_pre_train_data_index
 	else:
 		train_data       = CamVid_train_data
 		train_target     = CamVid_train_target

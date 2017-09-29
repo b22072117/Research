@@ -797,6 +797,294 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, reuse=None, scope="Se
 	
 	
 	
+def SegNet_VGG_10(net, class_num, is_training, is_testing, reuse=None, scope="SegNet_VGG_10"):
+	with tf.variable_scope(scope, reuse=reuse):
+		with tf.variable_scope("encoder"):
+			with tf.variable_scope("224X224"): # 1/1
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
+							is_shortcut		= False, 
+							is_bottleneck	= False, 
+							is_batch_norm	= True, 
+							is_training		= is_training, 
+							is_testing		= is_testing, 
+							is_dilated		= False, 
+							scope			= "conv1")
+							
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
+							is_shortcut		= False, 
+							is_bottleneck	= False, 
+							is_batch_norm	= True, 
+							is_training		= is_training, 
+							is_testing		= is_testing, 
+							is_dilated		= False, 
+							scope			= "conv2")	
+							
+				net, indices1, output_shape1 = utils.indice_pool(net, stride=2, scope="Pool1")
+				
+			with tf.variable_scope("112X112"): # 1/2
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
+							is_shortcut		= False, 
+							is_bottleneck	= False, 
+							is_batch_norm	= True, 
+							is_training		= is_training, 
+							is_testing		= is_testing, 
+							is_dilated		= False, 
+							scope			= "conv1")
+							
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
+							is_shortcut		= False, 
+							is_bottleneck	= False, 
+							is_batch_norm	= True, 
+							is_training		= is_training, 
+							is_testing		= is_testing, 
+							is_dilated		= False, 
+							scope			= "conv2")	
+							
+				net, indices2, output_shape2 = utils.indice_pool(net, stride=2, scope="Pool2")
+				
+			with tf.variable_scope("56X56"): # 1/4
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1, 
+							is_shortcut		= False, 
+							is_bottleneck	= False, 
+							is_batch_norm	= True, 
+							is_training		= is_training, 
+							is_testing		= is_testing, 
+							is_dilated		= False, 
+							scope			= "conv1")
+							
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
+							is_shortcut		= False, 
+							is_bottleneck	= False, 
+							is_batch_norm	= True, 
+							is_training		= is_training, 
+							is_testing		= is_testing, 
+							is_dilated		= False, 
+							scope			= "conv2")	
+							
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
+							is_shortcut		= False, 
+							is_bottleneck	= False, 
+							is_batch_norm	= True, 
+							is_training		= is_training, 
+							is_testing		= is_testing, 
+							is_dilated		= False, 
+							scope			= "conv3")	
+							
+				net, indices3, output_shape3 = utils.indice_pool(net, stride=2, scope="Pool3")
+						
+		with tf.variable_scope("decoder"):
+			with tf.variable_scope("56X56_D"): # 1/4 # conv3_D
+				net = utils.indice_unpool(net, stride=2, output_shape=output_shape3, indices=indices3, scope="unPool3")
+				
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
+							is_shortcut		= False, 
+							is_bottleneck	= False, 
+							is_batch_norm	= True, 
+							is_training		= is_training, 
+							is_testing		= is_testing, 
+							is_dilated		= False, 
+							scope			= "conv1")
+							
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
+							is_shortcut		= False, 
+							is_bottleneck	= False, 
+							is_batch_norm	= True, 
+							is_training		= is_training, 
+							is_testing		= is_testing, 
+							is_dilated		= False, 
+							scope			= "conv2")
+							
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
+							is_shortcut		= False, 
+							is_bottleneck	= False, 
+							is_batch_norm	= True, 
+							is_training		= is_training, 
+							is_testing		= is_testing, 
+							is_dilated		= False, 
+							scope			= "conv3")
+							
+			with tf.variable_scope("112X112_D"): # 1/2 # conv2_D
+				net = utils.indice_unpool(net, stride=2, output_shape=output_shape2, indices=indices2, scope="unPool2")
+				
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
+							is_shortcut		= False, 
+							is_bottleneck	= False, 
+							is_batch_norm	= True, 
+							is_training		= is_training, 
+							is_testing		= is_testing, 
+							is_dilated		= False, 
+							scope			= "conv1")
+							
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
+							is_shortcut		= False, 
+							is_bottleneck	= False, 
+							is_batch_norm	= True, 
+							is_training		= is_training, 
+							is_testing		= is_testing, 
+							is_dilated		= False, 
+							scope			= "conv2")	
+				
+			with tf.variable_scope("224X224_D"): # 1/1 # conv1_D
+				net = utils.indice_unpool(net, stride=2, output_shape=output_shape1, indices=indices1, scope="unPool1")
+				
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
+							is_shortcut		= False, 
+							is_bottleneck	= False, 
+							is_batch_norm	= True, 
+							is_training		= is_training, 
+							is_testing		= is_testing, 
+							is_dilated		= False, 
+							scope			= "conv1")
+							
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=class_num, rate=1,
+							is_shortcut		= False, 
+							is_bottleneck	= False, 
+							is_batch_norm	= False, 
+							is_training		= is_training, 
+							is_testing		= is_testing, 
+							is_dilated		= False, 
+							scope			= "conv2")	
+	return net
+	
+def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, reuse=None, scope="SegNet_VGG_10_dilated"):
+	with tf.variable_scope(scope, reuse=reuse):
+		with tf.variable_scope("encoder"):
+			with tf.variable_scope("224X224"): # 1/1
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
+							is_shortcut		= False, 
+							is_bottleneck	= False, 
+							is_batch_norm	= True, 
+							is_training		= is_training, 
+							is_testing		= is_testing, 
+							is_dilated		= False, 
+							scope			= "conv1")
+							
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
+							is_shortcut		= False, 
+							is_bottleneck	= False, 
+							is_batch_norm	= True, 
+							is_training		= is_training, 
+							is_testing		= is_testing, 
+							is_dilated		= False, 
+							scope			= "conv2")	
+				
+			with tf.variable_scope("112X112"): # 1/2
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=2,
+							is_shortcut		= False, 
+							is_bottleneck	= False, 
+							is_batch_norm	= True, 
+							is_training		= is_training, 
+							is_testing		= is_testing, 
+							is_dilated		= True, 
+							scope			= "conv1")
+							
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=2,
+							is_shortcut		= False, 
+							is_bottleneck	= False, 
+							is_batch_norm	= True, 
+							is_training		= is_training, 
+							is_testing		= is_testing, 
+							is_dilated		= True, 
+							scope			= "conv2")	
+							
+			with tf.variable_scope("56X56"): # 1/4
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=4, 
+							is_shortcut		= False, 
+							is_bottleneck	= False, 
+							is_batch_norm	= True, 
+							is_training		= is_training, 
+							is_testing		= is_testing, 
+							is_dilated		= True, 
+							scope			= "conv1")
+							
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=4,
+							is_shortcut		= False, 
+							is_bottleneck	= False, 
+							is_batch_norm	= True, 
+							is_training		= is_training, 
+							is_testing		= is_testing, 
+							is_dilated		= True, 
+							scope			= "conv2")	
+							
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=4,
+							is_shortcut		= False, 
+							is_bottleneck	= False, 
+							is_batch_norm	= True, 
+							is_training		= is_training, 
+							is_testing		= is_testing, 
+							is_dilated		= True, 
+							scope			= "conv3")	
+							
+		with tf.variable_scope("decoder"):
+			with tf.variable_scope("56X56_D"): # 1/4 # conv3_D
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=4,
+							is_shortcut		= False, 
+							is_bottleneck	= False, 
+							is_batch_norm	= True, 
+							is_training		= is_training, 
+							is_testing		= is_testing, 
+							is_dilated		= True, 
+							scope			= "conv1")
+							
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=4,
+							is_shortcut		= False, 
+							is_bottleneck	= False, 
+							is_batch_norm	= True, 
+							is_training		= is_training, 
+							is_testing		= is_testing, 
+							is_dilated		= True, 
+							scope			= "conv2")
+							
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=4,
+							is_shortcut		= False, 
+							is_bottleneck	= False, 
+							is_batch_norm	= True, 
+							is_training		= is_training, 
+							is_testing		= is_testing, 
+							is_dilated		= True, 
+							scope			= "conv3")
+							
+			with tf.variable_scope("112X112_D"): # 1/2 # conv2_D
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=2,
+							is_shortcut		= False, 
+							is_bottleneck	= False, 
+							is_batch_norm	= True, 
+							is_training		= is_training, 
+							is_testing		= is_testing, 
+							is_dilated		= True, 
+							scope			= "conv1")
+							
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=2,
+							is_shortcut		= False, 
+							is_bottleneck	= False, 
+							is_batch_norm	= True, 
+							is_training		= is_training, 
+							is_testing		= is_testing, 
+							is_dilated		= True, 
+							scope			= "conv2")	
+				
+			with tf.variable_scope("224X224_D"): # 1/1 # conv1_D
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
+							is_shortcut		= False, 
+							is_bottleneck	= False, 
+							is_batch_norm	= True, 
+							is_training		= is_training, 
+							is_testing		= is_testing, 
+							is_dilated		= False, 
+							scope			= "conv1")
+							
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=class_num, rate=1,
+							is_shortcut		= False, 
+							is_bottleneck	= False, 
+							is_batch_norm	= False, 
+							is_training		= is_training, 
+							is_testing		= is_testing, 
+							is_dilated		= False, 
+							scope			= "conv2")	
+	return net
+	
+	
+	
 	
 	
 	
