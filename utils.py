@@ -176,8 +176,10 @@ def Testing(
 	if IS_TRAINING == False:
 		print("")
 		print("Loading the trained weights ... ")
-		save_path = saver.restore(sess, TESTING_WEIGHT_FILE + ".ckpt")
-		#load_pre_trained_weights(parameters, pre_trained_weight_file=TESTING_WEIGHT_FILE, sess=sess) 
+		if parameters==None:
+			save_path = saver.restore(sess, TESTING_WEIGHT_FILE + ".ckpt")
+		else:
+			load_pre_trained_weights(parameters, pre_trained_weight_file=TESTING_WEIGHT_FILE, sess=sess) 
 	
 	#***********#
 	#	TRAIN	#
@@ -312,6 +314,7 @@ def Training_and_Validation(
 		# (Saving Trained Weight) File Path
 		TRAINED_WEIGHT_FILE				= None,
 		TRAINING_WEIGHT_FILE			= None,
+		IS_SAVER						= True, 
 		
 		# (Saving Trained Weight) Trained Weight Parameters 
 		parameters						= None,
@@ -374,9 +377,11 @@ def Training_and_Validation(
 	if TRAINED_WEIGHT_FILE!=None:
 		print ""
 		print("Loading Pre-trained weights ...")
-		save_path = saver.save(sess, TRAINED_WEIGHT_FILE + ".ckpt")
-		print(save_path)
-	#	load_pre_trained_weights(parameters, pre_trained_weight_file=TRAINED_WEIGHT_FILE, sess=sess)
+		if parameters==None:
+			save_path = saver.save(sess, TRAINED_WEIGHT_FILE + ".ckpt")
+			print(save_path)
+		else:
+			load_pre_trained_weights(parameters, pre_trained_weight_file=TRAINED_WEIGHT_FILE, sess=sess)
 
 	#-----------------------------#
 	#   Some Controk Parameters   #
@@ -527,9 +532,11 @@ def Training_and_Validation(
 		
 		# Every 10 epoch 
 		if (((epoch+1)%10==0) and ((epoch+1)>=10)):
-			save_path = saver.save(sess, TRAINING_WEIGHT_FILE + '_' + str(epoch+1) + ".ckpt")
-			print(save_path)
-	#		save_pre_trained_weights( (TRAINING_WEIGHT_FILE+'_'+str(epoch+1)), parameters, xs, batch_xs, sess)
+			if IS_SAVER:
+				save_path = saver.save(sess, TRAINING_WEIGHT_FILE + '_' + str(epoch+1) + ".ckpt")
+				print(save_path)
+			else:
+				save_pre_trained_weights( (TRAINING_WEIGHT_FILE+'_'+str(epoch+1)), parameters, xs, batch_xs, sess)
 
 	#-----------------------------------#
 	#	Saving Train info as csv file	#
@@ -751,7 +758,7 @@ def compute_accuracy(xs, ys, is_training, is_testing, is_validation, is_quantize
 	
 def load_pre_trained_weights(parameters, pre_trained_weight_file=None,  keys=None, sess=None):
 	if pre_trained_weight_file != None and sess != None:
-		weights = np.load(pre_trained_weight_file)
+		weights = np.load(pre_trained_weight_file + '.npz')
 		#if keys == None:
 		#	keys = sorted(weights.keys())
 		
@@ -929,15 +936,25 @@ def conv2D_Variable(kernel_size,
 					initializer,
 					is_constant_init,
 					is_ternary,
-					IS_TERNARY
+					IS_TERNARY,
+					is_depthwise
 					):
 	# float32 Variable
 	if is_constant_init:
-		float32_weights = tf.get_variable("weights", dtype=tf.float32, initializer=initializer)
+		if is_depthwise:
+			float32_weights = tf.get_variable("weights", dtype=tf.float32, initializer=initializer)
+		else:
+			float32_weights = tf.get_variable("weights", dtype=tf.float32, initializer=initializer)
 	else:
-		float32_weights = tf.get_variable("weights", [kernel_size, kernel_size, input_channel, output_channel], tf.float32, initializer=initializer)
+		if is_depthwise:
+			float32_weights = tf.get_variable("weights", [kernel_size, kernel_size, input_channel, 1			 ], tf.float32, initializer=initializer)
+		else:
+			float32_weights = tf.get_variable("weights", [kernel_size, kernel_size, input_channel, output_channel], tf.float32, initializer=initializer)
 	
-	float32_biases = tf.Variable(tf.constant(0.0, shape=[output_channel], dtype=tf.float32), trainable=True, name='biases')
+	if is_depthwise:
+		float32_biases = tf.Variable(tf.constant(0.0, shape=[input_channel], dtype=tf.float32), trainable=True, name='biases')
+	else:
+		float32_biases = tf.Variable(tf.constant(0.0, shape=[output_channel], dtype=tf.float32), trainable=True, name='biases')
 	tf.add_to_collection("weights", float32_weights)
 	tf.add_to_collection("biases" , float32_biases)
 	tf.add_to_collection("params" , float32_weights)
@@ -955,8 +972,12 @@ def conv2D_Variable(kernel_size,
 		final_biases  = tf.cond(is_ternary, lambda: ternarize_biases (float32_biases , ternary_biases_bd) , lambda: float32_biases )
 	
 	
-		weights = tf.get_variable("final_weights", [kernel_size, kernel_size, input_channel, output_channel], tf.float32, initializer=initializer)
-		biases = tf.Variable(tf.constant(0.0, shape=[output_channel], dtype=tf.float32), trainable=True, name='final_biases')
+		if is_depthwise:
+			weights = tf.get_variable("final_weights", [kernel_size, kernel_size, input_channel, input_channel], tf.float32, initializer=initializer)
+			biases = tf.Variable(tf.constant(0.0, shape=[input_channel], dtype=tf.float32), trainable=True, name='final_biases')
+		else:
+			weights = tf.get_variable("final_weights", [kernel_size, kernel_size, input_channel, output_channel], tf.float32, initializer=initializer)
+			biases = tf.Variable(tf.constant(0.0, shape=[output_channel], dtype=tf.float32), trainable=True, name='final_biases')
 		tf.add_to_collection("final_weights", weights)
 		tf.add_to_collection("final_biases", biases)
 		tf.add_to_collection("var_list", weights)
@@ -979,13 +1000,15 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 			is_shortcut		        = False, 		# For Residual
 			is_bottleneck	        = False, 		# For Residual
 			is_batch_norm	        = True,  		# For Batch Normalization
-			is_training		        = True,  		# For Batch Normalization
-			is_testing		        = False, 		# For getting the pretrained from caffemodel
+			is_training		        = True,  		# (tensor) For Batch Normalization
+			is_testing		        = False, 		# (tensor) For getting the pretrained from caffemodel
 			is_dilated		        = False, 		# For Dilated Convoution
-			is_ternary		        = False,
-			is_quantized_activation = False,
-			IS_TERNARY				= False,
-			IS_QUANTIZED_ACTIVATION = False, 
+			is_depthwise			= False,		# For Depthwise Convolution
+			is_ternary		        = False,		# (tensor) For weight ternarization
+			is_quantized_activation = False,		# (tensor) For activation quantization
+			IS_TERNARY				= False,		
+			IS_QUANTIZED_ACTIVATION = False,
+			IS_SAVER				= True,
 			padding			        = "SAME",
 			scope			        = "conv"):
 		
@@ -1017,7 +1040,7 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 
 					# batch normalization
 					if is_batch_norm == True:
-						shortcut = batch_norm(shortcut, output_channel, is_training, is_testing)
+						shortcut = batch_norm(shortcut, output_channel, is_training, is_testing, IS_SAVER)
 				else:
 					shortcut = net	
 
@@ -1047,7 +1070,7 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 						
 						# batch normalization
 						if is_batch_norm == True:
-							net = batch_norm(net, internal_channel, is_training, is_testing)
+							net = batch_norm(net, internal_channel, is_training, is_testing, IS_SAVER)
 							
 						net = tf.nn.relu(net)
 
@@ -1072,7 +1095,7 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 						
 						# batch normalization
 						if is_batch_norm == True:
-							net = batch_norm(net, internal_channel, is_training, is_testing)
+							net = batch_norm(net, internal_channel, is_training, is_testing, IS_SAVER)
 							
 						net = tf.nn.relu(net)
 					with tf.variable_scope("conv3_1x1"):
@@ -1096,7 +1119,7 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 						
 						# batch normalization
 						if is_batch_norm == True:
-							net = batch_norm(net, output_channel, is_training, is_testing)
+							net = batch_norm(net, output_channel, is_training, is_testing, IS_SAVER)
 							
 					net = tf.nn.relu(net + shortcut)
 
@@ -1125,7 +1148,7 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 					
 					# batch normalization
 					if is_batch_norm == True:
-						net = batch_norm(net, internal_channel, is_training, is_testing)
+						net = batch_norm(net, internal_channel, is_training, is_testing, IS_SAVER)
 						
 					net = tf.nn.relu(net)
 
@@ -1150,8 +1173,7 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 					
 					# batch normalization
 					if is_batch_norm == True:
-						net = batch_norm(net, internal_channel, is_training, is_testing)
-				
+						net = batch_norm(net, internal_channel, is_training, is_testing, IS_SAVER)
 				#relu
 				net = tf.nn.relu(net + shortcut)
 
@@ -1166,29 +1188,66 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 											  initializer      = initializer,
 											  is_constant_init = is_constant_init,
 											  is_ternary       = is_ternary,
-											  IS_TERNARY	   = IS_TERNARY)
+											  IS_TERNARY	   = IS_TERNARY,
+											  is_depthwise     = is_depthwise)
 											  
 			# convolution
 			if is_dilated:
-				net = tf.nn.atrous_conv2d(net, weights, rate=rate, padding=padding)
+				if is_depthwise:
+					net = depthwise_atrous_conv2d(net, weights, rate, padding)	
+				else:
+					net = tf.nn.atrous_conv2d(net, weights, rate=rate, padding=padding)
 			else:
-				net = tf.nn.conv2d(net, weights, strides=[1, stride, stride, 1], padding=padding)
+				if is_depthwise:
+					net = tf.nn.depthwise_conv2d(net, weights, strides=[1, stride, stride, 1], padding=padding)	
+				else:
+					net = tf.nn.conv2d(net, weights, strides=[1, stride, stride, 1], padding=padding)
 			
 			# add bias
 			net = tf.nn.bias_add(net, biases)
-			
+
 			# batch normalization
 			if is_batch_norm == True:
-				net = batch_norm(net, output_channel, is_training, is_testing)
-			
+				net = batch_norm(net, output_channel, is_training, is_testing, IS_SAVER)
 			#relu
-			net           = tf.nn.relu(net)
+			net = tf.nn.relu(net)
 			
 			if IS_QUANTIZED_ACTIVATION:
 				quantized_net = quantize_activation(net)
 				net = tf.cond(is_quantized_activation, lambda: quantized_net, lambda: net)
 				tf.add_to_collection("final_net", net)
+
+			if is_depthwise:
+				net =  conv2D(net, kernel_size=1, stride=1, internal_channel=internal_channel, output_channel=output_channel, rate=rate,
+					   	      initializer=tf.contrib.layers.variance_scaling_initializer(),
+					   	  	  is_constant_init        = False,
+					   	  	  is_shortcut		      = False, 		
+					   	 	  is_bottleneck	          = False, 		
+					   	 	  is_batch_norm	          = True,  		
+					   	 	  is_training		      = is_training,  		
+					   	 	  is_testing		      = is_testing, 
+					   	 	  is_dilated		      = False, 		
+					   	 	  is_depthwise			  = False,		
+					   	 	  is_ternary		      = is_ternary,		
+					   	 	  is_quantized_activation = is_quantized_activation,		
+					   	 	  IS_TERNARY			  = IS_TERNARY,		
+					   	 	  IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+					   	 	  IS_SAVER				  = True,
+					   	 	  padding			      = "SAME",
+					   	 	  scope			          = "depth_conv1x1")
 	return net
+
+
+def depthwise_atrous_conv2d(net, weights, rate, padding):
+	[H, W, D, _] = weights.get_shape().as_list()
+	for i in range(D):
+		x = tf.expand_dims(net    [:, :, :, i], 3)
+		w = tf.expand_dims(weights[:, :, :, i], 3)
+		if i==0:
+			out = tf.nn.atrous_conv1d(x, w, rate=rate, padding=padding)
+		else:
+			out = tf.concat([out, tf.nn.atrous_conv2d(x, w, rate=rate, padding=padding)], axis=3)
+	return out
 
 def deconv2D(net, 
 			kernel_size, 
@@ -1236,76 +1295,78 @@ def indice_unpool(net, stride, output_shape, indices, scope="unPool"):
 		net = tf.scatter_nd(indices, values, output_shape)
 		return net
 				
-def batch_norm(net, output_channel, is_training, is_testing):
+def batch_norm(net, output_channel, is_training, is_testing, IS_SAVER):
 	with tf.variable_scope("Batch_Norm"):
-		return tf.contrib.layers.batch_norm(
-		   			 inputs 				= net, 
-		   			 decay					= 0.95,
-		   			 center					= True,
-		   			 scale					= False,
-		   			 epsilon				= 0.001,
-		   			 activation_fn			= None,
-		   			 param_initializers		= None,
-		   			 param_regularizers		= None,
-		   			 updates_collections	= tf.GraphKeys.UPDATE_OPS,
-		   			 is_training			= True,
-		   			 reuse					= None,
-		   			 variables_collections	= "params",
-		   			 outputs_collections	= None,
-		   			 trainable				= True,
-		   			 batch_weights			= None,
-		   			 fused					= False,
-		   			 #data_format			= DATA_FORMAT_NHWC,
-		   			 zero_debias_moving_mean= False,
-		   			 scope					= None,
-		   			 renorm					= False,
-		   			 renorm_clipping		= None,
-		   			 renorm_decay			= 0.99)
-#		batch_mean, batch_var = tf.nn.moments(net, axes=[0, 1, 2])
-#
-#		trained_mean = tf.Variable(tf.zeros([output_channel]))
-#		trained_var = tf.Variable(tf.zeros([output_channel]))
-#		
-#		ema = tf.train.ExponentialMovingAverage(decay=0.95, zero_debias=False)
-#		
-#		def mean_var_with_update():
-#			ema_apply_op = ema.apply([batch_mean, batch_var])
-#			with tf.control_dependencies([ema_apply_op]):
-#				return tf.identity(batch_mean), tf.identity(batch_var)
-#			
-#		mean, var = tf.cond(is_testing,
-#						lambda: (
-#							trained_mean, 
-#							trained_var
-#								),
-#						lambda: (
-#							tf.cond(is_training,    
-#								mean_var_with_update,
-#								lambda:(
-#									ema.average(batch_mean), 
-#									ema.average(batch_var)
-#										)    
-#									)
-#								)
-#							)
-#		
-#		scale = tf.Variable(tf.ones([output_channel]))
-#		shift = tf.Variable(tf.ones([output_channel])*0.01)
-#				
-#		tf.add_to_collection("batch_mean", mean)
-#		tf.add_to_collection("batch_var", var)
-#		tf.add_to_collection("batch_scale", scale)
-#		tf.add_to_collection("batch_shift", shift)
-#		tf.add_to_collection("trained_mean", trained_mean)
-#		tf.add_to_collection("trained_var", trained_var)
-#		tf.add_to_collection("params", trained_mean)
-#		tf.add_to_collection("params", trained_var)
-#		tf.add_to_collection("params", scale)
-#		tf.add_to_collection("params", shift)
-#
-#		
-#		epsilon = 0.001
-#	return tf.nn.batch_normalization(net, mean, var, shift, scale, epsilon)
+		if IS_SAVER:
+			return tf.contrib.layers.batch_norm(
+			   			 inputs 				= net, 
+			   			 decay					= 0.95,
+			   			 center					= True,
+			   			 scale					= False,
+			   			 epsilon				= 0.001,
+			   			 activation_fn			= None,
+			   			 param_initializers		= None,
+			   			 param_regularizers		= None,
+			   			 updates_collections	= tf.GraphKeys.UPDATE_OPS,
+			   			 is_training			= True,
+			   			 reuse					= None,
+			   			 variables_collections	= "params",
+			   			 outputs_collections	= None,
+			   			 trainable				= True,
+			   			 batch_weights			= None,
+			   			 fused					= False,
+			   			 #data_format			= DATA_FORMAT_NHWC,
+			   			 zero_debias_moving_mean= False,
+			   			 scope					= None,
+			   			 renorm					= False,
+			   			 renorm_clipping		= None,
+			   			 renorm_decay			= 0.99)
+		else:
+			batch_mean, batch_var = tf.nn.moments(net, axes=[0, 1, 2])
+	
+			trained_mean = tf.Variable(tf.zeros([output_channel]))
+			trained_var = tf.Variable(tf.zeros([output_channel]))
+			
+			ema = tf.train.ExponentialMovingAverage(decay=0.95, zero_debias=False)
+			
+			def mean_var_with_update():
+				ema_apply_op = ema.apply([batch_mean, batch_var])
+				with tf.control_dependencies([ema_apply_op]):
+					return tf.identity(batch_mean), tf.identity(batch_var)
+				
+			mean, var = tf.cond(is_testing,
+							lambda: (
+								trained_mean, 
+								trained_var
+									),
+							lambda: (
+								tf.cond(is_training,    
+									mean_var_with_update,
+									lambda:(
+										ema.average(batch_mean), 
+										ema.average(batch_var)
+											)    
+										)
+									)
+								)
+			
+			scale = tf.Variable(tf.ones([output_channel]))
+			shift = tf.Variable(tf.ones([output_channel])*0.01)
+					
+			tf.add_to_collection("batch_mean", mean)
+			tf.add_to_collection("batch_var", var)
+			tf.add_to_collection("batch_scale", scale)
+			tf.add_to_collection("batch_shift", shift)
+			tf.add_to_collection("trained_mean", trained_mean)
+			tf.add_to_collection("trained_var", trained_var)
+			tf.add_to_collection("params", trained_mean)
+			tf.add_to_collection("params", trained_var)
+			tf.add_to_collection("params", scale)
+			tf.add_to_collection("params", shift)
+	
+			
+			epsilon = 0.001
+		return tf.nn.batch_normalization(net, mean, var, shift, scale, epsilon)
 	
 
 def softmax_with_weighted_cross_entropy(prediction, ys, class_weight):
