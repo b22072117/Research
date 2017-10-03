@@ -278,6 +278,14 @@ def Testing(
 		print("Saving the test Y_pre result as npz ... ")
 		Save_result_as_npz(test_Y_pre_path, Y_pre_test, CamVid_test_data_index)
 
+	# Save Result as .csv
+	accuracy_train = np.concatenate([[[train_accuracy]], [[train_accuracy_top2]], [[train_accuracy_top3]]], axis=1)
+	accuracy_valid = np.concatenate([[[valid_accuracy]], [[valid_accuracy_top2]], [[valid_accuracy_top3]]], axis=1)
+	accuracy_test  = np.concatenate([[[ test_accuracy]], [[ test_accuracy_top2]], [[ test_accuracy_top3]]], axis=1)
+	accuracy       = np.concatenate([accuracy_train, accuracy_valid, accuracy_test], axis=0)
+	Save_file_as_csv(TESTING_WEIGHT_FILE+'_accuracy' , accuracy)
+
+
 def Training_and_Validation( 
 		# Training & Validation Data
 		train_data				, 
@@ -929,6 +937,517 @@ def ternarize_biases(float32_biases, ternary_biases_bd):
 
 	return ternary_biases
 
+def shortcut_Module( net, kernel_size, stride, input_channel, internal_channel, output_channel, rate,
+			         initializer             ,
+			         is_constant_init        , 
+			         is_batch_norm	         ,
+			         is_training		     ,
+			         is_testing		         ,
+			         is_dilated		         ,
+			         is_depthwise		     ,
+			         is_ternary		         ,
+			         is_quantized_activation ,
+			         IS_TERNARY			     , 	
+			         IS_QUANTIZED_ACTIVATION ,
+			         IS_SAVER				 ,
+			         padding			     ):
+
+	with tf.variable_scope("shortcut"):
+		if input_channel!=output_channel:
+			# Variable define
+			weights, biases = conv2D_Variable(kernel_size       = 1,
+											  input_channel	    = input_channel,		 
+											  output_channel    = output_channel, 
+											  initializer       = initializer,
+											  is_constant_init  = is_constant_init,
+											  is_ternary        = is_ternary,
+											  IS_TERNARY		= IS_TERNARY,
+											  is_depthwise		= False)
+			# convolution
+			if is_dilated: 
+				shortcut = tf.nn.atrous_conv2d(net, weights, rate=rate, padding=padding)
+			else:
+				shortcut = tf.nn.conv2d(net, weights, strides=[1, 1, 1, 1], padding=padding)
+
+			# add bias
+			shortcut = tf.nn.bias_add(shortcut, biases)
+
+			# batch normalization
+			if is_batch_norm == True:
+				shortcut = batch_norm(shortcut, is_training, is_testing, IS_SAVER)
+			if is_depthwise:
+				shortcut = tf.nn.relu(shortcut)
+		else:
+			shortcut = net
+
+	return shortcut
+
+def SEP_Module(net, kernel_size, stride, input_channel, internal_channel, output_channel, rate,
+			   initializer             ,
+			   is_constant_init        ,
+			   is_batch_norm	       ,
+			   is_training		       ,
+			   is_testing		       ,
+			   is_dilated		       ,
+			   is_depthwise		       ,
+			   is_ternary		       ,
+			   is_quantized_activation ,
+			   IS_TERNARY			   ,		
+			   IS_QUANTIZED_ACTIVATION ,
+			   IS_SAVER			   	   ,
+			   padding			       ):
+
+	with tf.variable_scope("SEP_Module"):
+		with tf.variable_scope("Reduction"):
+			# Variable define
+			weights, biases = conv2D_Variable(kernel_size       = 1,
+										      input_channel	    = input_channel,
+										      output_channel    = internal_channel,
+										      initializer       = initializer,
+										      is_constant_init  = is_constant_init,
+										      is_ternary        = is_ternary,
+											  IS_TERNARY		= IS_TERNARY,
+											  is_depthwise		= False)
+
+			# convolution
+			if is_dilated:
+				net = tf.nn.atrous_conv2d(net, weights, rate=rate, padding="SAME")
+			else:
+				net = tf.nn.conv2d(net, weights, strides=[1, 1, 1, 1], padding="SAME")
+			
+			# add bias
+			net = tf.nn.bias_add(net, biases)
+			
+			# batch normalization
+			if is_batch_norm == True:
+				net = batch_norm(net, is_training, is_testing, IS_SAVER)
+				
+			net = tf.nn.relu(net)
+
+		with tf.variable_scope("PatternConv1"):
+			with tf.variable_scope("Pattern"):
+				# Variable define
+				weights, biases = conv2D_Variable(kernel_size      = kernel_size,
+												  input_channel	   = internal_channel,		
+												  output_channel   = internal_channel, 
+												  initializer      = initializer,
+												  is_constant_init = is_constant_init,
+												  is_ternary       = is_ternary,
+												  IS_TERNARY	   = IS_TERNARY,
+												  is_depthwise     = is_depthwise)
+												  
+				# convolution
+				if is_dilated:
+					if is_depthwise:
+						Pattern = depthwise_atrous_conv2d(net, weights, rate, padding=padding)	
+					else:
+						Pattern = tf.nn.atrous_conv2d(net, weights, rate=rate, padding=padding)
+				else:
+					if is_depthwise:
+						Pattern = tf.nn.depthwise_conv2d(net, weights, strides=[1, stride, stride, 1], padding=padding)	
+					else:
+						Pattern = tf.nn.conv2d(net, weights, strides=[1, stride, stride, 1], padding=padding)
+				
+				# add bias
+				Pattern = tf.nn.bias_add(Pattern, biases)
+
+				# batch normalization
+				if is_batch_norm == True:
+					Pattern = batch_norm(Pattern, is_training, is_testing, IS_SAVER)
+				#relu
+				Pattern = tf.nn.relu(Pattern)
+				
+				if IS_QUANTIZED_ACTIVATION:
+					quantized_net = quantize_activation(Pattern)
+					Pattern = tf.cond(is_quantized_activation, lambda: quantized_net, lambda: Pattern)
+					tf.add_to_collection("final_net", Pattern)
+
+				if is_depthwise:
+					Pattern = conv2D(Pattern, kernel_size=1, stride=1, internal_channel=internal_channel, output_channel=internal_channel, rate=rate,
+						   	         initializer=tf.contrib.layers.variance_scaling_initializer(),
+						   	  	     is_constant_init        = False,
+						   	  	     is_shortcut		     = False, 		
+						   	 	     is_bottleneck	         = False, 		
+									 is_residual			 = False,
+									 is_SEP					 = False,
+						   	 	     is_batch_norm	         = True,  		
+						   	 	     is_dilated		         = False, 		
+						   	 	     is_depthwise			 = False,		
+						   	 	     is_training		     = is_training,  		
+						   	 	     is_testing		         = is_testing, 
+						   	 	     is_ternary		         = is_ternary,		
+						   	 	     is_quantized_activation = is_quantized_activation,		
+						   	 	     IS_TERNARY			     = IS_TERNARY,		
+						   	 	     IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+						   	 	     IS_SAVER				 = IS_SAVER,
+						   	 	     padding			     = padding,
+						   	 	     scope			         = "depthwise_conv1x1")
+
+			with tf.variable_scope("Pattern_Residual"):
+				# Variable define
+				weights, biases = conv2D_Variable(kernel_size       = 1,
+											      input_channel	    = internal_channel,		 
+											      output_channel    = internal_channel, 
+											      initializer       = initializer,
+											      is_constant_init  = is_constant_init,
+											      is_ternary        = is_ternary,
+												  IS_TERNARY		= IS_TERNARY,
+												  is_depthwise		= False)
+
+				# convolution
+				if is_dilated:
+					Pattern_Residual = tf.nn.atrous_conv2d(net, weights, rate=rate, padding="SAME")
+				else:
+					Pattern_Residual = tf.nn.conv2d(net, weights, strides=[1, 1, 1, 1], padding="SAME")
+				
+				# add bias
+				Pattern_Residual = tf.nn.bias_add(Pattern_Residual, biases)
+				
+				# batch normalization
+				if is_batch_norm == True:
+					Pattern_Residual = batch_norm(Pattern_Residual, is_training, is_testing, IS_SAVER)
+					
+				Pattern_Residual = tf.nn.relu(Pattern_Residual)
+
+		# Adding Pattern and Pattern Residual
+		net = tf.add(Pattern, Pattern_Residual)
+
+		with tf.variable_scope("PatternConv2"):
+			with tf.variable_scope("Pattern"):
+				# Variable define
+				weights, biases = conv2D_Variable(kernel_size      = kernel_size,
+												  input_channel	   = internal_channel,		
+												  output_channel   = internal_channel/2, 
+												  initializer      = initializer,
+												  is_constant_init = is_constant_init,
+												  is_ternary       = is_ternary,
+												  IS_TERNARY	   = IS_TERNARY,
+												  is_depthwise     = is_depthwise)
+												  
+				# convolution
+				if is_dilated:
+					if is_depthwise:
+						Pattern = depthwise_atrous_conv2d(net, weights, rate, padding=padding)	
+					else:
+						Pattern = tf.nn.atrous_conv2d(net, weights, rate=rate, padding=padding)
+				else:
+					if is_depthwise:
+						Pattern = tf.nn.depthwise_conv2d(net, weights, strides=[1, 1, 1, 1], padding=padding)	
+					else:
+						Pattern = tf.nn.conv2d(net, weights, strides=[1, 1, 1, 1], padding=padding)
+				
+				# add bias
+				Pattern = tf.nn.bias_add(Pattern, biases)
+
+				# batch normalization
+				if is_batch_norm == True:
+					Pattern = batch_norm(Pattern, is_training, is_testing, IS_SAVER)
+				#relu
+				Pattern = tf.nn.relu(Pattern)
+				
+				if IS_QUANTIZED_ACTIVATION:
+					quantized_net = quantize_activation(Pattern)
+					Pattern = tf.cond(is_quantized_activation, lambda: quantized_net, lambda: Pattern)
+					tf.add_to_collection("final_net", Pattern)
+
+				if is_depthwise:
+					Pattern =  conv2D(Pattern, kernel_size=1, stride=1, internal_channel=internal_channel, output_channel=internal_channel/2, rate=rate,
+						   	      	  initializer=tf.contrib.layers.variance_scaling_initializer(),
+						   	  	  	  is_constant_init        = False,
+						   	  	  	  is_shortcut		      = False, 		
+						   	 	  	  is_bottleneck	          = False, 		
+									  is_residual			  = False,
+									  is_SEP			      = False,
+						   	 	  	  is_batch_norm	          = True,  		
+						   	 	  	  is_dilated		      = False, 		
+						   	 	  	  is_depthwise			  = False,		
+						   	 	  	  is_training		      = is_training,  		
+						   	 	  	  is_testing		      = is_testing, 
+						   	 	  	  is_ternary		      = is_ternary,		
+						   	 	  	  is_quantized_activation = is_quantized_activation,		
+						   	 	  	  IS_TERNARY			  = IS_TERNARY,		
+						   	 	  	  IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+						   	 	  	  IS_SAVER				  = IS_SAVER,
+						   	 	  	  padding			      = padding,
+						   	 	  	  scope			          = "depthwise_conv1x1")
+
+			with tf.variable_scope("Pattern_Residual"):
+				# Variable define
+				weights, biases = conv2D_Variable(kernel_size       = 1,
+											      input_channel	    = internal_channel,		 
+											      output_channel    = internal_channel/2, 
+											      initializer       = initializer,
+											      is_constant_init  = is_constant_init,
+											      is_ternary        = is_ternary,
+												  IS_TERNARY		= IS_TERNARY,
+												  is_depthwise		= False)
+
+				# convolution
+				if is_dilated:
+					Pattern_Residual = tf.nn.atrous_conv2d(net, weights, rate=rate, padding="SAME")
+				else:
+					Pattern_Residual = tf.nn.conv2d(net, weights, strides=[1, 1, 1, 1], padding="SAME")
+				
+				# add bias
+				Pattern_Residual = tf.nn.bias_add(Pattern_Residual, biases)
+				
+				# batch normalization
+				if is_batch_norm == True:
+					Pattern_Residual = batch_norm(Pattern_Residual, is_training, is_testing, IS_SAVER)
+					
+				Pattern_Residual = tf.nn.relu(Pattern_Residual)
+
+		# Adding Pattern and Pattern Residual
+		net = tf.add(Pattern, Pattern_Residual)
+
+		with tf.variable_scope("Recovery"):
+			# Variable define
+			weights, biases = conv2D_Variable(kernel_size       = 1,
+										      input_channel	    = internal_channel/2,
+										      output_channel    = output_channel,
+										      initializer       = initializer,
+										      is_constant_init  = is_constant_init,
+										      is_ternary        = is_ternary,
+											  IS_TERNARY		= IS_TERNARY,
+											  is_depthwise		= False)
+
+			# convolution
+			if is_dilated:
+				net = tf.nn.atrous_conv2d(net, weights, rate=rate, padding="SAME")
+			else:
+				net = tf.nn.conv2d(net, weights, strides=[1, 1, 1, 1], padding="SAME")
+			
+			# add bias
+			net = tf.nn.bias_add(net, biases)
+			
+			# batch normalization
+			if is_batch_norm == True:
+				net = batch_norm(net, is_training, is_testing, IS_SAVER)
+			# relu	
+			net = tf.nn.relu(net)
+
+	return net	
+
+
+def Residual_Block( net, kernel_size, stride, input_channel, internal_channel, output_channel, rate,
+					initializer             ,
+					is_constant_init        , 
+					is_bottleneck	        , 
+					is_batch_norm	        , 
+					is_training		        , 
+					is_testing		        , 
+					is_dilated		        , 
+					is_depthwise		    , 
+					is_ternary		        , 
+					is_quantized_activation , 
+					IS_TERNARY			    ,  	
+					IS_QUANTIZED_ACTIVATION , 
+					IS_SAVER			    , 
+					padding			        ): 
+
+	#===============================#
+	#	Bottleneck Residual Block	#
+	#===============================#
+	if is_bottleneck: 
+		with tf.variable_scope("bottle_neck"):
+			with tf.variable_scope("conv1_1x1"):
+				# Variable define
+				weights, biases = conv2D_Variable(kernel_size       = 1,
+											      input_channel	    = input_channel,		 
+											      output_channel    = internal_channel, 
+											      initializer       = initializer,
+											      is_constant_init  = is_constant_init,
+											      is_ternary        = is_ternary,
+												  IS_TERNARY		= IS_TERNARY,
+												  is_depthwise		= False)
+
+				# convolution
+				if is_dilated:
+					net = tf.nn.atrous_conv2d(net, weights, rate=rate, padding="SAME")
+				else:
+					net = tf.nn.conv2d(net, weights, strides=[1, 1, 1, 1], padding="SAME")
+				
+				# add bias
+				net = tf.nn.bias_add(net, biases)
+				
+				# batch normalization
+				if is_batch_norm == True:
+					net = batch_norm(net, is_training, is_testing, IS_SAVER)
+					
+				net = tf.nn.relu(net)
+
+			with tf.variable_scope("conv2_3x3"):
+				# Variable define
+				weights, biases = conv2D_Variable(kernel_size       = 3,
+											      input_channel	    = internal_channel,		 
+											      output_channel    = internal_channel, 
+											      initializer       = initializer,
+											      is_constant_init  = is_constant_init,
+											      is_ternary        = is_ternary,
+												  IS_TERNARY		= IS_TERNARY,
+												  is_depthwise		= is_depthwise)					
+
+				# convolution
+				if is_dilated:
+					if is_depthwise:
+						net = depthwise_atrous_conv2d(net, weights, rate, padding=padding)	
+					else:
+						net = tf.nn.atrous_conv2d(net, weights, rate=rate, padding=padding)
+				else:
+					if is_depthwise:
+						net = tf.nn.depthwise_conv2d(net, weights, strides=[1, stride, stride, 1], padding=padding)	
+					else:
+						net = tf.nn.conv2d(net, weights, strides=[1, stride, stride, 1], padding=padding)
+
+				# add bias
+				net = tf.nn.bias_add(net, biases)
+				
+				# batch normalization
+				if is_batch_norm == True:
+					net = batch_norm(net, is_training, is_testing, IS_SAVER)
+				# relu
+
+				net = tf.nn.relu(net)
+			with tf.variable_scope("conv3_1x1"):
+				# Variable define
+				weights, biases = conv2D_Variable(kernel_size       = 1,
+											      input_channel	    = internal_channel,		 
+											      output_channel    = output_channel, 
+											      initializer       = initializer,
+											      is_constant_init  = is_constant_init,
+											      is_ternary        = is_ternary,
+												  IS_TERNARY		= IS_TERNARY,
+												  is_depthwise		= False)
+
+				# convolution
+				if is_dilated:
+					net = tf.nn.atrous_conv2d(net, weights, rate=rate, padding="SAME")
+				else:
+					net = tf.nn.conv2d(net, weights, strides=[1, 1, 1, 1], padding="SAME")
+				
+				# add bias
+				net = tf.nn.bias_add(net, biases)
+				
+				# batch normalization
+				if is_batch_norm == True:
+					net = batch_norm(net, is_training, is_testing, IS_SAVER)
+				
+				# relu
+				if is_depthwise:
+					net = tf.nn.relu(net)
+
+	#===========================#
+	#	Normal Residual Block	#
+	#===========================#
+	else: 
+		with tf.variable_scope("conv1_3x3"):
+			# Variable define
+			weights, biases = conv2D_Variable(kernel_size       = 3,
+											  input_channel	    = input_channel,		 
+											  output_channel    = internal_channel, 
+											  initializer       = initializer,
+											  is_constant_init  = is_constant_init,
+											  is_ternary        = is_ternary,
+											  IS_TERNARY		= IS_TERNARY,
+											  is_depthwise		= is_depthwise)
+											  
+			# convolution
+			if is_dilated:
+				if is_depthwise:
+					net = depthwise_atrous_conv2d(net, weights, rate, padding=padding)	
+				else:
+					net = tf.nn.atrous_conv2d(net, weights, rate=rate, padding=padding)
+			else:
+				if is_depthwise:
+					net = tf.nn.depthwise_conv2d(net, weights, strides=[1, stride, stride, 1], padding=padding)	
+				else:
+					net = tf.nn.conv2d(net, weights, strides=[1, stride, stride, 1], padding=padding)
+
+			# add bias
+			net = tf.nn.bias_add(net, biases)
+			
+			# batch normalization
+			if is_batch_norm == True:
+				net = batch_norm(net, is_training, is_testing, IS_SAVER)
+				
+			net = tf.nn.relu(net)
+
+			if is_depthwise:
+				net =  conv2D(net, kernel_size=1, stride=1, internal_channel=input_channel, output_channel=internal_channel, rate=rate,
+					   	      initializer=tf.contrib.layers.variance_scaling_initializer(),
+					   	  	  is_constant_init        = False,
+					   	  	  is_shortcut		      = False, 		
+					   	 	  is_bottleneck	          = False, 		
+							  is_residual			  = False,
+							  is_SEP			      = False,
+					   	 	  is_batch_norm	          = True,  		
+					   	 	  is_dilated		      = False, 		
+					   	 	  is_depthwise			  = False,		
+					   	 	  is_training		      = is_training,  		
+					   	 	  is_testing		      = is_testing, 
+					   	 	  is_ternary		      = is_ternary,		
+					   	 	  is_quantized_activation = is_quantized_activation,		
+					   	 	  IS_TERNARY			  = IS_TERNARY,		
+					   	 	  IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+					   	 	  IS_SAVER				  = IS_SAVER,
+					   	 	  padding			      = padding,
+					   	 	  scope			          = "depthwise_conv1x1")
+
+		with tf.variable_scope("conv2_3x3"):
+			# Variable define
+			weights, biases = conv2D_Variable(kernel_size       = 3,
+											  input_channel	    = internal_channel,		 
+											  output_channel    = output_channel, 
+											  initializer       = initializer,
+											  is_constant_init  = is_constant_init,
+											  is_ternary        = is_ternary,
+											  IS_TERNARY		= IS_TERNARY,
+											  is_depthwise		= is_depthwise)
+			
+			# convolution
+			if is_dilated:
+				if is_depthwise:
+					net = depthwise_atrous_conv2d(net, weights, rate, padding=padding)	
+				else:
+					net = tf.nn.atrous_conv2d(net, weights, rate=rate, padding=padding)
+			else:
+				if is_depthwise:
+					net = tf.nn.depthwise_conv2d(net, weights, strides=[1, 1, 1, 1], padding=padding)	
+				else:
+					net = tf.nn.conv2d(net, weights, strides=[1, 1, 1, 1], padding=padding)
+
+			# add bias
+			net = tf.nn.bias_add(net, biases)
+			
+			# batch normalization
+			if is_batch_norm == True:
+				net = batch_norm(net, is_training, is_testing, IS_SAVER)
+				
+
+			if is_depthwise:
+				# relu
+				net = tf.nn.relu(net)
+
+				net =  conv2D(net, kernel_size=1, stride=1, internal_channel=internal_channel, output_channel=output_channel, rate=rate,
+					   	      initializer=tf.contrib.layers.variance_scaling_initializer(),
+					   	  	  is_constant_init        = False,
+					   	  	  is_shortcut		      = False, 		
+					   	 	  is_bottleneck	          = False, 		
+							  is_residual			  = False,
+							  is_SEP			      = False,
+					   	 	  is_batch_norm	          = True,  		
+					   	 	  is_dilated		      = False, 		
+					   	 	  is_depthwise			  = False,		
+					   	 	  is_training		      = is_training,  		
+					   	 	  is_testing		      = is_testing, 
+					   	 	  is_ternary		      = is_ternary,		
+					   	 	  is_quantized_activation = is_quantized_activation,		
+					   	 	  IS_TERNARY			  = IS_TERNARY,		
+					   	 	  IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+					   	 	  IS_SAVER				  = IS_SAVER,
+					   	 	  padding			      = padding,
+					   	 	  scope			          = "depthwise_conv1x1")
+	return net
 
 def conv2D_Variable(kernel_size,
 					input_channel,
@@ -997,14 +1516,16 @@ def conv2D_Variable(kernel_size,
 def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64, rate=1,
 			initializer=tf.contrib.layers.variance_scaling_initializer(),
 			is_constant_init        = False, 		# For using constant value as weight initial; Only valid in Normal Convolution
-			is_shortcut		        = False, 		# For Residual
+			is_shortcut		        = False, 		# For Residual, SEP
 			is_bottleneck	        = False, 		# For Residual
+			is_residual				= False,		# For Residual
+			is_SEP					= False,		# For SEP-Net
 			is_batch_norm	        = True,  		# For Batch Normalization
-			is_training		        = True,  		# (tensor) For Batch Normalization
-			is_testing		        = False, 		# (tensor) For getting the pretrained from caffemodel
 			is_dilated		        = False, 		# For Dilated Convoution
 			is_depthwise			= False,		# For Depthwise Convolution
 			is_ternary		        = False,		# (tensor) For weight ternarization
+			is_training		        = True,  		# (tensor) For Batch Normalization
+			is_testing		        = False, 		# (tensor) For getting the pretrained from caffemodel
 			is_quantized_activation = False,		# (tensor) For activation quantization
 			IS_TERNARY				= False,		
 			IS_QUANTIZED_ACTIVATION = False,
@@ -1014,172 +1535,78 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 		
 	with tf.variable_scope(scope):
 		input_channel = net.get_shape()[-1]
+			
+		#====================#
+		#   SEP-Net Module   #
+		#====================#	
+		if is_SEP:
+			net_SEP = SEP_Module(net, kernel_size, stride, input_channel, internal_channel, output_channel, rate,
+						         initializer             ,
+						         is_constant_init        ,
+						         is_batch_norm	         ,
+						         is_training		     ,
+						         is_testing		         ,
+						         is_dilated		         ,
+						         is_depthwise		     ,
+						         is_ternary		         ,
+						         is_quantized_activation ,
+						         IS_TERNARY			     ,		
+						         IS_QUANTIZED_ACTIVATION ,
+						         IS_SAVER			   	 ,
+						         padding			     )
 		
+		#===============================#
+		#	Bottleneck Residual Block	#
+		#===============================#
+		if is_residual:
+			net_Res = Residual_Block( net, kernel_size, stride, input_channel, internal_channel, output_channel, rate,
+							          initializer             ,
+							          is_constant_init        , 
+							          is_bottleneck	          , 
+							          is_batch_norm	          , 
+							          is_training		      , 
+							          is_testing		      , 
+							          is_dilated		      , 
+							          is_depthwise		      , 
+							          is_ternary		      , 
+							          is_quantized_activation , 
+							          IS_TERNARY			  ,  	
+							          IS_QUANTIZED_ACTIVATION , 
+							          IS_SAVER			      , 
+							          padding			      ) 
 		#===================#
-		#	Resdual Block	#
+		#	Shortcut Block	#
 		#===================#
 		if is_shortcut:
-			with tf.variable_scope("shortcut"):
-				if input_channel!=output_channel:
-					# Variable define
-					weights, biases = conv2D_Variable(kernel_size       = 1,
-													  input_channel	    = input_channel,		 
-													  output_channel    = output_channel, 
-													  initializer       = initializer,
-													  is_constant_init  = is_constant_init,
-													  is_ternary        = is_ternary,
-													  IS_TERNARY		= IS_TERNARY)
-					# convolution
-					if is_dilated: 
-						shortcut = tf.nn.atrous_conv2d(net, weights, rate=rate, padding="SAME")
-					else:
-						shortcut = tf.nn.conv2d(net, weights, strides=[1, stride, stride, 1], padding="SAME")
+			shortcut =  shortcut_Module( net, kernel_size, stride, input_channel, internal_channel, output_channel, rate,
+						  		         initializer             ,
+						  		         is_constant_init        , 
+						  		         is_batch_norm	         ,
+						  		         is_training		     ,
+						  		         is_testing		         ,
+						  		         is_dilated		         ,
+						  		         is_depthwise			 ,
+						  		         is_ternary		         ,
+						  		         is_quantized_activation ,
+						  		         IS_TERNARY			     , 	
+						  		         IS_QUANTIZED_ACTIVATION ,
+						  		         IS_SAVER				 ,
+						  		         padding			     )
+			if is_SEP:
+				net = net_SEP
+			else:
+				if is_residual:
+					net = net_Res
 
-					# add bias
-					shortcut = tf.nn.bias_add(shortcut, biases)
+			# adding shortcut
+			if is_depthwise:
+				net = tf.add(net, shortcut)
+			else:
+				net = tf.nn.relu(tf.add(net, shortcut))
 
-					# batch normalization
-					if is_batch_norm == True:
-						shortcut = batch_norm(shortcut, output_channel, is_training, is_testing, IS_SAVER)
-				else:
-					shortcut = net	
-
-			#-------------------------------#
-			#	Bottleneck Residual Block	#
-			#-------------------------------#
-			if is_bottleneck: 
-				with tf.variable_scope("bottle_neck"):
-					with tf.variable_scope("conv1_1x1"):
-						# Variable define
-						weights, biases = conv2D_Variable(kernel_size       = 1,
-													      input_channel	    = input_channel,		 
-													      output_channel    = internal_channel, 
-													      initializer       = initializer,
-													      is_constant_init  = is_constant_init,
-													      is_ternary        = is_ternary,
-														  IS_TERNARY		= IS_TERNARY)
-
-						# convolution
-						if is_dilated:
-							net = tf.nn.atrous_conv2d(net, weights, rate=rate, padding="SAME")
-						else:
-							net = tf.nn.conv2d(net, weights, strides=[1, stride, stride, 1], padding="SAME")
-						
-						# add bias
-						net = tf.nn.bias_add(net, biases)
-						
-						# batch normalization
-						if is_batch_norm == True:
-							net = batch_norm(net, internal_channel, is_training, is_testing, IS_SAVER)
-							
-						net = tf.nn.relu(net)
-
-					with tf.variable_scope("conv2_3x3"):
-						# Variable define
-						weights, biases = conv2D_Variable(kernel_size       = 3,
-													      input_channel	    = internal_channel,		 
-													      output_channel    = internal_channel, 
-													      initializer       = initializer,
-													      is_constant_init  = is_constant_init,
-													      is_ternary        = is_ternary,
-														  IS_TERNARY		= IS_TERNARY)					
-
-						# convolution
-						if is_dilated:
-							net = tf.nn.atrous_conv2d(net, weights, rate=rate, padding="SAME")
-						else:
-							net = tf.nn.conv2d(net, weights, strides=[1, 1, 1, 1], padding="SAME")
-						
-						# add bias
-						net = tf.nn.bias_add(net, biases)
-						
-						# batch normalization
-						if is_batch_norm == True:
-							net = batch_norm(net, internal_channel, is_training, is_testing, IS_SAVER)
-							
-						net = tf.nn.relu(net)
-					with tf.variable_scope("conv3_1x1"):
-						# Variable define
-						weights, biases = conv2D_Variable(kernel_size       = 1,
-													      input_channel	    = internal_channel,		 
-													      output_channel    = output_channel, 
-													      initializer       = initializer,
-													      is_constant_init  = is_constant_init,
-													      is_ternary        = is_ternary,
-														  IS_TERNARY		= IS_TERNARY)
-
-						# convolution
-						if is_dilated:
-							net = tf.nn.atrous_conv2d(net, weights, rate=rate, padding="SAME")
-						else:
-							net = tf.nn.conv2d(net, weights, strides=[1, 1, 1, 1], padding="SAME")
-						
-						# add bias
-						net = tf.nn.bias_add(net, biases)
-						
-						# batch normalization
-						if is_batch_norm == True:
-							net = batch_norm(net, output_channel, is_training, is_testing, IS_SAVER)
-							
-					net = tf.nn.relu(net + shortcut)
-
-			#---------------------------#
-			#	Normal Residual Block	#
-			#---------------------------#
-			else: 
-				with tf.variable_scope("conv1_3x3"):
-					# Variable define
-					weights, biases = conv2D_Variable(kernel_size       = 3,
-													  input_channel	    = input_channel,		 
-													  output_channel    = internal_channel, 
-													  initializer       = initializer,
-													  is_constant_init  = is_constant_init,
-													  is_ternary        = is_ternary,
-													  IS_TERNARY		= IS_TERNARY)
-													  
-					# convolution
-					if is_dilated:
-						net = tf.nn.atrous_conv2d(net, weights, rate=rate, padding="SAME")
-					else:
-						net = tf.nn.conv2d(net, weights, strides=[1, stride, stride, 1], padding="SAME")
-					
-					# add bias
-					net = tf.nn.bias_add(net, biases)
-					
-					# batch normalization
-					if is_batch_norm == True:
-						net = batch_norm(net, internal_channel, is_training, is_testing, IS_SAVER)
-						
-					net = tf.nn.relu(net)
-
-				with tf.variable_scope("conv2_3x3"):
-					# Variable define
-					weights, biases = conv2D_Variable(kernel_size       = 3,
-													  input_channel	    = internal_channel,		 
-													  output_channel    = output_channel, 
-													  initializer       = initializer,
-													  is_constant_init  = is_constant_init,
-													  is_ternary        = is_ternary,
-													  IS_TERNARY		= IS_TERNARY)
-					
-					# convolution
-					if is_dilated:
-						net = tf.nn.atrous_conv2d(net, weights, rate=rate, padding="SAME")
-					else:
-						net = tf.nn.conv2d(net, weights, strides=[1, 1, 1, 1], padding="SAME")
-					
-					# add bias
-					net = tf.nn.bias_add(net, biases)
-					
-					# batch normalization
-					if is_batch_norm == True:
-						net = batch_norm(net, internal_channel, is_training, is_testing, IS_SAVER)
-				#relu
-				net = tf.nn.relu(net + shortcut)
-
-		#==============================#
-		#	Normal Convolution Block   #
-		#==============================#
+		#===========================================#
+		#	Normal Convolution Block (No Shortcut)  #
+		#===========================================#
 		else:  
 			# Variable define
 			weights, biases = conv2D_Variable(kernel_size      = kernel_size,
@@ -1194,7 +1621,7 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 			# convolution
 			if is_dilated:
 				if is_depthwise:
-					net = depthwise_atrous_conv2d(net, weights, rate, padding)	
+					net = depthwise_atrous_conv2d(net, weights, rate, padding=padding)	
 				else:
 					net = tf.nn.atrous_conv2d(net, weights, rate=rate, padding=padding)
 			else:
@@ -1208,7 +1635,7 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 
 			# batch normalization
 			if is_batch_norm == True:
-				net = batch_norm(net, output_channel, is_training, is_testing, IS_SAVER)
+				net = batch_norm(net, is_training, is_testing, IS_SAVER)
 			#relu
 			net = tf.nn.relu(net)
 			
@@ -1218,23 +1645,25 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 				tf.add_to_collection("final_net", net)
 
 			if is_depthwise:
-				net =  conv2D(net, kernel_size=1, stride=1, internal_channel=internal_channel, output_channel=output_channel, rate=rate,
+				net =  conv2D(net, kernel_size=1, stride=1, internal_channel=input_channel, output_channel=output_channel, rate=rate,
 					   	      initializer=tf.contrib.layers.variance_scaling_initializer(),
 					   	  	  is_constant_init        = False,
 					   	  	  is_shortcut		      = False, 		
 					   	 	  is_bottleneck	          = False, 		
+							  is_residual			  = False,
+							  is_SEP				  = False,
 					   	 	  is_batch_norm	          = True,  		
-					   	 	  is_training		      = is_training,  		
-					   	 	  is_testing		      = is_testing, 
 					   	 	  is_dilated		      = False, 		
 					   	 	  is_depthwise			  = False,		
+					   	 	  is_training		      = is_training,  		
+					   	 	  is_testing		      = is_testing, 
 					   	 	  is_ternary		      = is_ternary,		
 					   	 	  is_quantized_activation = is_quantized_activation,		
 					   	 	  IS_TERNARY			  = IS_TERNARY,		
 					   	 	  IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
-					   	 	  IS_SAVER				  = True,
-					   	 	  padding			      = "SAME",
-					   	 	  scope			          = "depth_conv1x1")
+					   	 	  IS_SAVER				  = IS_SAVER,
+					   	 	  padding			      = padding,
+					   	 	  scope			          = "depthwise_conv1x1")
 	return net
 
 
@@ -1295,7 +1724,7 @@ def indice_unpool(net, stride, output_shape, indices, scope="unPool"):
 		net = tf.scatter_nd(indices, values, output_shape)
 		return net
 				
-def batch_norm(net, output_channel, is_training, is_testing, IS_SAVER):
+def batch_norm(net, is_training, is_testing, IS_SAVER):
 	with tf.variable_scope("Batch_Norm"):
 		if IS_SAVER:
 			return tf.contrib.layers.batch_norm(
@@ -1323,7 +1752,8 @@ def batch_norm(net, output_channel, is_training, is_testing, IS_SAVER):
 			   			 renorm_decay			= 0.99)
 		else:
 			batch_mean, batch_var = tf.nn.moments(net, axes=[0, 1, 2])
-	
+			output_channel = net.get_shape().as_list()
+
 			trained_mean = tf.Variable(tf.zeros([output_channel]))
 			trained_var = tf.Variable(tf.zeros([output_channel]))
 			

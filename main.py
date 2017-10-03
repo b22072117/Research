@@ -127,6 +127,7 @@ def main(argv=None):
 	#===========#
 	net = xImage
 	#prediction = SegNet_VGG_10_dilated(net, class_num, is_training, is_testing)
+	
 	prediction = Model.SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION)
 	#prediction = tf.nn.softmax(net)
 	
