@@ -19,10 +19,13 @@ def CamVid_data_parser(
 	# Path
 	CamVid_Path, # CamVid_Path = '/"Path_to_CamVid"/CamVid'
 	Y_pre_Path , # Y_pre_Path  = '/"Path_to_Y_pre_Path"/PSPNet_Y_pre'
+	
+	# Variable
+	layer=None,		# Choose the needed layer 
 
 	# Parameter
-	IS_STUDENT,
-	IS_TRAINING
+	IS_STUDENT=False,
+	IS_TRAINING=False
 	):
 	
 	#-------------------#
@@ -37,7 +40,7 @@ def CamVid_data_parser(
 	# Teacher Model Prediction Output
 	if IS_TRAINING and IS_STUDENT:	
 		Y_pre_train_data = CamVid_train_data
-		Y_pre_train_target, Y_pre_train_data_index = read_Y_pre_file(Y_pre_Path, '/train.txt')
+		Y_pre_train_target, Y_pre_train_data_index = read_Y_pre_file(Y_pre_Path, '/train.txt', layer)
 	else:
 		Y_pre_train_data       = None
 		Y_pre_train_target     = None
@@ -61,7 +64,7 @@ def CamVid_data_parser(
 	# Teacher Model Prediction Output
 	if IS_TRAINING and IS_STUDENT:	
 		Y_pre_valid_data = CamVid_valid_data
-		Y_pre_valid_target, Y_pre_valid_data_index = read_Y_pre_file(Y_pre_Path, '/val.txt')
+		Y_pre_valid_target, Y_pre_valid_data_index = read_Y_pre_file(Y_pre_Path, '/val.txt', layer)
 	else:
 		Y_pre_valid_data       = None
 		Y_pre_valid_target     = None
@@ -83,7 +86,7 @@ def CamVid_data_parser(
 	# Teacher Model Prediction Output
 	if IS_TRAINING and IS_STUDENT:	
 		Y_pre_test_data = CamVid_test_data
-		Y_pre_test_target, Y_pre_test_data_index = read_Y_pre_file(Y_pre_Path, '/test.txt')
+		Y_pre_test_target, Y_pre_test_data_index = read_Y_pre_file(Y_pre_Path, '/test.txt', layer)
 	else:
 		Y_pre_test_data       = None
 		Y_pre_test_target     = None
@@ -139,9 +142,11 @@ def Testing(
 	BATCH_SIZE					,
 	IS_SAVING_RESULT_AS_IMAGE	,
 	IS_SAVING_RESULT_AS_NPZ		,
+	IS_SAVING_PARTIAL_RESULT	,
 	IS_TRAINING					,
 	IS_TERNARY					,
 	IS_QUANTIZED_ACTIVATION		,
+	
 	
 	# Tensor	
 	prediction					,
@@ -167,19 +172,22 @@ def Testing(
 	valid_Y_pre_path  			= None,
 	test_target_path 			= None,
 	test_Y_pre_path  			= None,
-		
+
+	# Collection 
+	partial_output_collection	= None,
+
 	# Session
 	sess						= None):
 	
 	is_validation = False
-# Load trained weights and save all the results of the wanted image
-	if IS_TRAINING == False:
-		print("")
-		print("Loading the trained weights ... ")
-		if parameters==None:
-			save_path = saver.restore(sess, TESTING_WEIGHT_FILE + ".ckpt")
-		else:
-			load_pre_trained_weights(parameters, pre_trained_weight_file=TESTING_WEIGHT_FILE, sess=sess) 
+
+	# Load trained weights
+	print("")
+	print("Loading the trained weights ... ")
+	if parameters==None:
+		save_path = saver.restore(sess, TESTING_WEIGHT_FILE + ".ckpt")
+	else:
+		load_pre_trained_weights(parameters, pre_trained_weight_file=TESTING_WEIGHT_FILE, sess=sess) 
 	
 	#***********#
 	#	TRAIN	#
@@ -271,12 +279,51 @@ def Testing(
 
 	# Saving Result as NPZ File
 	if IS_SAVING_RESULT_AS_NPZ:
-		print("Saving the valid Y_pre result as npz ... ")
-		Save_result_as_npz (valid_Y_pre_path, Y_pre_valid, CamVid_valid_data_index)
 		print("Saving the train Y_pre result as npz ... ")
-		Save_result_as_npz(train_Y_pre_path, Y_pre_train, CamVid_train_data_index)
+		Save_result_as_npz(	train_Y_pre_path, Y_pre_train, train_data_index,
+							IS_SAVING_PARTIAL_RESULT,
+							partial_output_collection, 
+							# tensor
+							xs						= xs,
+							is_training				= is_training, 
+							is_testing				= is_testing,              
+							is_quantized_activation	= is_quantized_activation,
+							# data
+							v_xs					= train_data,
+							# Parameter
+							QUANTIZED_NOW 			= IS_QUANTIZED_ACTIVATION,
+							sess					= sess)
+		#Save_result_as_npz(train_Y_pre_path, Y_pre_train, CamVid_train_data_index, IS_SAVING_PARTIAL_RESULT)
+		print("Saving the valid Y_pre result as npz ... ")
+		Save_result_as_npz(	valid_Y_pre_path, Y_pre_valid, valid_data_index,
+							IS_SAVING_PARTIAL_RESULT, 
+							partial_output_collection, 
+							# tensor
+							xs						= xs,
+							is_training				= is_training, 
+							is_testing				= is_testing,              
+							is_quantized_activation	= is_quantized_activation,
+							# data
+							v_xs					= valid_data,
+							# Parameter
+							QUANTIZED_NOW 			= IS_QUANTIZED_ACTIVATION,
+							sess					= sess)
+		#Save_result_as_npz(valid_Y_pre_path, Y_pre_valid, CamVid_valid_data_index, IS_SAVING_PARTIAL_RESULT)
 		print("Saving the test Y_pre result as npz ... ")
-		Save_result_as_npz(test_Y_pre_path, Y_pre_test, CamVid_test_data_index)
+		Save_result_as_npz(	test_Y_pre_path, Y_pre_test, test_data_index,
+							IS_SAVING_PARTIAL_RESULT, 
+							partial_output_collection, 
+							# tensor
+							xs						= xs,
+							is_training				= is_training, 
+							is_testing				= is_testing,              
+							is_quantized_activation	= is_quantized_activation,
+							# data
+							v_xs					= test_data,
+							# Parameter
+							QUANTIZED_NOW 			= IS_QUANTIZED_ACTIVATION,
+							sess					= sess)
+		#Save_result_as_npz(test_Y_pre_path, Y_pre_test, CamVid_test_data_index, IS_SAVING_PARTIAL_RESULT)
 
 	# Save Result as .csv
 	accuracy_train = np.concatenate([[[train_accuracy]], [[train_accuracy_top2]], [[train_accuracy_top3]]], axis=1)
@@ -663,10 +710,39 @@ def Save_result_as_image(Path, result, file_index):
 	for i, target in enumerate(result):
 		scipy.misc.imsave(Path + file_index[i], target)
 	
-def Save_result_as_npz(Path, result, file_index):
-	for i, target in enumerate(result):
-		file_index[i] = file_index[i].split('.')[0]
-		np.savez(Path + file_index[i], target)
+def Save_result_as_npz(	Path, result, file_index,
+						#--------------------------#
+						# Saving Each Layer Result #
+						#--------------------------#
+						IS_SAVING_PARTIAL_RESULT, 
+						partial_output_collection, 
+						# tensor
+						xs,
+						is_training,
+						is_testing,              
+						is_quantized_activation,
+						# data
+						v_xs,
+						# Parameter
+						QUANTIZED_NOW,
+						sess,
+						last_x_layer = 5
+						):
+
+	if IS_SAVING_PARTIAL_RESULT:
+		for last_layer in range(last_x_layer):
+			layer_now = np.shape(partial_output_collection)[0]-1-last_layer
+			partial_output = partial_output_collection[layer_now]
+			for i in range(np.shape(v_xs)[0]):
+				file_index[i] = file_index[i].split('.')[0]
+				v_xs_part = np.expand_dims(v_xs[i], axis=0)
+	   			target = sess.run(partial_output, feed_dict={xs: v_xs_part, is_training: False, is_testing: True, is_quantized_activation: QUANTIZED_NOW})
+	   			np.savez(Path + file_index[i] + '_' + str(layer_now), target)
+	else:
+		for i, target in enumerate(result):
+			file_index[i] = file_index[i].split('.')[0]
+			np.savez(Path + file_index[i], target)
+
 def Save_file_as_csv(Path, file):
 	np.savetxt(Path + '.csv', file, delimiter=",")
 	
@@ -937,20 +1013,134 @@ def ternarize_biases(float32_biases, ternary_biases_bd):
 
 	return ternary_biases
 
+def Analyzer(Analysis, net, type, kernel_shape=None, stride=None,
+			is_depth_wise=False,
+			name=None):
+	
+	[B, H, W, D] = net.get_shape().as_list() # B:Batch // H:Height // W:Width // D:Depth
+	h = 0 
+	w = 0 
+	i = 0 
+	o = 0 
+	if kernel_shape!=None:
+		[h, w, i, o] = kernel_shape # h:Kernel Height // w:Kernel Width // i:input channel // o:output channel
+	
+
+	if type=='CONV':
+		if is_depth_wise:
+			macc = H*W*h*w*D / (stride*stride)
+			comp = 0
+			add  = 0
+			div  = 0
+			exp  = 0
+			activation = H*W*D / (stride*stride)
+			param = h*w*i
+		else:
+			macc = H*W*h*w*i*o / (stride*stride)
+			comp = 0
+			add  = 0
+			div  = 0
+			exp  = 0
+			activation = H*W*o / (stride*stride)
+			param = h*w*i*o
+	elif type=='POOL':
+		macc = 0
+		comp = h*w*H*W*D / (stride*stride)
+		add  = 0
+		div  = 0
+		exp  = 0
+		activation = H*W*D / (stride*stride)
+		param = 0
+	elif type=='UNPOOL':
+		macc = 0
+		comp = 0
+		add  = 0
+		div  = 0
+		activation = H*W*D*stride*stride
+		param = 0
+	elif type=='RELU':
+		macc = 0
+		comp = H*W*D
+		add  = 0
+		div  = 0
+		exp  = 0
+		activation = H*W*D
+		param = 0
+	
+	components = {'name'         : name, 
+				  'Input Height' : H,
+				  'Input Width'  : W,
+				  'Input Depth'  : D,
+				  'Type'         : type,
+				  'Kernel Height': h,
+				  'Kernel Width' : w,
+				  'Kernel Depth' : i, 
+				  'Kernel Number': o,
+				  'Stride'       : stride,
+				  'Macc'         : macc, 
+				  'Comp'         : comp, 
+				  'Add'          : add, 
+				  'Div'          : div, 
+				  'Exp'          : exp, 
+				  'Activation'   : activation, 
+				  'Param'        : param}
+
+	if len(Analysis.keys())<10:
+		layer_now = '0' + str(len(Analysis.keys()))
+	else:
+		layer_now = str(len(Analysis.keys()))
+
+	Analysis.update({'layer' + layer_now : components})
+
+	#pdb.set_trace()
+
+	return Analysis
+
+def Save_Analyzsis_as_csv(Analysis, FILE):
+	keys = sorted(Analysis.keys())
+	
+	components = np.array(['name'          ,
+				           'Input Height'  ,
+				           'Input Width'   ,
+				           'Input Depth'   ,
+				           'Type'          ,
+				           'Kernel Height' ,
+				           'Kernel Width'  ,
+				           'Kernel Depth'  ,
+				           'Kernel Number' ,
+				           'Stride'        ,
+				           'Macc'          ,
+				           'Comp'          ,
+				           'Add'           ,
+				           'Div'           ,
+				           'Exp'           ,
+				           'Activation'    , 
+				           'Param'         ])
+
+	Ana = np.expand_dims(components, axis=1)
+	for i, key in enumerate(keys):
+		#if i==0:
+		#	Ana = np.expand_dims(np.array([Analysis[key][x] for x in components]), axis=1)
+		#else:	
+		Ana = np.concatenate([Ana, np.expand_dims(np.array([Analysis[key][x] for x in components]), axis=1)], axis=1)
+
+	np.savetxt(FILE + '_Analysis.csv', Ana, delimiter=",", fmt="%s") 
+
 def shortcut_Module( net, kernel_size, stride, input_channel, internal_channel, output_channel, rate,
 			         initializer             ,
-			         is_constant_init        , 
-			         is_batch_norm	         ,
-			         is_training		     ,
-			         is_testing		         ,
-			         is_dilated		         ,
-			         is_depthwise		     ,
-			         is_ternary		         ,
-			         is_quantized_activation ,
-			         IS_TERNARY			     , 	
-			         IS_QUANTIZED_ACTIVATION ,
-			         IS_SAVER				 ,
-			         padding			     ):
+			         is_constant_init       , 
+			         is_batch_norm	        ,
+			         is_training		    ,
+			         is_testing		        ,
+			         is_dilated		        ,
+			         is_depthwise		    ,
+			         is_ternary		        ,
+			         is_quantized_activation,
+			         IS_TERNARY			    , 	
+			         IS_QUANTIZED_ACTIVATION,
+			         IS_SAVER				,
+			         padding				,			     
+					 Analysis				):
 
 	with tf.variable_scope("shortcut"):
 		if input_channel!=output_channel:
@@ -977,10 +1167,16 @@ def shortcut_Module( net, kernel_size, stride, input_channel, internal_channel, 
 				shortcut = batch_norm(shortcut, is_training, is_testing, IS_SAVER)
 			if is_depthwise:
 				shortcut = tf.nn.relu(shortcut)
+
+			################
+			#   Analyzer   #
+			################
+			Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[1,1,input_channel, output_channel], stride=1, is_depth_wise=False, name='Shortcut')
+
 		else:
 			shortcut = net
 
-	return shortcut
+	return shortcut, Analysis
 
 def SEP_Module(net, kernel_size, stride, input_channel, internal_channel, output_channel, rate,
 			   initializer             ,
@@ -995,7 +1191,8 @@ def SEP_Module(net, kernel_size, stride, input_channel, internal_channel, output
 			   IS_TERNARY			   ,		
 			   IS_QUANTIZED_ACTIVATION ,
 			   IS_SAVER			   	   ,
-			   padding			       ):
+			   padding			       ,
+			   Analysis				   ):
 
 	with tf.variable_scope("SEP_Module"):
 		with tf.variable_scope("Reduction"):
@@ -1014,15 +1211,25 @@ def SEP_Module(net, kernel_size, stride, input_channel, internal_channel, output
 				net = tf.nn.atrous_conv2d(net, weights, rate=rate, padding="SAME")
 			else:
 				net = tf.nn.conv2d(net, weights, strides=[1, 1, 1, 1], padding="SAME")
-			
+
+			################
+			#   Analyzer   #
+			################
+			Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[1,1,input_channel, internal_channel], stride=1, is_depth_wise=False, name='SEP_Module/Reduction/Conv')
+
 			# add bias
 			net = tf.nn.bias_add(net, biases)
 			
 			# batch normalization
 			if is_batch_norm == True:
 				net = batch_norm(net, is_training, is_testing, IS_SAVER)
-				
+
 			net = tf.nn.relu(net)
+
+			################
+			#   Analyzer   #
+			################
+			Analysis = Analyzer(Analysis, net, type='RELU', name='SEP_Module/Reduction/Activation')
 
 		with tf.variable_scope("PatternConv1"):
 			with tf.variable_scope("Pattern"):
@@ -1047,7 +1254,12 @@ def SEP_Module(net, kernel_size, stride, input_channel, internal_channel, output
 						Pattern = tf.nn.depthwise_conv2d(net, weights, strides=[1, stride, stride, 1], padding=padding)	
 					else:
 						Pattern = tf.nn.conv2d(net, weights, strides=[1, stride, stride, 1], padding=padding)
-				
+
+				################
+				#   Analyzer   #
+				################
+				Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[kernel_size,kernel_size,internal_channel, internal_channel], stride=stride, is_depth_wise=is_depthwise, name='SEP_Module/PatternConv1/Pattern/Conv')
+
 				# add bias
 				Pattern = tf.nn.bias_add(Pattern, biases)
 
@@ -1056,6 +1268,11 @@ def SEP_Module(net, kernel_size, stride, input_channel, internal_channel, output
 					Pattern = batch_norm(Pattern, is_training, is_testing, IS_SAVER)
 				#relu
 				Pattern = tf.nn.relu(Pattern)
+
+				################
+				#   Analyzer   #
+				################
+				Analysis = Analyzer(Analysis, net, type='RELU', name='SEP_Module/PatternConv1/Pattern/Activation')
 				
 				if IS_QUANTIZED_ACTIVATION:
 					quantized_net = quantize_activation(Pattern)
@@ -1081,6 +1298,7 @@ def SEP_Module(net, kernel_size, stride, input_channel, internal_channel, output
 						   	 	     IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
 						   	 	     IS_SAVER				 = IS_SAVER,
 						   	 	     padding			     = padding,
+									 Analysis				 = Analysis,
 						   	 	     scope			         = "depthwise_conv1x1")
 
 			with tf.variable_scope("Pattern_Residual"):
@@ -1103,11 +1321,21 @@ def SEP_Module(net, kernel_size, stride, input_channel, internal_channel, output
 				# add bias
 				Pattern_Residual = tf.nn.bias_add(Pattern_Residual, biases)
 				
+				################
+				#   Analyzer   #
+				################
+				Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[1,1,internal_channel, internal_channel], stride=1, is_depth_wise=False, name='SEP_Module/PatternConv1/Pattern_Residual/Conv')
+
 				# batch normalization
 				if is_batch_norm == True:
 					Pattern_Residual = batch_norm(Pattern_Residual, is_training, is_testing, IS_SAVER)
 					
 				Pattern_Residual = tf.nn.relu(Pattern_Residual)
+
+				################
+				#   Analyzer   #
+				################
+				Analysis = Analyzer(Analysis, net, type='RELU', name='SEP_Module/PatternConv1/Pattern_Residual/Activation')
 
 		# Adding Pattern and Pattern Residual
 		net = tf.add(Pattern, Pattern_Residual)
@@ -1139,12 +1367,23 @@ def SEP_Module(net, kernel_size, stride, input_channel, internal_channel, output
 				# add bias
 				Pattern = tf.nn.bias_add(Pattern, biases)
 
+				################
+				#   Analyzer   #
+				################
+				Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[kernel_size,kernel_size,internal_channel, internal_channel/2], stride=1, is_depth_wise=is_depthwise, name='SEP_Module/PatternConv2/Pattern/Conv')
+
 				# batch normalization
 				if is_batch_norm == True:
 					Pattern = batch_norm(Pattern, is_training, is_testing, IS_SAVER)
+
 				#relu
 				Pattern = tf.nn.relu(Pattern)
 				
+				################
+				#   Analyzer   #
+				################
+				Analysis = Analyzer(Analysis, net, type='RELU', name='SEP_Module/PatternConv2/Pattern/Activation')
+
 				if IS_QUANTIZED_ACTIVATION:
 					quantized_net = quantize_activation(Pattern)
 					Pattern = tf.cond(is_quantized_activation, lambda: quantized_net, lambda: Pattern)
@@ -1169,6 +1408,7 @@ def SEP_Module(net, kernel_size, stride, input_channel, internal_channel, output
 						   	 	  	  IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
 						   	 	  	  IS_SAVER				  = IS_SAVER,
 						   	 	  	  padding			      = padding,
+									  Analysis				  = Analysis,
 						   	 	  	  scope			          = "depthwise_conv1x1")
 
 			with tf.variable_scope("Pattern_Residual"):
@@ -1191,11 +1431,22 @@ def SEP_Module(net, kernel_size, stride, input_channel, internal_channel, output
 				# add bias
 				Pattern_Residual = tf.nn.bias_add(Pattern_Residual, biases)
 				
+				################
+				#   Analyzer   #
+				################
+				Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[1,1,internal_channel, internal_channel/2], stride=1, is_depth_wise=False, name='SEP_Module/PatternConv2/Pattern_Residual/Conv')
+
 				# batch normalization
 				if is_batch_norm == True:
 					Pattern_Residual = batch_norm(Pattern_Residual, is_training, is_testing, IS_SAVER)
-					
+
+				# Relu	
 				Pattern_Residual = tf.nn.relu(Pattern_Residual)
+
+				################
+				#   Analyzer   #
+				################
+				Analysis = Analyzer(Analysis, net, type='RELU', name='SEP_Module/PatternConv2/Pattern_Residual/Activation')
 
 		# Adding Pattern and Pattern Residual
 		net = tf.add(Pattern, Pattern_Residual)
@@ -1220,11 +1471,21 @@ def SEP_Module(net, kernel_size, stride, input_channel, internal_channel, output
 			# add bias
 			net = tf.nn.bias_add(net, biases)
 			
+			################
+			#   Analyzer   #
+			################
+			Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[1,1,internal_channel/2, output_channel], stride=1, is_depth_wise=False, name='SEP_Module/Recovery/Conv')
+
 			# batch normalization
 			if is_batch_norm == True:
 				net = batch_norm(net, is_training, is_testing, IS_SAVER)
 			# relu	
 			net = tf.nn.relu(net)
+
+			################
+			#   Analyzer   #
+			################
+			Analysis = Analyzer(Analysis, net, type='RELU', name='SEP_Module/Recovery/Activation')
 
 	return net	
 
@@ -1243,7 +1504,8 @@ def Residual_Block( net, kernel_size, stride, input_channel, internal_channel, o
 					IS_TERNARY			    ,  	
 					IS_QUANTIZED_ACTIVATION , 
 					IS_SAVER			    , 
-					padding			        ): 
+					padding			        ,
+					Analysis				): 
 
 	#===============================#
 	#	Bottleneck Residual Block	#
@@ -1270,11 +1532,22 @@ def Residual_Block( net, kernel_size, stride, input_channel, internal_channel, o
 				# add bias
 				net = tf.nn.bias_add(net, biases)
 				
+				################
+				#   Analyzer   #
+				################
+				Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[1,1,input_channel, internal_channel], stride=1, is_depth_wise=False, name='/bottle_neck/conv1_1x1/Conv')
+
 				# batch normalization
 				if is_batch_norm == True:
 					net = batch_norm(net, is_training, is_testing, IS_SAVER)
-					
+
+				# Relu	
 				net = tf.nn.relu(net)
+
+				################
+				#   Analyzer   #
+				################
+				Analysis = Analyzer(Analysis, net, type='RELU', name='/bottle_neck/conv1_1x1/Activation')
 
 			with tf.variable_scope("conv2_3x3"):
 				# Variable define
@@ -1302,12 +1575,23 @@ def Residual_Block( net, kernel_size, stride, input_channel, internal_channel, o
 				# add bias
 				net = tf.nn.bias_add(net, biases)
 				
+				################
+				#   Analyzer   #
+				################
+				Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[3,3,internal_channel, internal_channel], stride=stride, is_depth_wise=is_depthwise, name='/bottle_neck/conv2_3x3/Conv')
+
 				# batch normalization
 				if is_batch_norm == True:
 					net = batch_norm(net, is_training, is_testing, IS_SAVER)
-				# relu
 
+				# relu
 				net = tf.nn.relu(net)
+
+				################
+				#   Analyzer   #
+				################
+				Analysis = Analyzer(Analysis, net, type='RELU', name='/bottle_neck/conv2_3x3/Activation')
+
 			with tf.variable_scope("conv3_1x1"):
 				# Variable define
 				weights, biases = conv2D_Variable(kernel_size       = 1,
@@ -1328,6 +1612,11 @@ def Residual_Block( net, kernel_size, stride, input_channel, internal_channel, o
 				# add bias
 				net = tf.nn.bias_add(net, biases)
 				
+				################
+				#   Analyzer   #
+				################
+				Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[1,1,internal_channel, output_channel], stride=1, is_depth_wise=False, name='/bottle_neck/conv3_1x1/Conv')
+
 				# batch normalization
 				if is_batch_norm == True:
 					net = batch_norm(net, is_training, is_testing, IS_SAVER)
@@ -1335,6 +1624,11 @@ def Residual_Block( net, kernel_size, stride, input_channel, internal_channel, o
 				# relu
 				if is_depthwise:
 					net = tf.nn.relu(net)
+
+				################
+				#   Analyzer   #
+				################
+				Analysis = Analyzer(Analysis, net, type='RELU', name='/bottle_neck/conv3_1x1/Activation')
 
 	#===========================#
 	#	Normal Residual Block	#
@@ -1366,11 +1660,22 @@ def Residual_Block( net, kernel_size, stride, input_channel, internal_channel, o
 			# add bias
 			net = tf.nn.bias_add(net, biases)
 			
+			################
+			#   Analyzer   #
+			################
+			Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[3,3,input_channel, internal_channel], stride=stride, is_depth_wise=is_depthwise, name='/conv1_3x3/Conv')
+
 			# batch normalization
 			if is_batch_norm == True:
 				net = batch_norm(net, is_training, is_testing, IS_SAVER)
-				
+			
+			# Relu
 			net = tf.nn.relu(net)
+
+			################
+			#   Analyzer   #
+			################
+			Analysis = Analyzer(Analysis, net, type='RELU', name='/conv1_3x3/Activation')
 
 			if is_depthwise:
 				net =  conv2D(net, kernel_size=1, stride=1, internal_channel=input_channel, output_channel=internal_channel, rate=rate,
@@ -1391,6 +1696,7 @@ def Residual_Block( net, kernel_size, stride, input_channel, internal_channel, o
 					   	 	  IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
 					   	 	  IS_SAVER				  = IS_SAVER,
 					   	 	  padding			      = padding,
+							  Analysis				  = Analysis,
 					   	 	  scope			          = "depthwise_conv1x1")
 
 		with tf.variable_scope("conv2_3x3"):
@@ -1419,6 +1725,11 @@ def Residual_Block( net, kernel_size, stride, input_channel, internal_channel, o
 			# add bias
 			net = tf.nn.bias_add(net, biases)
 			
+			################
+			#   Analyzer   #
+			################
+			Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[3,3,internal_channel, output_channel], stride=stride, is_depth_wise=is_depthwise, name='/conv2_3x3/Conv')
+
 			# batch normalization
 			if is_batch_norm == True:
 				net = batch_norm(net, is_training, is_testing, IS_SAVER)
@@ -1427,6 +1738,11 @@ def Residual_Block( net, kernel_size, stride, input_channel, internal_channel, o
 			if is_depthwise:
 				# relu
 				net = tf.nn.relu(net)
+
+				################
+				#   Analyzer   #
+				################
+				Analysis = Analyzer(Analysis, net, type='RELU', name='/conv2_3x3/Conv')
 
 				net =  conv2D(net, kernel_size=1, stride=1, internal_channel=internal_channel, output_channel=output_channel, rate=rate,
 					   	      initializer=tf.contrib.layers.variance_scaling_initializer(),
@@ -1446,7 +1762,10 @@ def Residual_Block( net, kernel_size, stride, input_channel, internal_channel, o
 					   	 	  IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
 					   	 	  IS_SAVER				  = IS_SAVER,
 					   	 	  padding			      = padding,
+							  Analysis				  = Analysis,
 					   	 	  scope			          = "depthwise_conv1x1")
+
+				
 	return net
 
 def conv2D_Variable(kernel_size,
@@ -1531,10 +1850,11 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 			IS_QUANTIZED_ACTIVATION = False,
 			IS_SAVER				= True,
 			padding			        = "SAME",
+			Analysis				= None,
 			scope			        = "conv"):
 		
 	with tf.variable_scope(scope):
-		input_channel = net.get_shape()[-1]
+		input_channel = net.get_shape().as_list()[-1]
 			
 		#====================#
 		#   SEP-Net Module   #
@@ -1553,7 +1873,8 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 						         IS_TERNARY			     ,		
 						         IS_QUANTIZED_ACTIVATION ,
 						         IS_SAVER			   	 ,
-						         padding			     )
+						         padding			     ,
+								 Analysis				 )
 		
 		#===============================#
 		#	Bottleneck Residual Block	#
@@ -1573,7 +1894,8 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 							          IS_TERNARY			  ,  	
 							          IS_QUANTIZED_ACTIVATION , 
 							          IS_SAVER			      , 
-							          padding			      ) 
+							          padding			      ,
+									  Analysis				  ) 
 		#===================#
 		#	Shortcut Block	#
 		#===================#
@@ -1591,7 +1913,8 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 						  		         IS_TERNARY			     , 	
 						  		         IS_QUANTIZED_ACTIVATION ,
 						  		         IS_SAVER				 ,
-						  		         padding			     )
+						  		         padding			     ,
+										 Analysis				 )
 			if is_SEP:
 				net = net_SEP
 			else:
@@ -1603,6 +1926,11 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 				net = tf.add(net, shortcut)
 			else:
 				net = tf.nn.relu(tf.add(net, shortcut))
+			
+			################
+			#   Analyzer   #
+			################
+			Analysis = Analyzer(Analysis, net, type='RELU', name='/shortcut/Activation')
 
 		#===========================================#
 		#	Normal Convolution Block (No Shortcut)  #
@@ -1633,12 +1961,22 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 			# add bias
 			net = tf.nn.bias_add(net, biases)
 
+			################
+			#   Analyzer   #
+			################
+			Analysin = Analyzer(Analysis, net, type='CONV', kernel_shape=[kernel_size,kernel_size, input_channel, output_channel], stride=stride, is_depth_wise=is_depthwise, name='Conv')
+
 			# batch normalization
 			if is_batch_norm == True:
 				net = batch_norm(net, is_training, is_testing, IS_SAVER)
 			#relu
 			net = tf.nn.relu(net)
 			
+			################
+			#   Analyzer   #
+			################
+			Analysin = Analyzer(Analysis, net, type='RELU', name='Activation')
+
 			if IS_QUANTIZED_ACTIVATION:
 				quantized_net = quantize_activation(net)
 				net = tf.cond(is_quantized_activation, lambda: quantized_net, lambda: net)
@@ -1663,7 +2001,10 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 					   	 	  IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
 					   	 	  IS_SAVER				  = IS_SAVER,
 					   	 	  padding			      = padding,
+							  Analysis				  = Analysis,
 					   	 	  scope			          = "depthwise_conv1x1")
+
+
 	return net
 
 
@@ -1894,12 +2235,15 @@ def get_real_prediction(Prediction, batch_table):
 #
 #	return Y_pre, target
 
-def read_Y_pre_file(Path, text_file_name):
+def read_Y_pre_file(Path, text_file_name, layer=None):
 	data_index = open(Path + text_file_name, 'r').read().splitlines()
 
 	for i, file_name in enumerate(data_index):
 		file_name = file_name.split('.')[0]
-		y_pre = np.load(Path + file_name + '.npz')
+		if layer==None:
+			y_pre = np.load(Path + file_name + '.npz')
+		else:
+			y_pre = np.load(Path + file_name + '_' + str(layer) + '.npz')
 		Y_pre = y_pre[y_pre.keys()[0]]
 
 		if i==0:

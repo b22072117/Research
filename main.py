@@ -11,27 +11,29 @@ import Model
 #=======================#
 #	Global Parameter	#
 #=======================#
-Model_Name = 'SegNet_VGG_10_depthwise'
+Model_Name = 'SegNet_VGG_16'
+Model_Call = getattr(Model, Model_Name)
 print('\n\033[1;32;40mModel Name\033[0m =\033[1;37;40m {MODEL_NAME}\033[0m\n' .format(MODEL_NAME=Model_Name))
 pdb.set_trace()
-BATCH_SIZE = 4
+BATCH_SIZE = 3
 EPOCH_TIME = 200
 
-IS_TRAINING 			= True
-IS_TESTING  			= True
-IS_STUDENT  			= True
+IS_TRAINING 			= False
+IS_TESTING  			= False
+IS_STUDENT  			= False
 IS_GAN	    			= False 
 IS_TERNARY  			= False
 IS_QUANTIZED_ACTIVATION = False
+IS_PARTIAL_TRAINING		= False
 
-LEARNING_RATE = 1e-3
-EPOCH_DECADE  = 200
-LR_DECADE     = 10
-LAMBDA        = 0.
-
-DISCRIMINATOR_STEP 	       = 1
-TERNARY_EPOCH              = 50
-QUANTIZED_ACTIVATION_EPOCH = 150
+LEARNING_RATE 				= 1e-3	# Learning Rate
+EPOCH_DECADE  				= 200	# Decade Learning Rate Every EPOCH_DECADE
+LR_DECADE     				= 10	# Decade Learning for LR_DECADE time Every EPOCH_DECADE
+LAMBDA        				= 0.	# L2-Regularization Hyper parameter
+DISCRIMINATOR_STEP 	       	= 1		# 
+TERNARY_EPOCH              	= 50	# After Training for TERNARY_EPOCH, All Weights are converted to ternary
+QUANTIZED_ACTIVATION_EPOCH 	= 150	# After Training for QUANTIZED_ACTIVATION_EPOCH, All Nets after activation are converted to fixed point
+PARTIAL_TRAINING_LAYER_NOW	= 1		# Means as its Name
 
 if ((not IS_TRAINING) and IS_TESTING):
 	BATCH_SIZE=1
@@ -47,9 +49,9 @@ valid_target_path = '/home/2016/b22072117/ObjectSegmentation/codes/result/CamVid
 test_target_path  = '/home/2016/b22072117/ObjectSegmentation/codes/result/CamVid/SegNet/'
 
 # For Saving Result in .npz file
-train_Y_pre_path  = '/home/2016/b22072117/ObjectSegmentation/codes/nets/SegNet_Y_pre/student'
-valid_Y_pre_path  = '/home/2016/b22072117/ObjectSegmentation/codes/nets/SegNet_Y_pre/student'
-test_Y_pre_path   = '/home/2016/b22072117/ObjectSegmentation/codes/nets/SegNet_Y_pre/student'
+train_Y_pre_path  = '/home/2016/b22072117/ObjectSegmentation/codes/nets/SegNet_Y_pre/'
+valid_Y_pre_path  = '/home/2016/b22072117/ObjectSegmentation/codes/nets/SegNet_Y_pre/'
+test_Y_pre_path   = '/home/2016/b22072117/ObjectSegmentation/codes/nets/SegNet_Y_pre/'
 
 #=======================#
 #	Training File Name	#
@@ -83,6 +85,11 @@ def main(argv=None):
 	#===============#
 	#	File Read	#
 	#===============#
+	if IS_PARTIAL_TRAINING:
+		layer = PARTIAL_TRAINING_LAYER_NOW
+	else:
+		layer = None
+
 	[CamVid_train_data, CamVid_train_data_index, CamVid_train_target, 
 	 CamVid_valid_data, CamVid_valid_data_index, CamVid_valid_target, 
 	 CamVid_test_data , CamVid_test_data_index , CamVid_test_target , 
@@ -93,6 +100,8 @@ def main(argv=None):
 				  # Path
 				  CamVid_Path = '/home/2016/b22072117/ObjectSegmentation/codes/dataset/CamVid',
 				  Y_pre_Path  = '/home/2016/b22072117/ObjectSegmentation/codes/nets/SegNet_Y_pre',
+				  # Variable
+				  layer = layer,
 				  # Parameter
 				  IS_STUDENT  = IS_STUDENT ,
 				  IS_TRAINING = IS_TRAINING)
@@ -112,7 +121,10 @@ def main(argv=None):
 	data_shape = np.shape(CamVid_train_data)
 	# Placeholder
 	xs 			            = tf.placeholder(tf.float32, [BATCH_SIZE, data_shape[1], data_shape[2], data_shape[3]]) 
-	ys 			            = tf.placeholder(tf.float32, [BATCH_SIZE, data_shape[1], data_shape[2], class_num])
+	if IS_PARTIAL_TRAINING:
+		ys = Model_Call(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, TRAINING_WEIGHT_FILE)
+	else:
+		ys = tf.placeholder(tf.float32, [BATCH_SIZE, data_shape[1], data_shape[2], class_num])
 	learning_rate           = tf.placeholder(tf.float32)
 	is_training             = tf.placeholder(tf.bool)
 	is_testing 	            = tf.placeholder(tf.bool)
@@ -126,12 +138,8 @@ def main(argv=None):
 	#	Graph	#
 	#===========#
 	net = xImage
-	#prediction = SegNet_VGG_10_dilated(net, class_num, is_training, is_testing)
-	
-	prediction = Model.SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION)
+	prediction = Model_Call(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, TRAINING_WEIGHT_FILE)
 	#prediction = tf.nn.softmax(net)
-	
-	params = tf.get_collection("params", scope=None) 
 	
 	if IS_GAN:
 		prediction = tf.nn.softmax(prediction) # (if no softmax)
@@ -143,24 +151,26 @@ def main(argv=None):
 	#===============#
 	#	Collection	#
 	#===============#	
-	weights_collection	 		  = tf.get_collection("weights"           , scope=None)
-	biases_collection  	    	  = tf.get_collection("biases"            , scope=None)
-	mean_collection  	    	  = tf.get_collection("batch_mean"        , scope=None)
-	var_collection 	 	    	  = tf.get_collection("batch_var"         , scope=None)
-	scale_collection 			  = tf.get_collection("batch_scale"       , scope=None)
-	shift_collection 			  = tf.get_collection("batch_shift"       , scope=None)
-	trained_mean_collection 	  = tf.get_collection("trained_mean"      , scope=None)
-	trained_var_collection 		  = tf.get_collection("trained_var"       , scope=None)
-	ternary_weights_bd_collection = tf.get_collection("ternary_weights_bd", scope=None)
-	ternary_biases_bd_collection  = tf.get_collection("ternary_biases_bd" , scope=None)
-	final_weights_collection      = tf.get_collection("final_weights"     , scope=None)
-	final_biases_collection       = tf.get_collection("final_biases"      , scope=None)
-	var_list_collection		      = tf.get_collection("var_list"          , scope=None)
-	assign_var_list_collection    = tf.get_collection("assign_var_list"   , scope=None)
-	activation_collection	      = tf.get_collection("activation"        , scope=None)
-	mantissa_collection		      = tf.get_collection("mantissa"          , scope=None)
-	fraction_collection           = tf.get_collection("fraction"          , scope=None)
-	final_net_collection	      = tf.get_collection("final_net"	      , scope=None)
+	weights_collection	 		  	= tf.get_collection("weights"           , scope=None)
+	biases_collection  	    	  	= tf.get_collection("biases"            , scope=None)
+	mean_collection  	    	  	= tf.get_collection("batch_mean"        , scope=None)
+	var_collection 	 	    	  	= tf.get_collection("batch_var"         , scope=None)
+	scale_collection 			  	= tf.get_collection("batch_scale"       , scope=None)
+	shift_collection 			  	= tf.get_collection("batch_shift"       , scope=None)
+	trained_mean_collection 	  	= tf.get_collection("trained_mean"      , scope=None)
+	trained_var_collection 		  	= tf.get_collection("trained_var"       , scope=None)
+	ternary_weights_bd_collection 	= tf.get_collection("ternary_weights_bd", scope=None)
+	ternary_biases_bd_collection  	= tf.get_collection("ternary_biases_bd" , scope=None)
+	final_weights_collection      	= tf.get_collection("final_weights"     , scope=None)
+	final_biases_collection       	= tf.get_collection("final_biases"      , scope=None)
+	var_list_collection		      	= tf.get_collection("var_list"          , scope=None)
+	assign_var_list_collection    	= tf.get_collection("assign_var_list"   , scope=None)
+	activation_collection	      	= tf.get_collection("activation"        , scope=None)
+	mantissa_collection		      	= tf.get_collection("mantissa"          , scope=None)
+	fraction_collection           	= tf.get_collection("fraction"          , scope=None)
+	final_net_collection	      	= tf.get_collection("final_net"	    	, scope=None)
+	partial_output_collection	  	= tf.get_collection("partial_output"	, scope=None)
+	params 							= tf.get_collection("params"			, scope=None) 
 
 	#=======================#
 	#	Training Strategy	#
@@ -241,15 +251,14 @@ def main(argv=None):
 	#=================#
 	#	Session Run   #
 	#=================#
-	with tf.Session() as sess:
-	# Initialize
-		init = tf.global_variables_initializer()
-		sess.run(init)
-		
-	# Learning Rate	
-		lr = LEARNING_RATE
-	
-		if IS_TRAINING == True:
+	if IS_TRAINING == True:
+		with tf.Session() as sess:
+			# Initialize
+			init = tf.global_variables_initializer()
+			sess.run(init)
+			
+			# Learning Rate	
+			lr = LEARNING_RATE
 
 			utils.Training_and_Validation( 
 				# Training & Validation Data
@@ -323,10 +332,11 @@ def main(argv=None):
 				# Session
 				 sess						  = sess							)
 	
-		if IS_TESTING == True:
-			#is_validation = False
-
-			
+	if IS_TESTING == True:
+		with tf.Session() as sess:
+			# Initialize
+			init = tf.global_variables_initializer()
+			sess.run(init)
 			
 			utils.Testing(
 				# Training & Validation & Testing Data
@@ -342,7 +352,8 @@ def main(argv=None):
 				# Parameter	
 					BATCH_SIZE					= BATCH_SIZE				,
 					IS_SAVING_RESULT_AS_IMAGE	= False						,	
-					IS_SAVING_RESULT_AS_NPZ		= False						,
+					IS_SAVING_RESULT_AS_NPZ		= True						,
+					IS_SAVING_PARTIAL_RESULT	= True						,
 					IS_TRAINING					= IS_TRAINING				,
 					IS_TERNARY					= IS_TERNARY				,
 					IS_QUANTIZED_ACTIVATION		= IS_QUANTIZED_ACTIVATION	,
@@ -366,11 +377,13 @@ def main(argv=None):
 					valid_Y_pre_path  			= valid_Y_pre_path  		,
 					test_target_path 			= test_target_path 			,
 					test_Y_pre_path  			= test_Y_pre_path  			,
+				# Collection 
+				partial_output_collection	  	= partial_output_collection	,
 				# Session        
 					sess						= sess						)
-		pdb.set_trace()
-		print("")
-		print("Works are All Done !")
+	#pdb.set_trace()
+	print("")
+	print("Works are All Done !")
 
 if __name__ == "__main__":
 	tf.app.run()

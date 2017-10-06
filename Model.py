@@ -15,7 +15,8 @@ def Discriminator(net, is_training, is_testing, reuse=None, scope="Discriminator
 						is_testing		= is_testing)
 	return net
 
-def VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, reuse=None, scope="VGG_16"):
+def VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, FILE, reuse=None, scope="VGG_16"):
+	Analysis = {}
 	with tf.variable_scope(scope, reuse=reuse):
 		with tf.variable_scope("224X224"): # 1/1
 			net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -29,6 +30,7 @@ def VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 						is_quantized_activation = is_quantized_activation,
 						IS_TERNARY				= IS_TERNARY,
 						IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+						Analysis				= Analysis,
 						scope					= "conv1")
 						
 			net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -42,6 +44,7 @@ def VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 						is_quantized_activation = is_quantized_activation,
 						IS_TERNARY				= IS_TERNARY,
 						IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+						Analysis				= Analysis,
 						scope					= "conv2")	
 						
 			net, indices1, output_shape1 = utils.indice_pool(net, stride=2, scope="Pool1")
@@ -58,6 +61,7 @@ def VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 						is_quantized_activation = is_quantized_activation,
 						IS_TERNARY				= IS_TERNARY,
 						IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+						Analysis				= Analysis,
 						scope					= "conv1")
 						
 			net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
@@ -71,6 +75,7 @@ def VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 						is_quantized_activation = is_quantized_activation,
 						IS_TERNARY				= IS_TERNARY,
 						IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+						Analysis				= Analysis,
 						scope					= "conv2")	
 						
 			net, indices2, output_shape2 = utils.indice_pool(net, stride=2, scope="Pool2")
@@ -87,6 +92,7 @@ def VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 						is_quantized_activation = is_quantized_activation,
 						IS_TERNARY				= IS_TERNARY,
 						IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+						Analysis				= Analysis,
 						scope					= "conv1")
 						
 			net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
@@ -100,6 +106,7 @@ def VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 						is_quantized_activation = is_quantized_activation,
 						IS_TERNARY				= IS_TERNARY,
 						IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+						Analysis				= Analysis,
 						scope					= "conv2")	
 						
 			net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
@@ -113,6 +120,7 @@ def VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 						is_quantized_activation = is_quantized_activation,
 						IS_TERNARY				= IS_TERNARY,
 						IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+						Analysis				= Analysis,
 						scope					= "conv3")	
 						
 			net, indices3, output_shape3 = utils.indice_pool(net, stride=2, scope="Pool3")
@@ -129,6 +137,7 @@ def VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 						is_quantized_activation = is_quantized_activation,
 						IS_TERNARY				= IS_TERNARY,
 						IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+						Analysis				= Analysis,
 						scope					= "conv1")
 						
 			net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
@@ -142,6 +151,7 @@ def VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 						is_quantized_activation = is_quantized_activation,
 						IS_TERNARY				= IS_TERNARY,
 						IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+						Analysis				= Analysis,
 						scope					= "conv2")	
 						
 			net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
@@ -155,6 +165,7 @@ def VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 						is_quantized_activation = is_quantized_activation,
 						IS_TERNARY				= IS_TERNARY,
 						IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+						Analysis				= Analysis,
 						scope					= "conv3")		
 						
 			net, indices4, output_shape4 = utils.indice_pool(net, stride=2, scope="Pool4")
@@ -171,6 +182,7 @@ def VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 						is_quantized_activation = is_quantized_activation,
 						IS_TERNARY				= IS_TERNARY,
 						IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+						Analysis				= Analysis,
 						scope					= "conv1")
 						
 			net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
@@ -184,6 +196,7 @@ def VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 						is_quantized_activation = is_quantized_activation,
 						IS_TERNARY				= IS_TERNARY,
 						IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+						Analysis				= Analysis,
 						scope					= "conv2")	
 						
 			net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
@@ -197,6 +210,7 @@ def VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 						is_quantized_activation = is_quantized_activation,
 						IS_TERNARY				= IS_TERNARY,
 						IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+						Analysis				= Analysis,
 						scope					= "conv3")		
 						
 			net, indices5, output_shape5 = utils.indice_pool(net, stride=2, scope="Pool5")
@@ -212,6 +226,7 @@ def VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 						is_quantized_activation = is_quantized_activation,
 						IS_TERNARY				= IS_TERNARY,
 						IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+						Analysis				= Analysis,
 						scope					= "fc1")		
 
 			net = utils.conv2D(net, kernel_size=1, stride=1, output_channel=4096, rate=1,
@@ -225,6 +240,7 @@ def VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 						is_quantized_activation = is_quantized_activation,
 						IS_TERNARY				= IS_TERNARY,
 						IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+						Analysis				= Analysis,
 						scope					= "fc2")		
 
 			net = utils.conv2D(net, kernel_size=1, stride=1, output_channel=class_num, rate=1,
@@ -238,12 +254,15 @@ def VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 						is_quantized_activation = is_quantized_activation,
 						IS_TERNARY				= IS_TERNARY,
 						IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+						Analysis				= Analysis,
 						scope					= "fc3")		
 						
+		utils.Save_Analyzsis_as_csv(Analysis, FILE)
 	return net
 
-def residual_50(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, reuse=None, scope="Residual_50"):
+def residual_50(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, FILE, reuse=None, scope="Residual_50"):
 	with tf.variable_scope(scope, reuse=reuse):
+		Analysis = {}
 		with tf.variable_scope("conv1_x"):
 			net = utils.conv2D(net, kernel_size=7, stride=2, output_channel=64, rate=1,
 							is_shortcut				= False, 
@@ -257,6 +276,7 @@ def residual_50(net, class_num, is_training, is_testing, is_ternary, is_quantize
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 		with tf.variable_scope("conv2_x"), tf.device("/gpu:0"):
 			net = tf.nn.max_pool(net, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
@@ -272,6 +292,7 @@ def residual_50(net, class_num, is_training, is_testing, is_ternary, is_quantize
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 			net = utils.conv2D(net, kernel_size=3, stride=1, internal_channel=64, output_channel=256, rate=1,
@@ -286,6 +307,7 @@ def residual_50(net, class_num, is_training, is_testing, is_ternary, is_quantize
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")
 							
 			net = utils.conv2D(net, kernel_size=3, stride=1, internal_channel=64, output_channel=256, rate=1,
@@ -300,6 +322,7 @@ def residual_50(net, class_num, is_training, is_testing, is_ternary, is_quantize
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv3")
 							
 		with tf.variable_scope("conv3_x"), tf.device("/gpu:1"):
@@ -315,6 +338,7 @@ def residual_50(net, class_num, is_training, is_testing, is_ternary, is_quantize
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 			net = utils.conv2D(net, kernel_size=3, stride=1, internal_channel=128, output_channel=512, rate=1,
@@ -329,6 +353,7 @@ def residual_50(net, class_num, is_training, is_testing, is_ternary, is_quantize
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")
 							
 			net = utils.conv2D(net, kernel_size=3, stride=1, internal_channel=128, output_channel=512, rate=1,
@@ -343,6 +368,7 @@ def residual_50(net, class_num, is_training, is_testing, is_ternary, is_quantize
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv3")
 							
 		with tf.variable_scope("conv4_x"), tf.device("/gpu:2"):
@@ -358,6 +384,7 @@ def residual_50(net, class_num, is_training, is_testing, is_ternary, is_quantize
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 			net = utils.conv2D(net, kernel_size=3, stride=1, internal_channel=256, output_channel=1024, rate=1,
@@ -372,6 +399,7 @@ def residual_50(net, class_num, is_training, is_testing, is_ternary, is_quantize
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")
 							
 			net = utils.conv2D(net, kernel_size=3, stride=1, internal_channel=256, output_channel=1024, rate=1,
@@ -386,6 +414,7 @@ def residual_50(net, class_num, is_training, is_testing, is_ternary, is_quantize
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv3")
 														
 		with tf.variable_scope("conv5_x"), tf.device("/gpu:3"):
@@ -401,6 +430,7 @@ def residual_50(net, class_num, is_training, is_testing, is_ternary, is_quantize
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 			net = utils.conv2D(net, kernel_size=3, stride=1, internal_channel=512, output_channel=2048, rate=1,
@@ -415,6 +445,7 @@ def residual_50(net, class_num, is_training, is_testing, is_ternary, is_quantize
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")
 							
 			net = utils.conv2D(net, kernel_size=3, stride=1, internal_channel=512, output_channel=2048, rate=1,
@@ -429,6 +460,7 @@ def residual_50(net, class_num, is_training, is_testing, is_ternary, is_quantize
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv3")
 							
 		with tf.variable_scope("Average_Pooling"):
@@ -447,12 +479,15 @@ def residual_50(net, class_num, is_training, is_testing, is_ternary, is_quantize
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
+		utils.Save_Analyzsis_as_csv(Analysis, FILE)
 	return net
 	
-def PSPNet(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, reuse=None, scope="PSPNet"):
+def PSPNet(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, FILE, reuse=None, scope="PSPNet"):
 	input_shape = net.get_shape().as_list()
 	with tf.variable_scope(scope, reuse=reuse):
+		Analysis = {}
 		with tf.variable_scope("ResNet50"):
 			with tf.variable_scope("root_block"):
 				net = utils.conv2D(net, kernel_size=3, stride=2, output_channel=64, rate=1,
@@ -466,6 +501,7 @@ def PSPNet(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 								is_quantized_activation = is_quantized_activation,
 								IS_TERNARY				= IS_TERNARY,
 								IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+								Analysis				= Analysis,
 								scope					= "conv1_1")
 
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -479,6 +515,7 @@ def PSPNet(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 								is_quantized_activation = is_quantized_activation,
 								IS_TERNARY				= IS_TERNARY,
 								IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+								Analysis				= Analysis,
 								scope					= "conv1_2")
 
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
@@ -492,6 +529,7 @@ def PSPNet(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 								is_quantized_activation = is_quantized_activation,
 								IS_TERNARY				= IS_TERNARY,
 								IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+								Analysis				= Analysis,
 								scope					= "conv1_3")
 				
 				net = tf.nn.max_pool(net, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
@@ -509,6 +547,7 @@ def PSPNet(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 								is_quantized_activation = is_quantized_activation,
 								IS_TERNARY				= IS_TERNARY,
 								IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+								Analysis				= Analysis,
 								scope					= "conv2_r1")
 								
 				net = utils.conv2D(net, kernel_size=3, stride=1, internal_channel=64, output_channel=256, rate=1,
@@ -523,6 +562,7 @@ def PSPNet(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 								is_quantized_activation = is_quantized_activation,
 								IS_TERNARY				= IS_TERNARY,
 								IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+								Analysis				= Analysis,
 								scope					= "conv2_r2")
 								
 				net = utils.conv2D(net, kernel_size=3, stride=1, internal_channel=64, output_channel=256, rate=1,
@@ -537,6 +577,7 @@ def PSPNet(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 								is_quantized_activation = is_quantized_activation,
 								IS_TERNARY				= IS_TERNARY,
 								IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+								Analysis				= Analysis,
 								scope					= "conv2_r3")
 								
 			with tf.variable_scope("Block2"), tf.device("/gpu:1"):
@@ -552,6 +593,7 @@ def PSPNet(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 								is_quantized_activation = is_quantized_activation,
 								IS_TERNARY				= IS_TERNARY,
 								IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+								Analysis				= Analysis,
 								scope					= "conv3_r1")
 								
 				net = utils.conv2D(net, kernel_size=3, stride=1, internal_channel=128, output_channel=512, rate=1,
@@ -566,6 +608,7 @@ def PSPNet(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 								is_quantized_activation = is_quantized_activation,
 								IS_TERNARY				= IS_TERNARY,
 								IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+								Analysis				= Analysis,
 								scope					= "conv3_r2")
 								
 				net = utils.conv2D(net, kernel_size=3, stride=1, internal_channel=128, output_channel=512, rate=1,
@@ -580,6 +623,7 @@ def PSPNet(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 								is_quantized_activation = is_quantized_activation,
 								IS_TERNARY				= IS_TERNARY,
 								IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+								Analysis				= Analysis,
 								scope					= "conv3_r3")
 								
 				net = utils.conv2D(net, kernel_size=3, stride=1, internal_channel=128, output_channel=512, rate=1,
@@ -594,6 +638,7 @@ def PSPNet(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 								is_quantized_activation = is_quantized_activation,
 								IS_TERNARY				= IS_TERNARY,
 								IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+								Analysis				= Analysis,
 								scope					= "conv3_r4")
 
 			with tf.variable_scope("Block3"), tf.device("/gpu:2"):
@@ -609,6 +654,7 @@ def PSPNet(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 								is_quantized_activation = is_quantized_activation,
 								IS_TERNARY				= IS_TERNARY,
 								IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+								Analysis				= Analysis,
 								scope					= "conv4_r1")
 								
 				net = utils.conv2D(net, kernel_size=3, stride=1, internal_channel=256, output_channel=1024, rate=2,
@@ -623,6 +669,7 @@ def PSPNet(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 								is_quantized_activation = is_quantized_activation,
 								IS_TERNARY				= IS_TERNARY,
 								IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+								Analysis				= Analysis,
 								scope					= "conv4_r2")
 								
 				net = utils.conv2D(net, kernel_size=3, stride=1, internal_channel=256, output_channel=1024, rate=2,
@@ -637,6 +684,7 @@ def PSPNet(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 								is_quantized_activation = is_quantized_activation,
 								IS_TERNARY				= IS_TERNARY,
 								IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+								Analysis				= Analysis,
 								scope					= "conv4_r3")
 															
 				net = utils.conv2D(net, kernel_size=3, stride=1, internal_channel=256, output_channel=1024, rate=2,
@@ -651,6 +699,7 @@ def PSPNet(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 								is_quantized_activation = is_quantized_activation,
 								IS_TERNARY				= IS_TERNARY,
 								IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+								Analysis				= Analysis,
 								scope					= "conv4_r4")
 								
 				net = utils.conv2D(net, kernel_size=3, stride=1, internal_channel=256, output_channel=1024, rate=2,
@@ -665,6 +714,7 @@ def PSPNet(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 								is_quantized_activation = is_quantized_activation,
 								IS_TERNARY				= IS_TERNARY,
 								IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+								Analysis				= Analysis,
 								scope					= "conv4_r5")
 								
 				net = utils.conv2D(net, kernel_size=3, stride=1, internal_channel=256, output_channel=1024, rate=2,
@@ -679,6 +729,7 @@ def PSPNet(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 								is_quantized_activation = is_quantized_activation,
 								IS_TERNARY				= IS_TERNARY,
 								IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+								Analysis				= Analysis,
 								scope					= "conv4_r6")
 
 			with tf.variable_scope("Block4"), tf.device("/gpu:2"):
@@ -694,6 +745,7 @@ def PSPNet(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 								is_quantized_activation = is_quantized_activation,
 								IS_TERNARY				= IS_TERNARY,
 								IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+								Analysis				= Analysis,
 								scope					= "conv5_r1")
 								
 				net = utils.conv2D(net, kernel_size=3, stride=1, internal_channel=512, output_channel=2048, rate=4,
@@ -708,6 +760,7 @@ def PSPNet(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 								is_quantized_activation = is_quantized_activation,
 								IS_TERNARY				= IS_TERNARY,
 								IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+								Analysis				= Analysis,
 								scope					= "conv5_r2")
 								
 				net = utils.conv2D(net, kernel_size=3, stride=1, internal_channel=512, output_channel=2048, rate=4,
@@ -722,6 +775,7 @@ def PSPNet(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 								is_quantized_activation = is_quantized_activation,
 								IS_TERNARY				= IS_TERNARY,
 								IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+								Analysis				= Analysis,
 								scope					= "conv5_r3")
 								
 		with tf.variable_scope("Pyramid_Average_Pooling"):
@@ -740,6 +794,7 @@ def PSPNet(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 								is_quantized_activation = is_quantized_activation,
 								IS_TERNARY				= IS_TERNARY,
 								IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+								Analysis				= Analysis,
 								scope					= "conv6_1")
 			#net = tf.cond(is_training, lambda: tf.nn.dropout(net, keep_prob=0.9), lambda: net)
 			
@@ -754,14 +809,16 @@ def PSPNet(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 								is_quantized_activation = is_quantized_activation,
 								IS_TERNARY				= IS_TERNARY,
 								IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+								Analysis				= Analysis,
 								scope					= "conv6_2")
 
 			net = tf.image.resize_images(net, [input_shape[1], input_shape[2]])
-
+		utils.Save_Analyzsis_as_csv(Analysis, FILE)
 	return net
 	
-def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, reuse=None, scope="SegNet_VGG_16"):
+def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, FILE, reuse=None, scope="SegNet_VGG_16"):
 	with tf.variable_scope(scope, reuse=reuse):
+		Analysis = {}
 		with tf.variable_scope("encoder"):
 			with tf.variable_scope("224X224"): # 1/1
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -775,7 +832,10 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
+
+				tf.add_to_collection("partial_output", net)
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
@@ -788,8 +848,11 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 							
+				tf.add_to_collection("partial_output", net)
+
 				net, indices1, output_shape1 = utils.indice_pool(net, stride=2, scope="Pool1")
 				
 			with tf.variable_scope("112X112"): # 1/2
@@ -804,8 +867,11 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
+				tf.add_to_collection("partial_output", net)
+
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
@@ -817,8 +883,11 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 							
+				tf.add_to_collection("partial_output", net)
+
 				net, indices2, output_shape2 = utils.indice_pool(net, stride=2, scope="Pool2")
 				
 			with tf.variable_scope("56X56"): # 1/4
@@ -833,8 +902,11 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
+				tf.add_to_collection("partial_output", net)
+
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
@@ -846,8 +918,11 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 							
+				tf.add_to_collection("partial_output", net)
+
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
@@ -859,8 +934,11 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv3")	
 							
+				tf.add_to_collection("partial_output", net)
+				
 				net, indices3, output_shape3 = utils.indice_pool(net, stride=2, scope="Pool3")
 				
 			with tf.variable_scope("28X28"): # 1/8
@@ -875,8 +953,11 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
+				tf.add_to_collection("partial_output", net)
+
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
@@ -888,8 +969,11 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 							
+				tf.add_to_collection("partial_output", net)
+
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
@@ -901,8 +985,11 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv3")		
 							
+				tf.add_to_collection("partial_output", net)
+
 				net, indices4, output_shape4 = utils.indice_pool(net, stride=2, scope="Pool4")
 				
 			with tf.variable_scope("14X14"): # 1/16
@@ -917,8 +1004,11 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
+				tf.add_to_collection("partial_output", net)
+
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
@@ -930,8 +1020,11 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 							
+				tf.add_to_collection("partial_output", net)
+
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
@@ -943,8 +1036,11 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv3")		
 							
+				tf.add_to_collection("partial_output", net)
+
 				net, indices5, output_shape5 = utils.indice_pool(net, stride=2, scope="Pool5")
 						
 		with tf.variable_scope("decoder"):
@@ -962,7 +1058,10 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
+
+				tf.add_to_collection("partial_output", net)
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
 							is_shortcut				= False, 
@@ -975,8 +1074,11 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 							
+				tf.add_to_collection("partial_output", net)
+							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
@@ -988,8 +1090,11 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv3")							
 				
+				tf.add_to_collection("partial_output", net)
+
 			with tf.variable_scope("28X28_D"): # 1/8 # conv4_D
 				net = utils.indice_unpool(net, stride=2, output_shape=output_shape4, indices=indices4, scope="unPool4")
 				
@@ -1004,8 +1109,11 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
+				tf.add_to_collection("partial_output", net)
+
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
@@ -1017,8 +1125,11 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 							
+				tf.add_to_collection("partial_output", net)
+
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
@@ -1030,8 +1141,11 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv3")
 				
+				tf.add_to_collection("partial_output", net)
+
 			with tf.variable_scope("56X56_D"): # 1/4 # conv3_D
 				net = utils.indice_unpool(net, stride=2, output_shape=output_shape3, indices=indices3, scope="unPool3")
 				
@@ -1046,8 +1160,11 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
+				tf.add_to_collection("partial_output", net)
+
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
@@ -1059,8 +1176,11 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")
 							
+				tf.add_to_collection("partial_output", net)
+
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
@@ -1072,8 +1192,11 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv3")
 							
+				tf.add_to_collection("partial_output", net)
+
 			with tf.variable_scope("112X112_D"): # 1/2 # conv2_D
 				net = utils.indice_unpool(net, stride=2, output_shape=output_shape2, indices=indices2, scope="unPool2")
 				
@@ -1088,8 +1211,11 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
+				tf.add_to_collection("partial_output", net)
+
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
@@ -1101,11 +1227,16 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 				
+				tf.add_to_collection("partial_output", net)
+
 			with tf.variable_scope("224X224_D"): # 1/1 # conv1_D
 				net = utils.indice_unpool(net, stride=2, output_shape=output_shape1, indices=indices1, scope="unPool1")
 				
+				tf.add_to_collection("partial_output", net)
+
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
@@ -1117,8 +1248,11 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
+				tf.add_to_collection("partial_output", net)
+
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=class_num, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
@@ -1130,13 +1264,18 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
+
+				tf.add_to_collection("partial_output", net)
+		utils.Save_Analyzsis_as_csv(Analysis, FILE)
 	return net
 	
 	
 	
-def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, reuse=None, scope="SegNet_VGG_10"):
+def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, FILE_NAME, reuse=None, scope="SegNet_VGG_10"):
 	with tf.variable_scope(scope, reuse=reuse):
+		Analysis = {}
 		with tf.variable_scope("encoder"):
 			with tf.variable_scope("224X224"): # 1/1
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -1150,20 +1289,22 @@ def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
-							is_shortcut		= False, 
-							is_bottleneck	= False, 
-							is_batch_norm	= True, 
-							is_training		= is_training, 
-							is_testing		= is_testing, 
-							is_dilated		= False, 
-							is_ternary      = is_ternary,
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= True, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary      		= is_ternary,
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
-							scope			= "conv2")	
+							Analysis				= Analysis,
+							scope					= "conv2")	
 							
 				net, indices1, output_shape1 = utils.indice_pool(net, stride=2, scope="Pool1")
 				
@@ -1179,6 +1320,7 @@ def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
@@ -1192,6 +1334,7 @@ def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 							
 				net, indices2, output_shape2 = utils.indice_pool(net, stride=2, scope="Pool2")
@@ -1208,6 +1351,7 @@ def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
@@ -1221,6 +1365,7 @@ def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
@@ -1234,6 +1379,7 @@ def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv3")	
 							
 				net, indices3, output_shape3 = utils.indice_pool(net, stride=2, scope="Pool3")
@@ -1253,6 +1399,7 @@ def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
@@ -1266,6 +1413,7 @@ def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
@@ -1279,6 +1427,7 @@ def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv3")
 							
 			with tf.variable_scope("112X112_D"): # 1/2 # conv2_D
@@ -1295,6 +1444,7 @@ def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -1308,6 +1458,7 @@ def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 				
 			with tf.variable_scope("224X224_D"): # 1/1 # conv1_D
@@ -1324,6 +1475,7 @@ def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=class_num, rate=1,
@@ -1337,11 +1489,14 @@ def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
+		utils.Save_Analyzsis_as_csv(Analysis, FILE)
 	return net
 	
-def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_QUANTIZED_ACTIVATION, IS_TERNARY, reuse=None, scope="SegNet_VGG_10_dilated"):
+def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_QUANTIZED_ACTIVATION, IS_TERNARY, FILE, reuse=None, scope="SegNet_VGG_10_dilated"):
 	with tf.variable_scope(scope, reuse=reuse):
+		Analysis = {}
 		with tf.variable_scope("encoder"):
 			with tf.variable_scope("224X224"), tf.device("/gpu:0"): # 1/1
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -1355,6 +1510,7 @@ def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, i
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -1368,6 +1524,7 @@ def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, i
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 				
 			with tf.variable_scope("112X112"), tf.device("/gpu:1"): # 1/2
@@ -1382,6 +1539,7 @@ def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, i
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=2,
@@ -1395,6 +1553,7 @@ def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, i
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 							
 			with tf.variable_scope("56X56"), tf.device("/gpu:2"): # 1/4
@@ -1409,6 +1568,7 @@ def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, i
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=4,
@@ -1422,6 +1582,7 @@ def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, i
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=4,
@@ -1435,6 +1596,7 @@ def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, i
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv3")	
 							
 		with tf.variable_scope("decoder"): # 1/1
@@ -1450,6 +1612,7 @@ def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, i
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=4,
@@ -1463,6 +1626,7 @@ def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, i
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=4,
@@ -1476,6 +1640,7 @@ def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, i
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv3")
 							
 			with tf.variable_scope("112X112_D"), tf.device("/gpu:0"): # 1/2 # conv2_D
@@ -1490,6 +1655,7 @@ def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, i
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=2,
@@ -1503,6 +1669,7 @@ def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, i
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 				
 			with tf.variable_scope("224X224_D"), tf.device("/gpu:1"): # 1/1 # conv1_D
@@ -1517,6 +1684,7 @@ def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, i
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=class_num, rate=1,
@@ -1530,12 +1698,15 @@ def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, i
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
+		utils.Save_Analyzsis_as_csv(Analysis, FILE)
 	return net
 	
 	
-def SegNet_VGG_10_v2(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, reuse=None, scope="SegNet_VGG_10"):
+def SegNet_VGG_10_v2(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, FILE, reuse=None, scope="SegNet_VGG_10"):
 	with tf.variable_scope(scope, reuse=reuse):
+		Analysis = {}
 		with tf.variable_scope("encoder"):
 			with tf.variable_scope("224X224"): # 1/1
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -1549,20 +1720,22 @@ def SegNet_VGG_10_v2(net, class_num, is_training, is_testing, is_ternary, is_qua
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
-							is_shortcut		= False, 
-							is_bottleneck	= False, 
-							is_batch_norm	= True, 
-							is_training		= is_training, 
-							is_testing		= is_testing, 
-							is_dilated		= False, 
-							is_ternary      = is_ternary,
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= True, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary      		= is_ternary,
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
-							scope			= "conv2")	
+							Analysis				= Analysis,
+							scope					= "conv2")	
 							
 				net, indices1, output_shape1 = utils.indice_pool(net, stride=2, scope="Pool1")
 				
@@ -1578,6 +1751,7 @@ def SegNet_VGG_10_v2(net, class_num, is_training, is_testing, is_ternary, is_qua
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -1591,6 +1765,7 @@ def SegNet_VGG_10_v2(net, class_num, is_training, is_testing, is_ternary, is_qua
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 							
 				net, indices2, output_shape2 = utils.indice_pool(net, stride=2, scope="Pool2")
@@ -1607,6 +1782,7 @@ def SegNet_VGG_10_v2(net, class_num, is_training, is_testing, is_ternary, is_qua
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -1620,6 +1796,7 @@ def SegNet_VGG_10_v2(net, class_num, is_training, is_testing, is_ternary, is_qua
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -1633,6 +1810,7 @@ def SegNet_VGG_10_v2(net, class_num, is_training, is_testing, is_ternary, is_qua
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv3")	
 							
 				net, indices3, output_shape3 = utils.indice_pool(net, stride=2, scope="Pool3")
@@ -1652,6 +1830,7 @@ def SegNet_VGG_10_v2(net, class_num, is_training, is_testing, is_ternary, is_qua
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -1665,6 +1844,7 @@ def SegNet_VGG_10_v2(net, class_num, is_training, is_testing, is_ternary, is_qua
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -1678,6 +1858,7 @@ def SegNet_VGG_10_v2(net, class_num, is_training, is_testing, is_ternary, is_qua
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv3")
 							
 			with tf.variable_scope("112X112_D"): # 1/2 # conv2_D
@@ -1694,6 +1875,7 @@ def SegNet_VGG_10_v2(net, class_num, is_training, is_testing, is_ternary, is_qua
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -1707,6 +1889,7 @@ def SegNet_VGG_10_v2(net, class_num, is_training, is_testing, is_ternary, is_qua
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 				
 			with tf.variable_scope("224X224_D"): # 1/1 # conv1_D
@@ -1723,6 +1906,7 @@ def SegNet_VGG_10_v2(net, class_num, is_training, is_testing, is_ternary, is_qua
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=class_num, rate=1,
@@ -1736,13 +1920,16 @@ def SegNet_VGG_10_v2(net, class_num, is_training, is_testing, is_ternary, is_qua
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
+		utils.Save_Analyzsis_as_csv(Analysis, FILE)
 	return net
 	
 	
 
-def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, reuse=None, scope="SegNet_VGG_10"):
+def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, FILE, reuse=None, scope="SegNet_VGG_10"):
 	with tf.variable_scope(scope, reuse=reuse):
+		Analysis = {}
 		with tf.variable_scope("encoder"):
 			with tf.variable_scope("224X224"): # 1/1
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -1757,6 +1944,7 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -1771,6 +1959,7 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 							
 				net, indices1, output_shape1 = utils.indice_pool(net, stride=2, scope="Pool1")
@@ -1788,6 +1977,7 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
@@ -1802,6 +1992,7 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 							
 				net, indices2, output_shape2 = utils.indice_pool(net, stride=2, scope="Pool2")
@@ -1819,6 +2010,7 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
@@ -1833,6 +2025,7 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
@@ -1847,6 +2040,7 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv3")	
 							
 				net, indices3, output_shape3 = utils.indice_pool(net, stride=2, scope="Pool3")
@@ -1867,6 +2061,7 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
@@ -1881,6 +2076,7 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
@@ -1895,6 +2091,7 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv3")
 							
 			with tf.variable_scope("112X112_D"): # 1/2 # conv2_D
@@ -1912,6 +2109,7 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -1926,6 +2124,7 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 				
 			with tf.variable_scope("224X224_D"): # 1/1 # conv1_D
@@ -1943,6 +2142,7 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=class_num, rate=1,
@@ -1957,12 +2157,15 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
+		utils.Save_Analyzsis_as_csv(Analysis, FILE)
 	return net
 	
 
 def SegNet_VGG_10_depthwise_v2(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, reuse=None, scope="SegNet_VGG_10"):
 	with tf.variable_scope(scope, reuse=reuse):
+		Analysis = {}
 		with tf.variable_scope("encoder"):
 			with tf.variable_scope("224X224"): # 1/1
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -1977,6 +2180,7 @@ def SegNet_VGG_10_depthwise_v2(net, class_num, is_training, is_testing, is_terna
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -1991,6 +2195,7 @@ def SegNet_VGG_10_depthwise_v2(net, class_num, is_training, is_testing, is_terna
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 							
 				net, indices1, output_shape1 = utils.indice_pool(net, stride=2, scope="Pool1")
@@ -2008,6 +2213,7 @@ def SegNet_VGG_10_depthwise_v2(net, class_num, is_training, is_testing, is_terna
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -2022,6 +2228,7 @@ def SegNet_VGG_10_depthwise_v2(net, class_num, is_training, is_testing, is_terna
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 							
 				net, indices2, output_shape2 = utils.indice_pool(net, stride=2, scope="Pool2")
@@ -2039,6 +2246,7 @@ def SegNet_VGG_10_depthwise_v2(net, class_num, is_training, is_testing, is_terna
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -2053,6 +2261,7 @@ def SegNet_VGG_10_depthwise_v2(net, class_num, is_training, is_testing, is_terna
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -2067,6 +2276,7 @@ def SegNet_VGG_10_depthwise_v2(net, class_num, is_training, is_testing, is_terna
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv3")	
 							
 				net, indices3, output_shape3 = utils.indice_pool(net, stride=2, scope="Pool3")
@@ -2087,6 +2297,7 @@ def SegNet_VGG_10_depthwise_v2(net, class_num, is_training, is_testing, is_terna
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -2101,6 +2312,7 @@ def SegNet_VGG_10_depthwise_v2(net, class_num, is_training, is_testing, is_terna
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -2115,6 +2327,7 @@ def SegNet_VGG_10_depthwise_v2(net, class_num, is_training, is_testing, is_terna
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv3")
 							
 			with tf.variable_scope("112X112_D"): # 1/2 # conv2_D
@@ -2132,6 +2345,7 @@ def SegNet_VGG_10_depthwise_v2(net, class_num, is_training, is_testing, is_terna
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -2146,6 +2360,7 @@ def SegNet_VGG_10_depthwise_v2(net, class_num, is_training, is_testing, is_terna
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 				
 			with tf.variable_scope("224X224_D"): # 1/1 # conv1_D
@@ -2163,6 +2378,7 @@ def SegNet_VGG_10_depthwise_v2(net, class_num, is_training, is_testing, is_terna
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=class_num, rate=1,
@@ -2177,14 +2393,17 @@ def SegNet_VGG_10_depthwise_v2(net, class_num, is_training, is_testing, is_terna
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
+		utils.Save_Analyzsis_as_csv(Analysis, FILE)
 	return net
 	
 	
 
 
-def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, reuse=None, scope="SegNet_VGG_10"):
+def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, FILE, reuse=None, scope="SegNet_VGG_10"):
 	with tf.variable_scope(scope, reuse=reuse):
+		Analysis = {}
 		with tf.variable_scope("encoder"):
 			with tf.variable_scope("224X224"): # 1/1
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -2199,6 +2418,7 @@ def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, 
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -2213,6 +2433,7 @@ def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, 
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 							
 				net, indices1, output_shape1 = utils.indice_pool(net, stride=2, scope="Pool1")
@@ -2231,6 +2452,7 @@ def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, 
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
@@ -2246,6 +2468,7 @@ def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, 
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 							
 				net, indices2, output_shape2 = utils.indice_pool(net, stride=2, scope="Pool2")
@@ -2264,6 +2487,7 @@ def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, 
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
@@ -2279,6 +2503,7 @@ def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, 
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
@@ -2294,6 +2519,7 @@ def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, 
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv3")	
 							
 				net, indices3, output_shape3 = utils.indice_pool(net, stride=2, scope="Pool3")
@@ -2315,6 +2541,7 @@ def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, 
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
@@ -2330,6 +2557,7 @@ def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, 
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
@@ -2345,6 +2573,7 @@ def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, 
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv3")
 							
 			with tf.variable_scope("112X112_D"): # 1/2 # conv2_D
@@ -2363,6 +2592,7 @@ def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, 
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -2378,6 +2608,7 @@ def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, 
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 				
 			with tf.variable_scope("224X224_D"): # 1/1 # conv1_D
@@ -2395,6 +2626,7 @@ def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, 
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=class_num, rate=1,
@@ -2409,14 +2641,17 @@ def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, 
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
+		utils.Save_Analyzsis_as_csv(Analysis, FILE)
 	return net
 	
 
 
 
-def SegNet_VGG_10_residual_v2(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, reuse=None, scope="SegNet_VGG_10"):
+def SegNet_VGG_10_residual_v2(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, FILE, reuse=None, scope="SegNet_VGG_10"):
 	with tf.variable_scope(scope, reuse=reuse):
+		Analysis = {}
 		with tf.variable_scope("encoder"):
 			with tf.variable_scope("224X224"): # 1/1
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -2431,6 +2666,7 @@ def SegNet_VGG_10_residual_v2(net, class_num, is_training, is_testing, is_ternar
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -2445,6 +2681,7 @@ def SegNet_VGG_10_residual_v2(net, class_num, is_training, is_testing, is_ternar
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 							
 				net, indices1, output_shape1 = utils.indice_pool(net, stride=2, scope="Pool1")
@@ -2463,6 +2700,7 @@ def SegNet_VGG_10_residual_v2(net, class_num, is_training, is_testing, is_ternar
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -2478,6 +2716,7 @@ def SegNet_VGG_10_residual_v2(net, class_num, is_training, is_testing, is_ternar
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 							
 				net, indices2, output_shape2 = utils.indice_pool(net, stride=2, scope="Pool2")
@@ -2496,6 +2735,7 @@ def SegNet_VGG_10_residual_v2(net, class_num, is_training, is_testing, is_ternar
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -2511,6 +2751,7 @@ def SegNet_VGG_10_residual_v2(net, class_num, is_training, is_testing, is_ternar
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -2526,6 +2767,7 @@ def SegNet_VGG_10_residual_v2(net, class_num, is_training, is_testing, is_ternar
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv3")	
 							
 				net, indices3, output_shape3 = utils.indice_pool(net, stride=2, scope="Pool3")
@@ -2547,6 +2789,7 @@ def SegNet_VGG_10_residual_v2(net, class_num, is_training, is_testing, is_ternar
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -2562,6 +2805,7 @@ def SegNet_VGG_10_residual_v2(net, class_num, is_training, is_testing, is_ternar
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -2577,6 +2821,7 @@ def SegNet_VGG_10_residual_v2(net, class_num, is_training, is_testing, is_ternar
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv3")
 							
 			with tf.variable_scope("112X112_D"): # 1/2 # conv2_D
@@ -2595,6 +2840,7 @@ def SegNet_VGG_10_residual_v2(net, class_num, is_training, is_testing, is_ternar
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -2610,6 +2856,7 @@ def SegNet_VGG_10_residual_v2(net, class_num, is_training, is_testing, is_ternar
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 				
 			with tf.variable_scope("224X224_D"): # 1/1 # conv1_D
@@ -2627,6 +2874,7 @@ def SegNet_VGG_10_residual_v2(net, class_num, is_training, is_testing, is_ternar
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=class_num, rate=1,
@@ -2641,14 +2889,17 @@ def SegNet_VGG_10_residual_v2(net, class_num, is_training, is_testing, is_ternar
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
+		utils.Save_Analyzsis_as_csv(Analysis, FILE)
 	return net
 	
 
 
 
-def SegNet_VGG_10_SEP(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, reuse=None, scope="SegNet_VGG_10"):
+def SegNet_VGG_10_SEP(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, FILE, reuse=None, scope="SegNet_VGG_10"):
 	with tf.variable_scope(scope, reuse=reuse):
+		Analysis = {}
 		with tf.variable_scope("encoder"):
 			with tf.variable_scope("224X224"): # 1/1
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
@@ -2662,20 +2913,22 @@ def SegNet_VGG_10_SEP(net, class_num, is_training, is_testing, is_ternary, is_qu
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
-							is_shortcut		= False, 
-							is_bottleneck	= False, 
-							is_batch_norm	= True, 
-							is_training		= is_training, 
-							is_testing		= is_testing, 
-							is_dilated		= False, 
-							is_ternary      = is_ternary,
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= True, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary      		= is_ternary,
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
-							scope			= "conv2")	
+							Analysis				= Analysis,
+							scope					= "conv2")	
 							
 				net, indices1, output_shape1 = utils.indice_pool(net, stride=2, scope="Pool1")
 				
@@ -2692,6 +2945,7 @@ def SegNet_VGG_10_SEP(net, class_num, is_training, is_testing, is_ternary, is_qu
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net, indices2, output_shape2 = utils.indice_pool(net, stride=2, scope="Pool2")
@@ -2708,6 +2962,7 @@ def SegNet_VGG_10_SEP(net, class_num, is_training, is_testing, is_ternary, is_qu
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, internal_channel=128, output_channel=256, rate=1,
@@ -2722,6 +2977,7 @@ def SegNet_VGG_10_SEP(net, class_num, is_training, is_testing, is_ternary, is_qu
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
 							
 				net, indices3, output_shape3 = utils.indice_pool(net, stride=2, scope="Pool3")
@@ -2741,6 +2997,7 @@ def SegNet_VGG_10_SEP(net, class_num, is_training, is_testing, is_ternary, is_qu
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, internal_channel=64, output_channel=128, rate=1,
@@ -2755,6 +3012,7 @@ def SegNet_VGG_10_SEP(net, class_num, is_training, is_testing, is_ternary, is_qu
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")
 							
 			with tf.variable_scope("112X112_D"): # 1/2 # conv2_D
@@ -2772,6 +3030,7 @@ def SegNet_VGG_10_SEP(net, class_num, is_training, is_testing, is_ternary, is_qu
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")	
 				
 			with tf.variable_scope("224X224_D"): # 1/1 # conv1_D
@@ -2788,6 +3047,7 @@ def SegNet_VGG_10_SEP(net, class_num, is_training, is_testing, is_ternary, is_qu
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv1")
 							
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=class_num, rate=1,
@@ -2801,6 +3061,480 @@ def SegNet_VGG_10_SEP(net, class_num, is_training, is_testing, is_ternary, is_qu
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
 							scope					= "conv2")	
+		utils.Save_Analyzsis_as_csv(Analysis, FILE)
+	return net
+	
+
+def SegNet_VGG_16_5x5(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, FILE, reuse=None, scope="SegNet_VGG_16"):
+	with tf.variable_scope(scope, reuse=reuse):
+		Analysis = {}
+		with tf.variable_scope("encoder"):
+			with tf.variable_scope("224X224"): # 1/1
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= True, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary      		= is_ternary,
+							is_quantized_activation = is_quantized_activation,
+							IS_TERNARY				= IS_TERNARY,
+							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
+							scope					= "conv1")
+
+				tf.add_to_collection("partial_output", net)
+							
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= True, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary     			= is_ternary,
+							is_quantized_activation = is_quantized_activation,
+							IS_TERNARY				= IS_TERNARY,
+							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
+							scope					= "conv2")	
+							
+				tf.add_to_collection("partial_output", net)
+
+				net, indices1, output_shape1 = utils.indice_pool(net, stride=2, scope="Pool1")
+				
+			with tf.variable_scope("112X112"): # 1/2
+				tf.add_to_collection("partial_output", net)
+							
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= True, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary      		= is_ternary,
+							is_quantized_activation = is_quantized_activation,
+							IS_TERNARY				= IS_TERNARY,
+							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
+							scope					= "conv1")
+							
+				tf.add_to_collection("partial_output", net)
+
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= True, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary      		= is_ternary,
+							is_quantized_activation = is_quantized_activation,
+							IS_TERNARY				= IS_TERNARY,
+							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
+							scope					= "conv2")	
+							
+				tf.add_to_collection("partial_output", net)
+
+				net, indices2, output_shape2 = utils.indice_pool(net, stride=2, scope="Pool2")
+				
+			with tf.variable_scope("56X56"): # 1/4
+				tf.add_to_collection("partial_output", net)
+							
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1, 
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= True, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary     			= is_ternary,
+							is_quantized_activation = is_quantized_activation,
+							IS_TERNARY				= IS_TERNARY,
+							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
+							scope					= "conv1")
+							
+				tf.add_to_collection("partial_output", net)
+
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= True, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary      		= is_ternary,
+							is_quantized_activation = is_quantized_activation,
+							IS_TERNARY				= IS_TERNARY,
+							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
+							scope					= "conv2")	
+							
+				tf.add_to_collection("partial_output", net)
+
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= True, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary     			= is_ternary,
+							is_quantized_activation = is_quantized_activation,
+							IS_TERNARY				= IS_TERNARY,
+							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
+							scope					= "conv3")	
+							
+				tf.add_to_collection("partial_output", net)
+				
+				net, indices3, output_shape3 = utils.indice_pool(net, stride=2, scope="Pool3")
+				
+			with tf.variable_scope("28X28"): # 1/8
+				tf.add_to_collection("partial_output", net)
+							
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= True, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary      		= is_ternary,
+							is_quantized_activation = is_quantized_activation,
+							IS_TERNARY				= IS_TERNARY,
+							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
+							scope					= "conv1")
+							
+				tf.add_to_collection("partial_output", net)
+
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= True, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary      		= is_ternary,
+							is_quantized_activation = is_quantized_activation,
+							IS_TERNARY				= IS_TERNARY,
+							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
+							scope					= "conv2")	
+							
+				tf.add_to_collection("partial_output", net)
+
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= True, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary     			= is_ternary,
+							is_quantized_activation = is_quantized_activation,
+							IS_TERNARY				= IS_TERNARY,
+							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
+							scope					= "conv3")		
+							
+				tf.add_to_collection("partial_output", net)
+
+				net, indices4, output_shape4 = utils.indice_pool(net, stride=2, scope="Pool4")
+				
+			with tf.variable_scope("14X14"): # 1/16
+				tf.add_to_collection("partial_output", net)
+							
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= True, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary      		= is_ternary,
+							is_quantized_activation = is_quantized_activation,
+							IS_TERNARY				= IS_TERNARY,
+							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
+							scope					= "conv1")
+							
+				tf.add_to_collection("partial_output", net)
+
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= True, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary      		= is_ternary,
+							is_quantized_activation = is_quantized_activation,
+							IS_TERNARY				= IS_TERNARY,
+							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
+							scope					= "conv2")	
+							
+				tf.add_to_collection("partial_output", net)
+
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= True, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary      		= is_ternary,
+							is_quantized_activation = is_quantized_activation,
+							IS_TERNARY				= IS_TERNARY,
+							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
+							scope					= "conv3")		
+							
+				tf.add_to_collection("partial_output", net)
+
+				net, indices5, output_shape5 = utils.indice_pool(net, stride=2, scope="Pool5")
+						
+		with tf.variable_scope("decoder"):
+			with tf.variable_scope("14X14_D"): # 1/ # conv5_D
+				net = utils.indice_unpool(net, stride=2, output_shape=output_shape5, indices=indices5, scope="unPool5")
+				
+				tf.add_to_collection("partial_output", net)
+							
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= True, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary      		= is_ternary,
+							is_quantized_activation = is_quantized_activation,
+							IS_TERNARY				= IS_TERNARY,
+							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
+							scope					= "conv1")
+
+				tf.add_to_collection("partial_output", net)
+							
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= True, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary      		= is_ternary,
+							is_quantized_activation = is_quantized_activation,
+							IS_TERNARY				= IS_TERNARY,
+							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
+							scope					= "conv2")	
+							
+				tf.add_to_collection("partial_output", net)
+							
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= True, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary      		= is_ternary,
+							is_quantized_activation = is_quantized_activation,
+							IS_TERNARY				= IS_TERNARY,
+							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
+							scope					= "conv3")							
+				
+				tf.add_to_collection("partial_output", net)
+
+			with tf.variable_scope("28X28_D"): # 1/8 # conv4_D
+				net = utils.indice_unpool(net, stride=2, output_shape=output_shape4, indices=indices4, scope="unPool4")
+				
+				tf.add_to_collection("partial_output", net)
+
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= True, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary      		= is_ternary,
+							is_quantized_activation = is_quantized_activation,
+							IS_TERNARY				= IS_TERNARY,
+							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
+							scope					= "conv1")
+							
+				tf.add_to_collection("partial_output", net)
+
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= True, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary      		= is_ternary,
+							is_quantized_activation = is_quantized_activation,
+							IS_TERNARY				= IS_TERNARY,
+							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
+							scope					= "conv2")	
+							
+				tf.add_to_collection("partial_output", net)
+
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= True, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary      		= is_ternary,
+							is_quantized_activation = is_quantized_activation,
+							IS_TERNARY				= IS_TERNARY,
+							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
+							scope					= "conv3")
+				
+				tf.add_to_collection("partial_output", net)
+
+			with tf.variable_scope("56X56_D"): # 1/4 # conv3_D
+				net = utils.indice_unpool(net, stride=2, output_shape=output_shape3, indices=indices3, scope="unPool3")
+				
+				tf.add_to_collection("partial_output", net)
+
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= True, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary     			= is_ternary,
+							is_quantized_activation = is_quantized_activation,
+							IS_TERNARY				= IS_TERNARY,
+							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
+							scope					= "conv1")
+							
+				tf.add_to_collection("partial_output", net)
+
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= True, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary     			= is_ternary,
+							is_quantized_activation = is_quantized_activation,
+							IS_TERNARY				= IS_TERNARY,
+							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
+							scope					= "conv2")
+							
+				tf.add_to_collection("partial_output", net)
+
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= True, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary     			= is_ternary,
+							is_quantized_activation = is_quantized_activation,
+							IS_TERNARY				= IS_TERNARY,
+							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
+							scope					= "conv3")
+							
+				tf.add_to_collection("partial_output", net)
+
+			with tf.variable_scope("112X112_D"): # 1/2 # conv2_D
+				net = utils.indice_unpool(net, stride=2, output_shape=output_shape2, indices=indices2, scope="unPool2")
+				
+				tf.add_to_collection("partial_output", net)
+
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= True, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary      		= is_ternary,
+							is_quantized_activation = is_quantized_activation,
+							IS_TERNARY				= IS_TERNARY,
+							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
+							scope					= "conv1")
+							
+				tf.add_to_collection("partial_output", net)
+
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= True, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary      		= is_ternary,
+							is_quantized_activation = is_quantized_activation,
+							IS_TERNARY				= IS_TERNARY,
+							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
+							scope					= "conv2")	
+				
+				tf.add_to_collection("partial_output", net)
+
+			with tf.variable_scope("224X224_D"): # 1/1 # conv1_D
+				net = utils.indice_unpool(net, stride=2, output_shape=output_shape1, indices=indices1, scope="unPool1")
+				
+				tf.add_to_collection("partial_output", net)
+
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= True, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary      		= is_ternary,
+							is_quantized_activation = is_quantized_activation,
+							IS_TERNARY				= IS_TERNARY,
+							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
+							scope					= "conv1")
+							
+				tf.add_to_collection("partial_output", net)
+
+				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=class_num, rate=1,
+							is_shortcut				= False, 
+							is_bottleneck			= False, 
+							is_batch_norm			= False, 
+							is_training				= is_training, 
+							is_testing				= is_testing, 
+							is_dilated				= False, 
+							is_ternary      		= is_ternary,
+							is_quantized_activation = is_quantized_activation,
+							IS_TERNARY				= IS_TERNARY,
+							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+							Analysis				= Analysis,
+							scope					= "conv2")	
+
+				tf.add_to_collection("partial_output", net)
+		utils.Save_Analyzsis_as_csv(Analysis, FILE)
 	return net
 	
