@@ -1013,36 +1013,61 @@ def ternarize_biases(float32_biases, ternary_biases_bd):
 
 	return ternary_biases
 
-def Analyzer(Analysis, net, type, kernel_shape=None, stride=None,
-			is_depth_wise=False,
+def Analyzer(Analysis, net, type, kernel_shape=None, stride=0, group=1,
+			is_depthwise=False,
+			padding='SAME',
 			name=None):
-	
-	[B, H, W, D] = net.get_shape().as_list() # B:Batch // H:Height // W:Width // D:Depth
-	h = 0 
-	w = 0 
-	i = 0 
-	o = 0 
+	if net !=None:
+		[B, H, W, D] = net.get_shape().as_list() # B:Batch // H:Height // W:Width // D:Depth
+		h = 0 
+		w = 0 
+		i = 0 
+		o = 0
+
 	if kernel_shape!=None:
 		[h, w, i, o] = kernel_shape # h:Kernel Height // w:Kernel Width // i:input channel // o:output channel
 	
+	if is_depthwise:
+		name = name + '_Depthwise'
+		o = 1
+	else: 
+		group = 1
 
 	if type=='CONV':
-		if is_depth_wise:
-			macc = H*W*h*w*D / (stride*stride)
-			comp = 0
-			add  = 0
-			div  = 0
-			exp  = 0
-			activation = H*W*D / (stride*stride)
-			param = h*w*i
-		else:
-			macc = H*W*h*w*i*o / (stride*stride)
-			comp = 0
-			add  = 0
-			div  = 0
-			exp  = 0
-			activation = H*W*o / (stride*stride)
-			param = h*w*i*o
+		if padding=='SAME':
+			if is_depthwise:
+				macc = H*W*h*w*D*group / (stride*stride)
+				comp = 0
+				add  = 0
+				div  = 0
+				exp  = 0
+				activation = H*W*D / (stride*stride)
+				param = h*w*i
+			else:
+				macc = H*W*h*w*i*o / (stride*stride)
+				comp = 0
+				add  = 0
+				div  = 0
+				exp  = 0
+				activation = H*W*o / (stride*stride)
+				param = h*w*i*o
+		elif padding=='VALID':
+			if is_depthwise:
+				macc = (H-h+1)*(W-w+1)*h*w*D*group / (stride*stride)
+				comp = 0
+				add  = 0
+				div  = 0
+				exp  = 0
+				activation = (H-h+1)*(W-w+1)*D / (stride*stride)
+				param = h*w*i
+			else:
+				macc = (H-h+1)*(W-w+1)*h*w*i*o / (stride*stride)
+				comp = 0
+				add  = 0
+				div  = 0
+				exp  = 0
+				activation = (H-h+1)*(W-w+1)*o / (stride*stride) 
+				param = h*w*i*o
 	elif type=='POOL':
 		macc = 0
 		comp = h*w*H*W*D / (stride*stride)
@@ -1066,7 +1091,98 @@ def Analyzer(Analysis, net, type, kernel_shape=None, stride=None,
 		exp  = 0
 		activation = H*W*D
 		param = 0
+	elif type=='DATA':
+		macc = 0
+		comp = 0
+		add  = 0
+		div  = 0
+		exp  = 0
+		activation = H*W*D
+		param = 0
+	elif type=='ADD':
+		macc = 0
+		comp = 0
+		add  = H*W*D
+		div  = 0
+		exp  = 0
+		activation = H*W*D
+		param = 0
+	elif type=='TOTAL':
+		name   		= 'Total' 
+		H      		= 'None'
+		W      		= 'None'
+		D      		= 'None'
+		h      		= 'None'
+		w      		= 'None'
+		i      		= 'None' 
+		o      		= 'None'
+		stride 		= 'None'
+		activation  = 'None' 
+		param	    = 'None'
+
+		for i, key in enumerate(Analysis.keys()):
+			if i==0:
+				macc   	     = Analysis[key]['Macc'] 
+				comp   	     = Analysis[key]['Comp'] 
+				add    	     = Analysis[key]['Add'] 
+				div    	     = Analysis[key]['Div'] 
+				exp    	     = Analysis[key]['Exp'] 
+				PE_row       = Analysis[key]['PE Height']
+				PE_col       = Analysis[key]['PE Width']
+				Macc_Cycle   = Analysis[key]['Macc Cycle'] 
+				Input_Cycle  = Analysis[key]['Input Cycle']
+				Kernel_Cycle = Analysis[key]['Kernel Cycle']
+				Output_Cycle = Analysis[key]['Output Cycle']
+				Bottleneck   = Analysis[key]['Bottleneck']
+			else:
+				macc   	     = macc         + Analysis[key]['Macc'] 
+				comp   	     = comp         + Analysis[key]['Comp'] 
+				add    	     = add          + Analysis[key]['Add'] 
+				div    	     = div          + Analysis[key]['Div'] 
+				exp    	     = exp          + Analysis[key]['Exp'] 
+				Macc_Cycle   = Macc_Cycle   + Analysis[key]['Macc Cycle'] 
+				Input_Cycle  = Input_Cycle  + Analysis[key]['Input Cycle']
+				Kernel_Cycle = Kernel_Cycle + Analysis[key]['Kernel Cycle']
+				Output_Cycle = Output_Cycle + Analysis[key]['Output Cycle']
+				Bottleneck   = Bottleneck   + Analysis[key]['Bottleneck']
 	
+	# Estimate the Cycle Times which will be taken in hardware
+	## Hardware Environment
+	if type!='TOTAL':
+		PE_row = 14
+		PE_col = 12
+		
+		Tile_row = 8
+		Tile_col = 8
+
+		Data_Bits = 32
+
+		Memory_Bandwidth = 128
+
+		## Some Meaningful Variable
+		Kernel_Retake_Times = (H * W) / (Tile_row * Tile_col)
+		Partial_Output_Times = 1
+		Input_Retake_Times = 1
+		if type=='CONV':
+			if is_depthwise:
+				Input_Retake_Times = 1
+			else:
+				Input_Retake_Times = o / (PE_row*PE_col/(h*w))
+			if Input_Retake_Times<1:
+				Input_Retake_Times = 1
+		Data_Access_In_One_Cycle = Memory_Bandwidth / Data_Bits
+
+		## Cycle times
+		Macc_Cycle   = macc / (PE_row * PE_col)
+		Input_Cycle  = (H * W * D) * (Input_Retake_Times) / (Data_Access_In_One_Cycle)		 
+		if type=='CONV':
+			Kernel_Cycle = (h * w * i * o * group) * (Kernel_Retake_Times) / (Data_Access_In_One_Cycle)		
+		else:
+			Kernel_Cycle = 0 
+		Output_Cycle = (activation) * (Partial_Output_Times) / (Data_Access_In_One_Cycle)		 
+		Bottleneck = max(Macc_Cycle, Input_Cycle, Kernel_Cycle, Output_Cycle)
+		
+
 	components = {'name'         : name, 
 				  'Input Height' : H,
 				  'Input Width'  : W,
@@ -1083,9 +1199,18 @@ def Analyzer(Analysis, net, type, kernel_shape=None, stride=None,
 				  'Div'          : div, 
 				  'Exp'          : exp, 
 				  'Activation'   : activation, 
-				  'Param'        : param}
+				  'Param'        : param,
+				  'PE Height'	 : PE_row,
+				  'PE Width'	 : PE_col,
+				  'Macc Cycle'	 : Macc_Cycle,
+				  'Input Cycle'	 : Input_Cycle,
+				  'Kernel Cycle' : Kernel_Cycle,
+				  'Output Cycle' : Output_Cycle,
+				  'Bottleneck'   : Bottleneck}
 
 	if len(Analysis.keys())<10:
+		layer_now = '00' + str(len(Analysis.keys()))
+	elif len(Analysis.keys())<100:
 		layer_now = '0' + str(len(Analysis.keys()))
 	else:
 		layer_now = str(len(Analysis.keys()))
@@ -1097,6 +1222,8 @@ def Analyzer(Analysis, net, type, kernel_shape=None, stride=None,
 	return Analysis
 
 def Save_Analyzsis_as_csv(Analysis, FILE):
+	Analyzer(Analysis, net=None, type='TOTAL')
+
 	keys = sorted(Analysis.keys())
 	
 	components = np.array(['name'          ,
@@ -1115,7 +1242,14 @@ def Save_Analyzsis_as_csv(Analysis, FILE):
 				           'Div'           ,
 				           'Exp'           ,
 				           'Activation'    , 
-				           'Param'         ])
+				           'Param'         ,
+				  		   'PE Height'	   ,
+				  		   'PE Width'	   ,
+				  		   'Macc Cycle'	   ,
+				  		   'Input Cycle'   ,
+				  		   'Kernel Cycle'  ,
+				  		   'Output Cycle'  ,
+				  		   'Bottleneck'    ])
 
 	Ana = np.expand_dims(components, axis=1)
 	for i, key in enumerate(keys):
@@ -1154,6 +1288,9 @@ def shortcut_Module( net, kernel_size, stride, input_channel, internal_channel, 
 											  IS_TERNARY		= IS_TERNARY,
 											  is_depthwise		= False)
 			# convolution
+			#   Analyzer   #
+			Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[1,1,input_channel, output_channel], stride=1, is_depthwise=False, name='Shortcut')
+
 			if is_dilated: 
 				shortcut = tf.nn.atrous_conv2d(net, weights, rate=rate, padding=padding)
 			else:
@@ -1167,12 +1304,6 @@ def shortcut_Module( net, kernel_size, stride, input_channel, internal_channel, 
 				shortcut = batch_norm(shortcut, is_training, is_testing, IS_SAVER)
 			if is_depthwise:
 				shortcut = tf.nn.relu(shortcut)
-
-			################
-			#   Analyzer   #
-			################
-			Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[1,1,input_channel, output_channel], stride=1, is_depth_wise=False, name='Shortcut')
-
 		else:
 			shortcut = net
 
@@ -1207,29 +1338,26 @@ def SEP_Module(net, kernel_size, stride, input_channel, internal_channel, output
 											  is_depthwise		= False)
 
 			# convolution
+			#   Analyzer   #
+			Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[1,1,input_channel, internal_channel], stride=1, is_depthwise=False, name='SEP_Module/Reduction/Conv')
+
 			if is_dilated:
 				net = tf.nn.atrous_conv2d(net, weights, rate=rate, padding="SAME")
 			else:
 				net = tf.nn.conv2d(net, weights, strides=[1, 1, 1, 1], padding="SAME")
-
-			################
-			#   Analyzer   #
-			################
-			Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[1,1,input_channel, internal_channel], stride=1, is_depth_wise=False, name='SEP_Module/Reduction/Conv')
-
+			
 			# add bias
 			net = tf.nn.bias_add(net, biases)
 			
 			# batch normalization
 			if is_batch_norm == True:
 				net = batch_norm(net, is_training, is_testing, IS_SAVER)
-
+			
+			# Relu
+			#   Analyzer   #
+			#Analysis = Analyzer(Analysis, net, type='RELU', name='SEP_Module/Reduction/Activation')
 			net = tf.nn.relu(net)
 
-			################
-			#   Analyzer   #
-			################
-			Analysis = Analyzer(Analysis, net, type='RELU', name='SEP_Module/Reduction/Activation')
 
 		with tf.variable_scope("PatternConv1"):
 			with tf.variable_scope("Pattern"):
@@ -1244,6 +1372,9 @@ def SEP_Module(net, kernel_size, stride, input_channel, internal_channel, output
 												  is_depthwise     = is_depthwise)
 												  
 				# convolution
+				#   Analyzer   #
+				Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[kernel_size,kernel_size,internal_channel, internal_channel], stride=stride, is_depthwise=is_depthwise, name='SEP_Module/PatternConv1/Pattern/Conv')
+
 				if is_dilated:
 					if is_depthwise:
 						Pattern = depthwise_atrous_conv2d(net, weights, rate, padding=padding)	
@@ -1254,12 +1385,7 @@ def SEP_Module(net, kernel_size, stride, input_channel, internal_channel, output
 						Pattern = tf.nn.depthwise_conv2d(net, weights, strides=[1, stride, stride, 1], padding=padding)	
 					else:
 						Pattern = tf.nn.conv2d(net, weights, strides=[1, stride, stride, 1], padding=padding)
-
-				################
-				#   Analyzer   #
-				################
-				Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[kernel_size,kernel_size,internal_channel, internal_channel], stride=stride, is_depth_wise=is_depthwise, name='SEP_Module/PatternConv1/Pattern/Conv')
-
+				
 				# add bias
 				Pattern = tf.nn.bias_add(Pattern, biases)
 
@@ -1267,13 +1393,11 @@ def SEP_Module(net, kernel_size, stride, input_channel, internal_channel, output
 				if is_batch_norm == True:
 					Pattern = batch_norm(Pattern, is_training, is_testing, IS_SAVER)
 				#relu
+				#   Analyzer   #
+				#Analysis = Analyzer(Analysis, net, type='RELU', name='SEP_Module/PatternConv1/Pattern/Activation')
+				
 				Pattern = tf.nn.relu(Pattern)
 
-				################
-				#   Analyzer   #
-				################
-				Analysis = Analyzer(Analysis, net, type='RELU', name='SEP_Module/PatternConv1/Pattern/Activation')
-				
 				if IS_QUANTIZED_ACTIVATION:
 					quantized_net = quantize_activation(Pattern)
 					Pattern = tf.cond(is_quantized_activation, lambda: quantized_net, lambda: Pattern)
@@ -1313,6 +1437,9 @@ def SEP_Module(net, kernel_size, stride, input_channel, internal_channel, output
 												  is_depthwise		= False)
 
 				# convolution
+				#   Analyzer   #
+				Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[1,1,internal_channel, internal_channel], stride=1, is_depthwise=False, name='SEP_Module/PatternConv1/Pattern_Residual/Conv')
+
 				if is_dilated:
 					Pattern_Residual = tf.nn.atrous_conv2d(net, weights, rate=rate, padding="SAME")
 				else:
@@ -1321,21 +1448,16 @@ def SEP_Module(net, kernel_size, stride, input_channel, internal_channel, output
 				# add bias
 				Pattern_Residual = tf.nn.bias_add(Pattern_Residual, biases)
 				
-				################
-				#   Analyzer   #
-				################
-				Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[1,1,internal_channel, internal_channel], stride=1, is_depth_wise=False, name='SEP_Module/PatternConv1/Pattern_Residual/Conv')
-
 				# batch normalization
 				if is_batch_norm == True:
 					Pattern_Residual = batch_norm(Pattern_Residual, is_training, is_testing, IS_SAVER)
 					
 				Pattern_Residual = tf.nn.relu(Pattern_Residual)
-
-				################
+				
+				# Relu
 				#   Analyzer   #
-				################
-				Analysis = Analyzer(Analysis, net, type='RELU', name='SEP_Module/PatternConv1/Pattern_Residual/Activation')
+				#Analysis = Analyzer(Analysis, net, type='RELU', name='SEP_Module/PatternConv1/Pattern_Residual/Activation')
+				Pattern_Residual = tf.nn.relu(Pattern_Residual)
 
 		# Adding Pattern and Pattern Residual
 		net = tf.add(Pattern, Pattern_Residual)
@@ -1353,6 +1475,9 @@ def SEP_Module(net, kernel_size, stride, input_channel, internal_channel, output
 												  is_depthwise     = is_depthwise)
 												  
 				# convolution
+				#   Analyzer   #
+				Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[kernel_size,kernel_size,internal_channel, internal_channel/2], stride=1, is_depthwise=is_depthwise, name='SEP_Module/PatternConv2/Pattern/Conv')
+
 				if is_dilated:
 					if is_depthwise:
 						Pattern = depthwise_atrous_conv2d(net, weights, rate, padding=padding)	
@@ -1367,23 +1492,17 @@ def SEP_Module(net, kernel_size, stride, input_channel, internal_channel, output
 				# add bias
 				Pattern = tf.nn.bias_add(Pattern, biases)
 
-				################
-				#   Analyzer   #
-				################
-				Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[kernel_size,kernel_size,internal_channel, internal_channel/2], stride=1, is_depth_wise=is_depthwise, name='SEP_Module/PatternConv2/Pattern/Conv')
-
+				
 				# batch normalization
 				if is_batch_norm == True:
 					Pattern = batch_norm(Pattern, is_training, is_testing, IS_SAVER)
 
 				#relu
+				#   Analyzer   #
+				#Analysis = Analyzer(Analysis, net, type='RELU', name='SEP_Module/PatternConv2/Pattern/Activation')
+
 				Pattern = tf.nn.relu(Pattern)
 				
-				################
-				#   Analyzer   #
-				################
-				Analysis = Analyzer(Analysis, net, type='RELU', name='SEP_Module/PatternConv2/Pattern/Activation')
-
 				if IS_QUANTIZED_ACTIVATION:
 					quantized_net = quantize_activation(Pattern)
 					Pattern = tf.cond(is_quantized_activation, lambda: quantized_net, lambda: Pattern)
@@ -1423,6 +1542,9 @@ def SEP_Module(net, kernel_size, stride, input_channel, internal_channel, output
 												  is_depthwise		= False)
 
 				# convolution
+				#   Analyzer   #
+				Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[1,1,internal_channel, internal_channel/2], stride=1, is_depthwise=False, name='SEP_Module/PatternConv2/Pattern_Residual/Conv')
+
 				if is_dilated:
 					Pattern_Residual = tf.nn.atrous_conv2d(net, weights, rate=rate, padding="SAME")
 				else:
@@ -1431,22 +1553,14 @@ def SEP_Module(net, kernel_size, stride, input_channel, internal_channel, output
 				# add bias
 				Pattern_Residual = tf.nn.bias_add(Pattern_Residual, biases)
 				
-				################
-				#   Analyzer   #
-				################
-				Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[1,1,internal_channel, internal_channel/2], stride=1, is_depth_wise=False, name='SEP_Module/PatternConv2/Pattern_Residual/Conv')
-
 				# batch normalization
 				if is_batch_norm == True:
 					Pattern_Residual = batch_norm(Pattern_Residual, is_training, is_testing, IS_SAVER)
 
 				# Relu	
-				Pattern_Residual = tf.nn.relu(Pattern_Residual)
-
-				################
 				#   Analyzer   #
-				################
-				Analysis = Analyzer(Analysis, net, type='RELU', name='SEP_Module/PatternConv2/Pattern_Residual/Activation')
+				#Analysis = Analyzer(Analysis, net, type='RELU', name='SEP_Module/PatternConv2/Pattern_Residual/Activation')
+				Pattern_Residual = tf.nn.relu(Pattern_Residual)
 
 		# Adding Pattern and Pattern Residual
 		net = tf.add(Pattern, Pattern_Residual)
@@ -1463,6 +1577,9 @@ def SEP_Module(net, kernel_size, stride, input_channel, internal_channel, output
 											  is_depthwise		= False)
 
 			# convolution
+			#   Analyzer   #
+			Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[1,1,internal_channel/2, output_channel], stride=1, is_depthwise=False, name='SEP_Module/Recovery/Conv')
+
 			if is_dilated:
 				net = tf.nn.atrous_conv2d(net, weights, rate=rate, padding="SAME")
 			else:
@@ -1471,21 +1588,14 @@ def SEP_Module(net, kernel_size, stride, input_channel, internal_channel, output
 			# add bias
 			net = tf.nn.bias_add(net, biases)
 			
-			################
-			#   Analyzer   #
-			################
-			Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[1,1,internal_channel/2, output_channel], stride=1, is_depth_wise=False, name='SEP_Module/Recovery/Conv')
-
 			# batch normalization
 			if is_batch_norm == True:
 				net = batch_norm(net, is_training, is_testing, IS_SAVER)
+				
 			# relu	
-			net = tf.nn.relu(net)
-
-			################
 			#   Analyzer   #
-			################
-			Analysis = Analyzer(Analysis, net, type='RELU', name='SEP_Module/Recovery/Activation')
+			#Analysis = Analyzer(Analysis, net, type='RELU', name='SEP_Module/Recovery/Activation')
+			net = tf.nn.relu(net)
 
 	return net	
 
@@ -1524,6 +1634,9 @@ def Residual_Block( net, kernel_size, stride, input_channel, internal_channel, o
 												  is_depthwise		= False)
 
 				# convolution
+				#   Analyzer   #
+				Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[1,1,input_channel, internal_channel], stride=1, is_depthwise=False, name='/bottle_neck/conv1_1x1/Conv')
+
 				if is_dilated:
 					net = tf.nn.atrous_conv2d(net, weights, rate=rate, padding="SAME")
 				else:
@@ -1532,22 +1645,14 @@ def Residual_Block( net, kernel_size, stride, input_channel, internal_channel, o
 				# add bias
 				net = tf.nn.bias_add(net, biases)
 				
-				################
-				#   Analyzer   #
-				################
-				Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[1,1,input_channel, internal_channel], stride=1, is_depth_wise=False, name='/bottle_neck/conv1_1x1/Conv')
-
 				# batch normalization
 				if is_batch_norm == True:
 					net = batch_norm(net, is_training, is_testing, IS_SAVER)
 
-				# Relu	
-				net = tf.nn.relu(net)
-
-				################
+				# Relu
 				#   Analyzer   #
-				################
-				Analysis = Analyzer(Analysis, net, type='RELU', name='/bottle_neck/conv1_1x1/Activation')
+				#Analysis = Analyzer(Analysis, net, type='RELU', name='/bottle_neck/conv1_1x1/Activation')				
+				net = tf.nn.relu(net)	
 
 			with tf.variable_scope("conv2_3x3"):
 				# Variable define
@@ -1561,6 +1666,9 @@ def Residual_Block( net, kernel_size, stride, input_channel, internal_channel, o
 												  is_depthwise		= is_depthwise)					
 
 				# convolution
+				#   Analyzer   #
+				Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[3,3,internal_channel, internal_channel], stride=stride, is_depthwise=is_depthwise, name='/bottle_neck/conv2_3x3/Conv')
+
 				if is_dilated:
 					if is_depthwise:
 						net = depthwise_atrous_conv2d(net, weights, rate, padding=padding)	
@@ -1575,22 +1683,14 @@ def Residual_Block( net, kernel_size, stride, input_channel, internal_channel, o
 				# add bias
 				net = tf.nn.bias_add(net, biases)
 				
-				################
-				#   Analyzer   #
-				################
-				Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[3,3,internal_channel, internal_channel], stride=stride, is_depth_wise=is_depthwise, name='/bottle_neck/conv2_3x3/Conv')
-
 				# batch normalization
 				if is_batch_norm == True:
 					net = batch_norm(net, is_training, is_testing, IS_SAVER)
 
 				# relu
-				net = tf.nn.relu(net)
-
-				################
 				#   Analyzer   #
-				################
-				Analysis = Analyzer(Analysis, net, type='RELU', name='/bottle_neck/conv2_3x3/Activation')
+				#Analysis = Analyzer(Analysis, net, type='RELU', name='/bottle_neck/conv2_3x3/Activation')
+				net = tf.nn.relu(net)
 
 			with tf.variable_scope("conv3_1x1"):
 				# Variable define
@@ -1604,6 +1704,9 @@ def Residual_Block( net, kernel_size, stride, input_channel, internal_channel, o
 												  is_depthwise		= False)
 
 				# convolution
+				#   Analyzer   #
+				Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[1,1,internal_channel, output_channel], stride=1, is_depthwise=False, name='/bottle_neck/conv3_1x1/Conv')
+
 				if is_dilated:
 					net = tf.nn.atrous_conv2d(net, weights, rate=rate, padding="SAME")
 				else:
@@ -1611,24 +1714,17 @@ def Residual_Block( net, kernel_size, stride, input_channel, internal_channel, o
 				
 				# add bias
 				net = tf.nn.bias_add(net, biases)
-				
-				################
-				#   Analyzer   #
-				################
-				Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[1,1,internal_channel, output_channel], stride=1, is_depth_wise=False, name='/bottle_neck/conv3_1x1/Conv')
-
+					
 				# batch normalization
 				if is_batch_norm == True:
 					net = batch_norm(net, is_training, is_testing, IS_SAVER)
 				
 				# relu
+				#   Analyzer   #
+				#Analysis = Analyzer(Analysis, net, type='RELU', name='/bottle_neck/conv3_1x1/Activation')
 				if is_depthwise:
 					net = tf.nn.relu(net)
 
-				################
-				#   Analyzer   #
-				################
-				Analysis = Analyzer(Analysis, net, type='RELU', name='/bottle_neck/conv3_1x1/Activation')
 
 	#===========================#
 	#	Normal Residual Block	#
@@ -1646,6 +1742,9 @@ def Residual_Block( net, kernel_size, stride, input_channel, internal_channel, o
 											  is_depthwise		= is_depthwise)
 											  
 			# convolution
+			#   Analyzer   #
+			Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[3,3,input_channel, internal_channel], stride=stride, is_depthwise=is_depthwise, name='/conv1_3x3/Conv')
+
 			if is_dilated:
 				if is_depthwise:
 					net = depthwise_atrous_conv2d(net, weights, rate, padding=padding)	
@@ -1660,22 +1759,14 @@ def Residual_Block( net, kernel_size, stride, input_channel, internal_channel, o
 			# add bias
 			net = tf.nn.bias_add(net, biases)
 			
-			################
-			#   Analyzer   #
-			################
-			Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[3,3,input_channel, internal_channel], stride=stride, is_depth_wise=is_depthwise, name='/conv1_3x3/Conv')
-
 			# batch normalization
 			if is_batch_norm == True:
 				net = batch_norm(net, is_training, is_testing, IS_SAVER)
 			
 			# Relu
-			net = tf.nn.relu(net)
-
-			################
 			#   Analyzer   #
-			################
-			Analysis = Analyzer(Analysis, net, type='RELU', name='/conv1_3x3/Activation')
+			#Analysis = Analyzer(Analysis, net, type='RELU', name='/conv1_3x3/Activation')
+			net = tf.nn.relu(net)
 
 			if is_depthwise:
 				net =  conv2D(net, kernel_size=1, stride=1, internal_channel=input_channel, output_channel=internal_channel, rate=rate,
@@ -1711,6 +1802,9 @@ def Residual_Block( net, kernel_size, stride, input_channel, internal_channel, o
 											  is_depthwise		= is_depthwise)
 			
 			# convolution
+			#   Analyzer   #
+			Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[3,3,internal_channel, output_channel], stride=stride, is_depthwise=is_depthwise, name='/conv2_3x3/Conv')
+
 			if is_dilated:
 				if is_depthwise:
 					net = depthwise_atrous_conv2d(net, weights, rate, padding=padding)	
@@ -1725,11 +1819,7 @@ def Residual_Block( net, kernel_size, stride, input_channel, internal_channel, o
 			# add bias
 			net = tf.nn.bias_add(net, biases)
 			
-			################
-			#   Analyzer   #
-			################
-			Analysis = Analyzer(Analysis, net, type='CONV', kernel_shape=[3,3,internal_channel, output_channel], stride=stride, is_depth_wise=is_depthwise, name='/conv2_3x3/Conv')
-
+			
 			# batch normalization
 			if is_batch_norm == True:
 				net = batch_norm(net, is_training, is_testing, IS_SAVER)
@@ -1737,13 +1827,10 @@ def Residual_Block( net, kernel_size, stride, input_channel, internal_channel, o
 
 			if is_depthwise:
 				# relu
-				net = tf.nn.relu(net)
-
-				################
 				#   Analyzer   #
-				################
-				Analysis = Analyzer(Analysis, net, type='RELU', name='/conv2_3x3/Conv')
-
+				#Analysis = Analyzer(Analysis, net, type='RELU', name='/conv2_3x3/Conv')
+				net = tf.nn.relu(net)
+				
 				net =  conv2D(net, kernel_size=1, stride=1, internal_channel=internal_channel, output_channel=output_channel, rate=rate,
 					   	      initializer=tf.contrib.layers.variance_scaling_initializer(),
 					   	  	  is_constant_init        = False,
@@ -1832,7 +1919,7 @@ def conv2D_Variable(kernel_size,
 		tf.add_to_collection("var_list", float32_biases)
 		return float32_weights, float32_biases
 	
-def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64, rate=1,
+def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64, rate=1, group=1,
 			initializer=tf.contrib.layers.variance_scaling_initializer(),
 			is_constant_init        = False, 		# For using constant value as weight initial; Only valid in Normal Convolution
 			is_shortcut		        = False, 		# For Residual, SEP
@@ -1900,21 +1987,21 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 		#	Shortcut Block	#
 		#===================#
 		if is_shortcut:
-			shortcut =  shortcut_Module( net, kernel_size, stride, input_channel, internal_channel, output_channel, rate,
-						  		         initializer             ,
-						  		         is_constant_init        , 
-						  		         is_batch_norm	         ,
-						  		         is_training		     ,
-						  		         is_testing		         ,
-						  		         is_dilated		         ,
-						  		         is_depthwise			 ,
-						  		         is_ternary		         ,
-						  		         is_quantized_activation ,
-						  		         IS_TERNARY			     , 	
-						  		         IS_QUANTIZED_ACTIVATION ,
-						  		         IS_SAVER				 ,
-						  		         padding			     ,
-										 Analysis				 )
+			shortcut, Analysis =  shortcut_Module( net, kernel_size, stride, input_channel, internal_channel, output_channel, rate,
+						  		         		   initializer             ,
+						  		         		   is_constant_init        , 
+						  		         		   is_batch_norm	       ,
+						  		         		   is_training		       ,
+						  		         		   is_testing		       ,
+						  		         		   is_dilated		       ,
+						  		         		   is_depthwise			   ,
+						  		         		   is_ternary		       ,
+						  		         		   is_quantized_activation ,
+						  		         		   IS_TERNARY			   , 	
+						  		         		   IS_QUANTIZED_ACTIVATION ,
+						  		         		   IS_SAVER				   ,
+						  		         		   padding			       ,
+										 		   Analysis				   )
 			if is_SEP:
 				net = net_SEP
 			else:
@@ -1922,60 +2009,69 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 					net = net_Res
 
 			# adding shortcut
+			#   Analyzer   #
+			Analysis = Analyzer(Analysis, net, type='ADD' , name='/shortcut/ADD')
+			#Analysis = Analyzer(Analysis, net, type='RELU', name='/shortcut/Activation')
 			if is_depthwise:
 				net = tf.add(net, shortcut)
 			else:
 				net = tf.nn.relu(tf.add(net, shortcut))
 			
-			################
-			#   Analyzer   #
-			################
-			Analysis = Analyzer(Analysis, net, type='RELU', name='/shortcut/Activation')
+			
 
 		#===========================================#
 		#	Normal Convolution Block (No Shortcut)  #
 		#===========================================#
 		else:  
-			# Variable define
-			weights, biases = conv2D_Variable(kernel_size      = kernel_size,
-											  input_channel	   = input_channel,		
-											  output_channel   = output_channel, 
-											  initializer      = initializer,
-											  is_constant_init = is_constant_init,
-											  is_ternary       = is_ternary,
-											  IS_TERNARY	   = IS_TERNARY,
-											  is_depthwise     = is_depthwise)
-											  
-			# convolution
-			if is_dilated:
-				if is_depthwise:
-					net = depthwise_atrous_conv2d(net, weights, rate, padding=padding)	
-				else:
-					net = tf.nn.atrous_conv2d(net, weights, rate=rate, padding=padding)
-			else:
-				if is_depthwise:
-					net = tf.nn.depthwise_conv2d(net, weights, strides=[1, stride, stride, 1], padding=padding)	
-				else:
-					net = tf.nn.conv2d(net, weights, strides=[1, stride, stride, 1], padding=padding)
-			
-			# add bias
-			net = tf.nn.bias_add(net, biases)
+			if not is_depthwise:
+				group=1
 
-			################
 			#   Analyzer   #
-			################
-			Analysin = Analyzer(Analysis, net, type='CONV', kernel_shape=[kernel_size,kernel_size, input_channel, output_channel], stride=stride, is_depth_wise=is_depthwise, name='Conv')
+			Analysin = Analyzer(Analysis, net, type='CONV', kernel_shape=[kernel_size,kernel_size, input_channel, output_channel], stride=stride, group=group, is_depthwise=is_depthwise, padding=padding, name='Conv')
+
+			for g in range(group):
+				with tf.variable_scope('group%d'%(g)):
+					# Variable define
+					weights, biases = conv2D_Variable(kernel_size      = kernel_size,
+													  input_channel	   = input_channel,		
+													  output_channel   = output_channel, 
+													  initializer      = initializer,
+													  is_constant_init = is_constant_init,
+													  is_ternary       = is_ternary,
+													  IS_TERNARY	   = IS_TERNARY,
+													  is_depthwise     = is_depthwise)
+													  
+					# convolution
+					if is_dilated:
+						if is_depthwise:
+							net_tmp = depthwise_atrous_conv2d(net, weights, rate, padding=padding)	
+						else:
+							net_tmp = tf.nn.atrous_conv2d(net, weights, rate=rate, padding=padding)
+					else:
+						if is_depthwise:
+							net_tmp = tf.nn.depthwise_conv2d(net, weights, strides=[1, stride, stride, 1], padding=padding)	
+						else:
+							net_tmp = tf.nn.conv2d(net, weights, strides=[1, stride, stride, 1], padding=padding)
+					
+					# add bias
+					net_tmp = tf.nn.bias_add(net_tmp, biases)
+
+					# merge every group net together
+					if g==0:
+						net = net_tmp
+					else:
+						#net = tf.concat([net, net_tmp], axis=3)
+						net = tf.add(net, net_tmp)
 
 			# batch normalization
 			if is_batch_norm == True:
 				net = batch_norm(net, is_training, is_testing, IS_SAVER)
-			#relu
+			# relu
+			#   Analyzer   #
+			#Analysin = Analyzer(Analysis, net, type='RELU', name='Activation')
 			net = tf.nn.relu(net)
 			
-			################
-			#   Analyzer   #
-			################
-			Analysin = Analyzer(Analysis, net, type='RELU', name='Activation')
+			
 
 			if IS_QUANTIZED_ACTIVATION:
 				quantized_net = quantize_activation(net)
@@ -2035,16 +2131,24 @@ def deconv2D(net,
 		net = tf.nn.conv2d_transpose(net, weights, output_shape, strides=[1, stride, stride, 1], padding="SAME", name=None)
 	return net
 
-def indice_pool(net, stride, scope="Pool"):
+def indice_pool(net, stride, Analysis, scope="Pool"):
 	with tf.variable_scope(scope):
 		output_shape = net.get_shape().as_list()
-		net, indices = tf.nn.max_pool_with_argmax(input=net, 
-												ksize=[1, stride, stride, 1],
-												strides=[1, stride, stride, 1],
-												padding="SAME",
-												Targmax=None,
-												name=None)
-	return net, indices, output_shape
+		################
+		#   Analyzer   #
+		################
+		Analysis = Analyzer(Analysis, net, type='POOL', kernel_shape=[stride, stride, output_shape[3], output_shape[3]], stride=stride, name='Pool')
+		
+		net, indices = tf.nn.max_pool_with_argmax( 
+			input=net, 
+			ksize=[1, stride, stride, 1],
+			strides=[1, stride, stride, 1],
+			padding="SAME",
+			Targmax=None,
+			name=None
+		)
+
+	return net, indices, output_shape, Analysis
 	
 def indice_unpool(net, stride, output_shape, indices, scope="unPool"):
 	with tf.variable_scope(scope):

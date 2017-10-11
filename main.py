@@ -7,14 +7,15 @@ from PIL import Image
 from scipy import misc
 import utils
 import Model
+import sys
 
 #=======================#
 #	Global Parameter	#
 #=======================#
-Model_Name = 'SegNet_VGG_16'
+Model_Name = sys.argv[1] #'SegNet_VGG_10'
 Model_Call = getattr(Model, Model_Name)
 print('\n\033[1;32;40mModel Name\033[0m =\033[1;37;40m {MODEL_NAME}\033[0m\n' .format(MODEL_NAME=Model_Name))
-pdb.set_trace()
+#pdb.set_trace()
 BATCH_SIZE = 3
 EPOCH_TIME = 200
 
@@ -119,12 +120,18 @@ def main(argv=None):
 	#	Data	#
 	#===========#
 	data_shape = np.shape(CamVid_train_data)
-	# Placeholder
-	xs 			            = tf.placeholder(tf.float32, [BATCH_SIZE, data_shape[1], data_shape[2], data_shape[3]]) 
+	
+	#******************#
+	#    Placeholder   #
+	#******************#
+	xs = tf.placeholder(tf.float32, [BATCH_SIZE, data_shape[1], data_shape[2], data_shape[3]]) 
+	#xs = tf.placeholder(tf.float32, [BATCH_SIZE, 224, 224, data_shape[3]]) 
+
 	if IS_PARTIAL_TRAINING:
 		ys = Model_Call(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, TRAINING_WEIGHT_FILE)
 	else:
 		ys = tf.placeholder(tf.float32, [BATCH_SIZE, data_shape[1], data_shape[2], class_num])
+
 	learning_rate           = tf.placeholder(tf.float32)
 	is_training             = tf.placeholder(tf.bool)
 	is_testing 	            = tf.placeholder(tf.bool)
@@ -138,8 +145,8 @@ def main(argv=None):
 	#	Graph	#
 	#===========#
 	net = xImage
-	prediction = Model_Call(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, TRAINING_WEIGHT_FILE)
-	#prediction = tf.nn.softmax(net)
+	prediction = Model_Call(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, 'Analysis/' + Model_Name)
+	#prediction = Model_Call(net, 1000, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, TRAINING_WEIGHT_FILE)
 	
 	if IS_GAN:
 		prediction = tf.nn.softmax(prediction) # (if no softmax)
