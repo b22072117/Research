@@ -12,14 +12,17 @@ import sys
 #=======================#
 #	Global Parameter	#
 #=======================#
-Model_Name = sys.argv[1] #'SegNet_VGG_10'
+Dataset = 'ade20k' 
+Model_first_name  = 'SegNet' #sys.argv[1] # e.g. : SegNet
+Model_second_name = 'VGG_10' #sys.argv[2] # e.g. : VGG_16
+Model_Name = Model_first_name + '_' + Model_second_name
 Model_Call = getattr(Model, Model_Name)
 print('\n\033[1;32;40mModel Name\033[0m =\033[1;37;40m {MODEL_NAME}\033[0m\n' .format(MODEL_NAME=Model_Name))
-#pdb.set_trace()
-BATCH_SIZE = 3
+
+BATCH_SIZE = 15
 EPOCH_TIME = 200
 
-IS_TRAINING 			= False
+IS_TRAINING 			= True
 IS_TESTING  			= False
 IS_STUDENT  			= False
 IS_GAN	    			= False 
@@ -44,23 +47,29 @@ print("\033[1;32;40mBATCH_SIZE\033[0m = \033[1;37;40m{BS}\033[0m" .format(BS=BAT
 #==========#
 #   Path   #
 #==========#
+# For Loading Dataset
+Dataset_Path = '/home/2016/b22072117/ObjectSegmentation/codes/dataset/' + Dataset 
+if Dataset=='ade20k':
+	Dataset_Path = Dataset_Path + '/ADEChallengeData2016'
+Y_pre_Path   = '/home/2016/b22072117/ObjectSegmentation/codes/nets/' + Model_first_name + '_Y_pre'
+
 # For Saving Result Picture of Testing
-train_target_path = '/home/2016/b22072117/ObjectSegmentation/codes/result/CamVid/SegNet/'
-valid_target_path = '/home/2016/b22072117/ObjectSegmentation/codes/result/CamVid/SegNet/'
-test_target_path  = '/home/2016/b22072117/ObjectSegmentation/codes/result/CamVid/SegNet/'
+train_target_path = '/home/2016/b22072117/ObjectSegmentation/codes/result/' + Dataset + '/' + Model_first_name + '/' 
+valid_target_path = '/home/2016/b22072117/ObjectSegmentation/codes/result/' + Dataset + '/' + Model_first_name + '/' 
+test_target_path  = '/home/2016/b22072117/ObjectSegmentation/codes/result/' + Dataset + '/' + Model_first_name + '/' 
 
 # For Saving Result in .npz file
-train_Y_pre_path  = '/home/2016/b22072117/ObjectSegmentation/codes/nets/SegNet_Y_pre/'
-valid_Y_pre_path  = '/home/2016/b22072117/ObjectSegmentation/codes/nets/SegNet_Y_pre/'
-test_Y_pre_path   = '/home/2016/b22072117/ObjectSegmentation/codes/nets/SegNet_Y_pre/'
+train_Y_pre_path  = '/home/2016/b22072117/ObjectSegmentation/codes/nets/' + Dataset + '/' + Model_first_name + '_Y_pre/'
+valid_Y_pre_path  = '/home/2016/b22072117/ObjectSegmentation/codes/nets/' + Dataset + '/' + Model_first_name + '_Y_pre/'
+test_Y_pre_path   = '/home/2016/b22072117/ObjectSegmentation/codes/nets/' + Dataset + '/' + Model_first_name + '_Y_pre/'
 
 #=======================#
 #	Training File Name	#
 #=======================#
 if LEARNING_RATE <= 1e-5:
-	TRAINING_WEIGHT_FILE = 'SegNet_Model/' + Model_Name + '_' + str(LEARNING_RATE).split('.')[0]
+	TRAINING_WEIGHT_FILE = Model_first_name + '_Model/' + Model_Name + '_' + str(LEARNING_RATE).split('.')[0]
 else:
-	TRAINING_WEIGHT_FILE = 'SegNet_Model/' + Model_Name + '_' + str(LEARNING_RATE).split('.')[1]
+	TRAINING_WEIGHT_FILE = Model_first_name + '_Model/' + Model_Name + '_' + str(LEARNING_RATE).split('.')[1]
 TRAINING_WEIGHT_FILE = TRAINING_WEIGHT_FILE + '_epoch' + str(EPOCH_DECADE)
 TRAINING_WEIGHT_FILE = TRAINING_WEIGHT_FILE + '_divide' + str(LR_DECADE)
 TRAINING_WEIGHT_FILE = TRAINING_WEIGHT_FILE + '_L20' + str(LAMBDA).split('.')[1]	
@@ -69,9 +78,9 @@ TRAINING_WEIGHT_FILE = TRAINING_WEIGHT_FILE + '_L20' + str(LAMBDA).split('.')[1]
 #	Testing File Name	#
 #=======================#
 if LEARNING_RATE <= 1e-5:
-	TESTING_WEIGHT_FILE = 'SegNet_Model/' + Model_Name + '_' + str(LEARNING_RATE).split('.')[0]
+	TESTING_WEIGHT_FILE = Model_first_name + '_Model/' + Model_Name + '_' + str(LEARNING_RATE).split('.')[0]
 else:
-	TESTING_WEIGHT_FILE = 'SegNet_Model/' + Model_Name + '_' + str(LEARNING_RATE).split('.')[1]
+	TESTING_WEIGHT_FILE = Model_first_name + '_Model/' + Model_Name + '_' + str(LEARNING_RATE).split('.')[1]
 TESTING_WEIGHT_FILE = TESTING_WEIGHT_FILE + '_epoch' + str(EPOCH_DECADE)
 TESTING_WEIGHT_FILE = TESTING_WEIGHT_FILE + '_divide' + str(LR_DECADE)
 TESTING_WEIGHT_FILE = TESTING_WEIGHT_FILE + '_L20' + str(LAMBDA).split('.')[1]
@@ -83,43 +92,20 @@ TESTING_WEIGHT_FILE = TESTING_WEIGHT_FILE + '_' + str(EPOCH_TIME)
 #============#
 	
 def main(argv=None):
-	#===============#
-	#	File Read	#
-	#===============#
-	if IS_PARTIAL_TRAINING:
-		layer = PARTIAL_TRAINING_LAYER_NOW
-	else:
-		layer = None
-
-	[CamVid_train_data, CamVid_train_data_index, CamVid_train_target, 
-	 CamVid_valid_data, CamVid_valid_data_index, CamVid_valid_target, 
-	 CamVid_test_data , CamVid_test_data_index , CamVid_test_target , 
-	 Y_pre_train_data , Y_pre_train_data_index , Y_pre_train_target , 
-	 Y_pre_valid_data , Y_pre_valid_data_index , Y_pre_valid_target , 
-	 Y_pre_test_data  , Y_pre_test_data_index  , Y_pre_test_target  , 
-	 class_num] = utils.CamVid_data_parser(
-				  # Path
-				  CamVid_Path = '/home/2016/b22072117/ObjectSegmentation/codes/dataset/CamVid',
-				  Y_pre_Path  = '/home/2016/b22072117/ObjectSegmentation/codes/nets/SegNet_Y_pre',
-				  # Variable
-				  layer = layer,
-				  # Parameter
-				  IS_STUDENT  = IS_STUDENT ,
-				  IS_TRAINING = IS_TRAINING)
-	
-	if IS_STUDENT:
-		train_data       = Y_pre_train_data
-		train_target     = Y_pre_train_target
-		train_data_index = Y_pre_train_data_index
-	else:
-		train_data       = CamVid_train_data
-		train_target     = CamVid_train_target
-		train_data_index = CamVid_train_data_index
 
 	#===========#
 	#	Data	#
 	#===========#
-	data_shape = np.shape(CamVid_train_data)
+	if Dataset=='CamVid':
+		class_num = 12
+		H_resize = 360 
+		W_resize = 480 
+		data_shape = [None, 360, 480, 3]
+	elif Dataset=='ade20k':
+		H_resize = 224 
+		W_resize = 224 
+		class_num = 151
+		data_shape = [None, H_resize, W_resize, 3]
 	
 	#******************#
 	#    Placeholder   #
@@ -149,7 +135,7 @@ def main(argv=None):
 	#prediction = Model_Call(net, 1000, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, TRAINING_WEIGHT_FILE)
 	
 	if IS_GAN:
-		prediction = tf.nn.softmax(prediction) # (if no softmax)
+		prediction       = tf.nn.softmax(prediction) # (if no softmax)
 		prediction_Gen	 = prediction
 		prediction_Dis_0 = Model.Discriminator(prediction_Gen, is_training, is_testing)
 		params_Dis       = tf.get_collection("params", scope=None)[np.shape(params)[0]:] 
@@ -187,9 +173,9 @@ def main(argv=None):
 	cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=tf.argmax(ys, -1), logits=prediction)
 	
 	# L2 Regularization
-	l2_norm  	= tf.reduce_mean(tf.stack([tf.nn.l2_loss(x) for x in weights_collection]))
-	l2_lambda 	= tf.constant(LAMBDA)
-	l2_norm   	= tf.multiply(l2_lambda, l2_norm)
+	l2_norm   = tf.reduce_mean(tf.stack([tf.nn.l2_loss(x) for x in weights_collection]))
+	l2_lambda = tf.constant(LAMBDA)
+	l2_norm   = tf.multiply(l2_lambda, l2_norm)
 
 	# Loss
 	if IS_GAN:
@@ -204,12 +190,12 @@ def main(argv=None):
 	else:
 		loss = KL
 		if IS_TERNARY:
-			opt = tf.train.AdamOptimizer(learning_rate)
-			train_step_compute_gradients = opt.compute_gradients(loss, var_list=var_list_collection)
-			gra_and_var = [(train_step_compute_gradients[i][0], params[i]) for i in range(np.shape(train_step_compute_gradients)[0])]
-			train_step = opt.apply_gradients(gra_and_var)
+			opt         = tf.train.AdamOptimizer(learning_rate)
+			gradients   = opt.compute_gradients(loss, var_list=var_list_collection)
+			gra_and_var = [(gradients[i][0], params[i]) for i in range(np.shape(gradients)[0])]
+			train_step  = opt.apply_gradients(gra_and_var)
 		else:
-			train_step = tf.train.AdamOptimizer(learning_rate).minimize(loss)
+			train_step  = tf.train.AdamOptimizer(learning_rate).minimize(loss)
 
 	#=======================#
 	#	Weight Parameters	#
@@ -260,6 +246,14 @@ def main(argv=None):
 	#=================#
 	if IS_TRAINING == True:
 		with tf.Session() as sess:
+
+			# File Read
+			if IS_PARTIAL_TRAINING:
+				layer = PARTIAL_TRAINING_LAYER_NOW
+			else:
+				layer = None
+
+			
 			# Initialize
 			init = tf.global_variables_initializer()
 			sess.run(init)
@@ -268,11 +262,17 @@ def main(argv=None):
 			lr = LEARNING_RATE
 
 			utils.Training_and_Validation( 
-				# Training & Validation Data
-				train_data					  = train_data						, 
-				train_target				  = train_target					,
-				valid_data					  = CamVid_valid_data				,
-				valid_target				  = CamVid_valid_target				,
+				# (File Read) Path
+				Dataset	                      = Dataset                         ,
+				Dataset_Path                  = Dataset_Path                    ,
+				Y_pre_Path                    = Y_pre_Path                      ,
+				# (File Read) Variable
+				class_num                     = class_num                       ,
+				layer                         = layer                           ,
+				H_resize                      = H_resize                        ,
+				W_resize                      = W_resize                        ,
+				# (File Read) Variable
+				IS_STUDENT                    = IS_STUDENT                      ,
 				# Parameter					  		
 				EPOCH_TIME					  = EPOCH_TIME						,
 				BATCH_SIZE					  = BATCH_SIZE						,
@@ -337,7 +337,7 @@ def main(argv=None):
 				final_weights_collection	  = final_weights_collection		,
 				final_net_collection		  = final_net_collection			,
 				# Session
-				 sess						  = sess							)
+				sess						  = sess							)
 	
 	if IS_TESTING == True:
 		with tf.Session() as sess:
@@ -347,20 +347,20 @@ def main(argv=None):
 			
 			utils.Testing(
 				# Training & Validation & Testing Data
-					train_data					= CamVid_train_data 	    , 
-					train_target				= CamVid_train_target		,
-					train_data_index			= CamVid_train_data_index	,
-					valid_data					= CamVid_valid_data			,
-					valid_target				= CamVid_valid_target		,
-					valid_data_index			= CamVid_valid_data_index	,
-					test_data					= CamVid_test_data			, 
-					test_target					= CamVid_test_target		,
-					test_data_index				= CamVid_test_data_index	,
+					train_data					= train_data 	    		, 
+					train_target				= train_target				,
+					train_data_index			= train_data_index			,
+					valid_data					= valid_data				,
+					valid_target				= valid_target				,
+					valid_data_index			= valid_data_index			,
+					test_data					= test_data					, 
+					test_target					= test_target				,
+					test_data_index				= test_data_index			,
 				# Parameter	
 					BATCH_SIZE					= BATCH_SIZE				,
 					IS_SAVING_RESULT_AS_IMAGE	= False						,	
-					IS_SAVING_RESULT_AS_NPZ		= True						,
-					IS_SAVING_PARTIAL_RESULT	= True						,
+					IS_SAVING_RESULT_AS_NPZ		= False						,
+					IS_SAVING_PARTIAL_RESULT	= False						,
 					IS_TRAINING					= IS_TRAINING				,
 					IS_TERNARY					= IS_TERNARY				,
 					IS_QUANTIZED_ACTIVATION		= IS_QUANTIZED_ACTIVATION	,

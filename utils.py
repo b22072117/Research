@@ -11,94 +11,100 @@ except ImportError:
 	import xml.etree.ElementTree as ET
 from os import listdir
 from os.path import isfile, join
+import time
 
-#def GAN_discriminator():
+def Hyperparameter_Decoder(Hyperparameter):
+"""
+Hyperparameter Optimization: A Spectral Approach
+|===============================================================================================|
+| Num|              Type                 |             0            |              1            |
+|===============================================================================================|
+| 00 | Weight Initailization             | standard initializations | other initializations     |
+| 01 | Weight Initialization             | ...                                                  |
+| 02 | Optimization Method               | SGD                      | ADAM?                     |
+| 03 | Initial Learning Rate             | < 0.01                   | >= 0.01                   |
+| 04 | Initial Learning Rate             | < 0.001; < 0.1           | >=0.001; >= 0.1           |
+| 05 | Initial Learning Rate             | 0.0001; 0.001; 0.01; 0.1 | 0.0003; 0.003; 0.03; 0.3  |
+| 06 | Learning Rate Drop                | No                       | Yes                       |
+| 07 | Learning Rate First Drop Time     | Drop by 1/10 at Epoch 40 | Drop by 1/10 at Epoch 60  |
+| 08 | Learning Rate Second Drop Time    | Drop by 1/10 at Epoch 80 | Drop by 1/10 at Epoch 100 |
+| 09 | Use Momentum                      | No                       | Yes                       |
+| 10 | Momentum Rate                     | 0.9                      | 0.99                      |
+| 11 | Initial Residual Link Weight      | (No Use)                                             | 
+| 12 | Tune Residual Link Weight         | (No Use)                                             | 
+| 13 | Tune Time of Residual Link Weight | (No Use)                                             | 
+| 14 | Resblock First Activation         | (No Use)                                             | 
+| 15 | Resblock Second Activation        | (No Use)                                             | 
+| 16 | Resblock Third Activation         | (No Use)                                             | 
+| 17 | Convolution bias                  | No                       | Yes                       |
+| 18 | Activation                        | ReLU                     | Others                    |
+| 19 | Activation                        | ReLU; Sigmoid            | ReLU; Tanh                |
+| 20 | Use Dropout                       | No                       | Yes                       |
+| 21 | Dropout Rate                      | Low                      | High                      |
+| 22 | Dropout Rate                      | 0.05; 0.2                | 0.1; 0.3                  |
+| 23 | Batch Normalization               | No                       | Yes                       |
+| 24 | Batch Normalization Tuning        | (No Use)                                             |  
+| 25 | Resnet Shortcut Type              | (No Use)                                             | 
+| 26 | Resnet shortcut Type              | (No Use)                                             |
+| 27 | Weight Decay                      | No                       | Yes                       | 
+| 28 | Weight Decay Parameter            | 1e-4                     | 1e-4                      |
+| 29 | Batch Size                        | Small                    | Big                       |
+| 30 | Batch Size                        | 32; 128                  | 64; 256                   |
+| 31 | Optnet                            | (No Use)                                             |
+| 32 | Share gradInput                   | (No Use)                                             |
+|===============================================================================================|
+"""
+	# Weight Initialization
+	if   Hyperparameter[0:1]==[0, 0]:
+	elif Hyperparameter[0:1]==[0, 1]:
 	
+	if   Hyperparameter[2]==0:
+		if   Hyperparameter[3]==0:
+			if   Hyperparameter[4]==0:
+			elif Hyperparameter[4]==1:
+		elif Hyperparameter[3]==1:
+			if   Hyperparameter[4]==0:
+			elif Hyperparameter[4]==1:
+	elif Hyperparameter[2]==1:
+		if   Hyperparameter[1]==0:
+		elif Hyperparameter[1]==1:
 
-def CamVid_data_parser(
+	return Hyper_dict
+	
+def dataset_parser(
 	# Path
-	CamVid_Path, # CamVid_Path = '/"Path_to_CamVid"/CamVid'
-	Y_pre_Path , # Y_pre_Path  = '/"Path_to_Y_pre_Path"/PSPNet_Y_pre'
-	
+	Dataset,	      # e.g. 'CamVid'
+	Path, 		      # e.g. '/Path_to_Dataset/CamVid'
+	Y_pre_Path,       # e.g. '/Path_to_Y_pre/CamVid'
+	data_index,
+	target_index,
+
 	# Variable
-	layer=None,		# Choose the needed layer 
+	class_num,
+	layer=None, # Choose the needed layer 
+	H_resize=224,
+	W_resize=224,
 
 	# Parameter
 	IS_STUDENT=False,
 	IS_TRAINING=False
 	):
 	
-	#-------------------#
-	#   Training file   #
-	#-------------------#
-	print("")
-	print("Loading Training Data ...")
-	# CamVid
-	CamVid_train_data  , CamVid_train_data_index = read_dataset_file(CamVid_Path, '/train.txt')
-	CamVid_train_target, _                       = read_dataset_file(CamVid_Path, '/trainannot.txt')
-	
-	# Teacher Model Prediction Output
-	if IS_TRAINING and IS_STUDENT:	
-		Y_pre_train_data = CamVid_train_data
-		Y_pre_train_target, Y_pre_train_data_index = read_Y_pre_file(Y_pre_Path, '/train.txt', layer)
+	# Dataset
+	if IS_TRAINING and IS_STUDENT:	 
+		data  , data_shape = read_dataset_file(data_index, Path, Dataset, H_resize, W_resize)
+		target, _          = read_Y_pre_file(data_index, Y_pre_Path, layer)
 	else:
-		Y_pre_train_data       = None
-		Y_pre_train_target     = None
-		Y_pre_train_data_index = None
-		
+		data  , data_shape = read_dataset_file(data_index, Path, Dataset, H_resize, W_resize)
+		target, _          = read_dataset_file(target_index, Path, Dataset, H_resize, W_resize, True)
+	
+	#print("Class Num : {CN}" .format(CN=np.max(target)))
 
-	class_num = np.max(CamVid_train_target)+1
-	CamVid_train_target = one_of_k(CamVid_train_target, class_num)
-	print("Shape of train data	: {Shape}" .format(Shape = np.shape(CamVid_train_data)))
-	print("Shape of train target	: {Shape}" .format(Shape = np.shape(CamVid_train_target)))
+	target = one_of_k(target, class_num)
+	#print("Shape of data   : {Shape}" .format(Shape = np.shape(data)))
+	#print("Shape of target : {Shape}" .format(Shape = np.shape(target)))
 	
-	#---------------------#
-	#   Validation file   #
-	#---------------------#
-	print("")
-	print("Loading Validation Data ...")
-	# CamVid
-	CamVid_valid_data  , CamVid_valid_data_index = read_dataset_file(CamVid_Path, '/val.txt')
-	CamVid_valid_target, _                       = read_dataset_file(CamVid_Path, '/valannot.txt')
-	
-	# Teacher Model Prediction Output
-	if IS_TRAINING and IS_STUDENT:	
-		Y_pre_valid_data = CamVid_valid_data
-		Y_pre_valid_target, Y_pre_valid_data_index = read_Y_pre_file(Y_pre_Path, '/val.txt', layer)
-	else:
-		Y_pre_valid_data       = None
-		Y_pre_valid_target     = None
-		Y_pre_valid_data_index = None
-
-	CamVid_valid_target = one_of_k(CamVid_valid_target, class_num)
-	print("Shape of valid data	: {Shape}" .format(Shape = np.shape(CamVid_valid_data)))
-	print("Shape of valid target	: {Shape}" .format(Shape = np.shape(CamVid_valid_target)))
-	
-	#------------------#
-	#   Testing file   #
-	#------------------#
-	print("")
-	print("Loading Testing Data ...")
-	# CamVid 
-	CamVid_test_data  , CamVid_test_data_index = read_dataset_file(CamVid_Path, '/test.txt')
-	CamVid_test_target, _                      = read_dataset_file(CamVid_Path, '/testannot.txt')
-	
-	# Teacher Model Prediction Output
-	if IS_TRAINING and IS_STUDENT:	
-		Y_pre_test_data = CamVid_test_data
-		Y_pre_test_target, Y_pre_test_data_index = read_Y_pre_file(Y_pre_Path, '/test.txt', layer)
-	else:
-		Y_pre_test_data       = None
-		Y_pre_test_target     = None
-		Y_pre_test_data_index = None
-	
-	CamVid_test_target = one_of_k(CamVid_test_target, class_num)
-	print("Shape of test data	: {Shape}" .format(Shape = np.shape(CamVid_test_data)))
-	print("Shape of test target	: {Shape}" .format(Shape = np.shape(CamVid_test_target)))
-	print("")
-	
-	return CamVid_train_data, CamVid_train_data_index, CamVid_train_target, CamVid_valid_data, CamVid_valid_data_index, CamVid_valid_target, CamVid_test_data, CamVid_test_data_index, CamVid_test_target, Y_pre_train_data, Y_pre_train_data_index, Y_pre_train_target, Y_pre_valid_data, Y_pre_valid_data_index, Y_pre_valid_target, Y_pre_test_data  , Y_pre_test_data_index, Y_pre_test_target, class_num
-		   
+	return data, target
 
 def file_name_parser(filepath):
 	filename = [f for f in listdir(filepath) if isfile(join(filepath, f))]
@@ -184,6 +190,7 @@ def Testing(
 	# Load trained weights
 	print("")
 	print("Loading the trained weights ... ")
+	print("\n\033[1;32;40mWeights File\033[0m : {WF}" .format(WF = TESTING_WEIGHT_FILE))
 	if parameters==None:
 		save_path = saver.restore(sess, TESTING_WEIGHT_FILE + ".ckpt")
 	else:
@@ -334,12 +341,20 @@ def Testing(
 
 
 def Training_and_Validation( 
-		# Training & Validation Data
-		train_data				, 
-		train_target			,
-		valid_data				,
-		valid_target			,
+		# (File Read) Path
+		Dataset	                , 
+		Dataset_Path            ,
+		Y_pre_Path              ,
 		
+		# (File Read) Variable
+		class_num               , 
+		layer                   , 
+		H_resize                ,
+		W_resize                ,
+		
+		# (File Read) Parameter
+		IS_STUDENT				,
+
 		# Parameter	
 		EPOCH_TIME				,
 		BATCH_SIZE				,
@@ -426,6 +441,7 @@ def Training_and_Validation(
 
 		# Session
 		sess							= None):
+
 	#-------------------------------#
 	#	Loading Pre-trained Model	#
 	#-------------------------------#
@@ -443,103 +459,168 @@ def Training_and_Validation(
 	#-----------------------------#
 	QUANTIZED_NOW = False
 	TERNARY_NOW = False
+
+	#---------------#
+	#   File Read   #
+	#---------------#
+	train_data_index   = np.array(open(Dataset_Path + '/train.txt', 'r').read().splitlines())
+	train_target_index = np.array(open(Dataset_Path + '/trainannot.txt', 'r').read().splitlines())
+	train_data_num = len(train_data_index)
+	print("Training Data Number = {DS}" .format(DS = train_data_num))
+	
+	shuffle_index = np.arange(train_data_num)
+	np.random.shuffle(shuffle_index)
+
+	train_data_index   = train_data_index  [shuffle_index]
+	train_target_index = train_target_index[shuffle_index]
+
+	val_data_index   = open(Dataset_Path + '/val.txt', 'r').read().splitlines()
+	val_target_index = open(Dataset_Path + '/valannot.txt', 'r').read().splitlines()
+	val_data_num = len(val_data_index)
+	print("Validation Data Number = {DS}" .format(DS = val_data_num))
+	
+	Data_Size_Per_Iter = 15
+
 	#---------------#
 	#	Per Epoch	#
 	#---------------#
 	for epoch in range(EPOCH_TIME):
-		data_shape = np.shape(train_data)
-		train_data, train_target = shuffle_image(train_data, train_target)
-
 		Train_acc = 0
 		Train_loss = 0
-		
-		#--------------------------#
-		#   Quantizad Activation   #
-		#--------------------------#
-		if IS_QUANTIZED_ACTIVATION and (epoch+1)==QUANTIZED_ACTIVATION_EPOCH:
-			batch_xs = train_data[0 : BATCH_SIZE]
-			# Calculate Each Activation's appropriate mantissa and fractional bit
-			m, f = quantized_m_and_f(activation_collection, xs, is_training, is_testing, is_quantized_activation, batch_xs, sess)	
-			# Assign mantissa and fractional bit to the tensor
-			assign_quantized_m_and_f(mantissa_collection, fraction_collection, m, f, sess)
-			
-			# Start Quantize Activation
-			QUANTIZED_NOW = True
-		
-		#-------------#
-		#   Ternary   #
-		#-------------#
-		if IS_TERNARY and (epoch+1)==TERNARY_EPOCH:
-			# Calculate the ternary boundary of each layer's weights
-			weights_bd, biases_bd, weights_table, biases_table = tenarized_bd(weights_collection,  biases_collection, weights_bd_ratio, biases_bd_ratio, sess)
 
-			# assign ternary boundary to tensor
-			assign_ternary_boundary(ternary_weights_bd_collection, ternary_biases_bd_collection, weights_bd, biases_bd, sess)
+		###
+		tStart = time.time()
+		###
 
-			# Start Quantize Activation
-			TERNARY_NOW = True
-
-		print("")
-		print("Training ... ")
-		for i in range(int(data_shape[0]/BATCH_SIZE)):
-			# Train data in BATCH SIZE
-			batch_xs    = train_data   [i*BATCH_SIZE : (i+1)*BATCH_SIZE]
-			batch_ys    = train_target [i*BATCH_SIZE : (i+1)*BATCH_SIZE]
-			
-			#-----------------------#
-			#	Run Training Step	#
-			#-----------------------#	
-			if IS_GAN:
-			# (GAN) Generator
-				_, Loss, Prediction, Prediction_Dis_0 = sess.run([train_step_Gen, loss_Gen, prediction_Gen, prediction_Dis_0], feed_dict={xs: batch_xs, ys: batch_ys, learning_rate: lr, is_training: True, is_testing: False})
-			# (GAN) Discriminator
-				if i % DISCRIMINATOR_STEP==0:
-					_, Loss_Dis, Prediction_Dis_1 = sess.run([train_step_Dis, loss_Dis, prediction_Dis_1], feed_dict={xs: batch_xs, ys: batch_ys, learning_rate: lr, is_training: True, is_testing: False})
+		for data_iter in range((train_data_num/Data_Size_Per_Iter)+1):
+			#-------------------#
+			#   Training file   #
+			#-------------------#
+			# data_index_part
+			if train_data_num<Data_Size_Per_Iter:
+				train_data_index_part   = train_data_index
+				train_target_index_part = train_target_index
 			else:
-			# (Normal)
-				_, Loss, Prediction = sess.run([train_step, loss, prediction], feed_dict={xs: batch_xs, ys: batch_ys, learning_rate: lr, is_training: True, is_testing: False, is_ternary: TERNARY_NOW, is_quantized_activation: QUANTIZED_NOW})
+				train_data_index_part   = train_data_index[data_iter*Data_Size_Per_Iter:(data_iter+1)*Data_Size_Per_Iter]
+				train_target_index_part = train_target_index[data_iter*Data_Size_Per_Iter:(data_iter+1)*Data_Size_Per_Iter]
 
-				for assign_var_list_iter, assign_var_list in enumerate(assign_var_list_collection):
-					sess.run(assign_var_list, feed_dict={is_ternary: TERNARY_NOW})
+			print("Loading Training Data ...")
+			train_data, train_target = dataset_parser(
+				# Path
+				Dataset	         = Dataset,
+				Path             = Dataset_Path, 
+				Y_pre_Path       = Y_pre_Path,
+				data_index       = train_data_index_part,
+				target_index     = train_target_index_part,		
+				
+				# Variable
+				class_num        = class_num,
+				layer            = layer,
+				H_resize         = H_resize,
+				W_resize         = W_resize,
+
+				# Parameter
+				IS_STUDENT       = IS_STUDENT ,
+				IS_TRAINING      = True)
 			
-			#-----------#
-			#	Result	#
-			#-----------#
-			y_pre = np.argmax(Prediction, -1)
-			batch_accuracy = np.mean(np.equal(np.argmax(batch_ys, -1), y_pre))
+			#-------------------#
+			#  Start Training   #
+			#-------------------#
+			data_shape = np.shape(train_data) 
+			train_data, train_target = shuffle_image(train_data, train_target)
+
 			
-			Train_acc  = Train_acc  + batch_accuracy
-			Train_loss = Train_loss + np.mean(Loss)
+			#--------------------------#
+			#   Quantizad Activation   #
+			#--------------------------#
+			if IS_QUANTIZED_ACTIVATION and (epoch+1)==QUANTIZED_ACTIVATION_EPOCH:
+				batch_xs = train_data[0 : BATCH_SIZE]
+				# Calculate Each Activation's appropriate mantissa and fractional bit
+				m, f = quantized_m_and_f(activation_collection, xs, is_training, is_testing, is_quantized_activation, batch_xs, sess)	
+				# Assign mantissa and fractional bit to the tensor
+				assign_quantized_m_and_f(mantissa_collection, fraction_collection, m, f, sess)
+				
+				# Start Quantize Activation
+				QUANTIZED_NOW = True
+			
+			#-------------#
+			#   Ternary   #
+			#-------------#
+			if IS_TERNARY and (epoch+1)==TERNARY_EPOCH:
+				# Calculate the ternary boundary of each layer's weights
+				weights_bd, biases_bd, weights_table, biases_table = tenarized_bd(weights_collection,  biases_collection, weights_bd_ratio, biases_bd_ratio, sess)
 
-			# Print Training Result Per Batch Size
-			print("Epoch : {ep}" .format(ep = epoch))
-			print("Batch Iteration : {Iter}" .format(Iter = i))
-			print("  Batch Accuracy : {acc}".format(acc = batch_accuracy))
-			print("  Loss : {loss}".format(loss = np.mean(Loss)))
-			print("  Learning Rate : {LearningRate}".format(LearningRate = lr))
+				# assign ternary boundary to tensor
+				assign_ternary_boundary(ternary_weights_bd_collection, ternary_biases_bd_collection, weights_bd, biases_bd, sess)
 
-			# GAN Discriminator Result
-			if IS_GAN:
-				batch_accuracy_Dis = np.mean(np.concatenate([Prediction_Dis_0, Prediction_Dis_1], axis=0))
-				print("  Discriminator Output : {Dis_Out}" ,format(Dis_Out=batch_accuracy_Dis))
+				# Start Quantize Activation
+				TERNARY_NOW = True
 
-			# Per Class Accuracy
-			per_class_accuracy(Prediction, batch_ys)
+			print("Training ... ")
+			for i in range(int(data_shape[0]/BATCH_SIZE)):
+				# Train data in BATCH SIZE
+				batch_xs    = train_data   [i*BATCH_SIZE : (i+1)*BATCH_SIZE]
+				batch_ys    = train_target [i*BATCH_SIZE : (i+1)*BATCH_SIZE]
+				
+				#-----------------------#
+				#	Run Training Step	#
+				#-----------------------#	
+				if IS_GAN:
+				# (GAN) Generator
+					_, Loss, Prediction, Prediction_Dis_0 = sess.run([train_step_Gen, loss_Gen, prediction_Gen, prediction_Dis_0], feed_dict={xs: batch_xs, ys: batch_ys, learning_rate: lr, is_training: True, is_testing: False})
+				# (GAN) Discriminator
+					if i % DISCRIMINATOR_STEP==0:
+						_, Loss_Dis, Prediction_Dis_1 = sess.run([train_step_Dis, loss_Dis, prediction_Dis_1], feed_dict={xs: batch_xs, ys: batch_ys, learning_rate: lr, is_training: True, is_testing: False})
+				else:
+				# (Normal)
+					_, Loss, Prediction = sess.run([train_step, loss, prediction], feed_dict={xs: batch_xs, ys: batch_ys, learning_rate: lr, is_training: True, is_testing: False, is_ternary: TERNARY_NOW, is_quantized_activation: QUANTIZED_NOW})
+
+					for assign_var_list_iter, assign_var_list in enumerate(assign_var_list_collection):
+						sess.run(assign_var_list, feed_dict={is_ternary: TERNARY_NOW})
+				
+				#-----------#
+				#	Result	#
+				#-----------#
+				y_pre = np.argmax(Prediction, -1)
+				batch_accuracy = np.mean(np.equal(np.argmax(batch_ys, -1), y_pre))
+				
+				Train_acc  = Train_acc  + batch_accuracy
+				Train_loss = Train_loss + np.mean(Loss)
+
+				# Print Training Result Per Batch Size
+				print("\033[1;34;40mEpoch\033[0m : {ep}" .format(ep = epoch))
+				print("\033[1;34;40mData Iteration\033[0m : {Iter}" .format(Iter = i*BATCH_SIZE+data_iter*Data_Size_Per_Iter))
+				print("\033[1;32;40m  Batch Accuracy\033[0m : {acc}".format(acc = batch_accuracy))
+				print("\033[1;32;40m  Loss          \033[0m : {loss}".format(loss = np.mean(Loss)))
+				print("\033[1;32;40m  Learning Rate \033[0m : {LearningRate}".format(LearningRate = lr))
+
+				# GAN Discriminator Result
+				if IS_GAN:
+					batch_accuracy_Dis = np.mean(np.concatenate([Prediction_Dis_0, Prediction_Dis_1], axis=0))
+					print("  Discriminator Output : {Dis_Out}" ,format(Dis_Out=batch_accuracy_Dis))
+
+				# Per Class Accuracy
+				"""
+				per_class_accuracy(Prediction, batch_ys)
+				"""
+			#----------------------------------------------------------------------#
+			#    Show Difference between quanitzed and non-quantized activation    #
+			#----------------------------------------------------------------------#
+			print("")
+			if QUANTIZED_NOW:
+				batch_xs = train_data[0 : BATCH_SIZE]
+				for i, final_net in enumerate(final_net_collection):
+					TRUE   = sess.run(final_net, feed_dict={xs: batch_xs, is_quantized_activation: True })
+					FALSE  = sess.run(final_net, feed_dict={xs: batch_xs, is_quantized_activation: False})
+					print("{iter}: {TRUE_MEAN}	{FALSE_MEAN}	{DIFF_MEAN}" .format(iter=i, TRUE_MEAN=np.mean(TRUE), FALSE_MEAN=np.mean(FALSE), DIFF_MEAN=np.mean(np.absolute(TRUE-FALSE))))
+		###
+		tEnd = time.time()
+		print("It cost {TIME} sec" .format(TIME=tEnd - tStart))
+		###
 		
-		#----------------------------------------------------------------------#
-		#    Show Difference between quanitzed and non-quantized activation    #
-		#----------------------------------------------------------------------#
-		print("")
-		if QUANTIZED_NOW:
-			batch_xs = train_data[0 : BATCH_SIZE]
-			for i, final_net in enumerate(final_net_collection):
-				TRUE   = sess.run(final_net, feed_dict={xs: batch_xs, is_quantized_activation: True })
-				FALSE  = sess.run(final_net, feed_dict={xs: batch_xs, is_quantized_activation: False})
-				print("{iter}: {TRUE_MEAN}	{FALSE_MEAN}	{DIFF_MEAN}" .format(iter=i, TRUE_MEAN=np.mean(TRUE), FALSE_MEAN=np.mean(FALSE), DIFF_MEAN=np.mean(np.absolute(TRUE-FALSE))))
-
 		# Record Per Epoch Training Result (Finally this will save as the .csv file)
-		Train_acc  = Train_acc  / float(int(data_shape[0]/BATCH_SIZE))
-		Train_loss = Train_loss / float(int(data_shape[0]/BATCH_SIZE))
+		Train_acc  = Train_acc  / float(int(data_shape[0]/BATCH_SIZE)) / float(int(train_data_num/Data_Size_Per_Iter)) 
+		Train_loss = Train_loss / float(int(data_shape[0]/BATCH_SIZE)) / float(int(train_data_num/Data_Size_Per_Iter)) 
 
 		if epoch==0:
 			Train_acc_per_epoch  = np.array([Train_acc ])
@@ -553,26 +634,65 @@ def Training_and_Validation(
 		#---------------#
 		#	Validation	#
 		#---------------#
+		total_valid_accuracy = 0
+		for iter in range(val_data_num/Data_Size_Per_Iter):
+			#---------------------#
+			#   Validation file   #
+			#---------------------#
+			# data_index_part
+			if val_data_num<Data_Size_Per_Iter:
+				val_data_index_part   = val_data_index
+				val_target_index_part = val_target_index
+			else:
+				val_data_index_part   = val_data_index[iter*Data_Size_Per_Iter:(iter+1)*Data_Size_Per_Iter]
+				val_target_index_part = val_target_index[iter*Data_Size_Per_Iter:(iter+1)*Data_Size_Per_Iter]
+
+			print("")
+			print("Loading Validation Data ...")
+			val_data , val_target = dataset_parser(
+				# Path
+				Dataset	         = Dataset,
+				Path             = Dataset_Path, 
+				Y_pre_Path       = Y_pre_Path,
+				data_index       = val_data_index_part,
+				target_index     = val_target_index_part,		
+				
+				# Variable
+				class_num        = class_num,
+				layer            = layer,
+				H_resize         = H_resize,
+				W_resize         = W_resize,
+				# Parameter
+				IS_STUDENT       = IS_STUDENT ,
+				IS_TRAINING      = True)
+
+			print("")
+			print("Epoch : {ep}".format(ep = epoch))
+			print("Validation ... ")
+			is_validation = True 
+			_, valid_accuracy, _, _, _ = compute_accuracy(
+						xs                      = xs, 
+						ys                      = ys, 
+						is_training             = is_training, 
+						is_testing              = is_testing, 
+						is_validation           = is_validation, 
+						is_quantized_activation = is_quantized_activation, 
+						QUANTIZED_NOW           = QUANTIZED_NOW, 
+						prediction              = prediction, 
+						v_xs                    = valid_data, 
+						v_ys                    = valid_target, 
+						BATCH_SIZE              = BATCH_SIZE, 
+						sess                    = sess)
+			is_validation = False
+			total_valid_accuracy = total_valid_accuracy + valid_accuracy
+
+		if val_data_num<Data_Size_Per_Iter:
+			total_valid_accuracy = total_valid_accuracy
+		else:
+			total_valid_accuracy = total_valid_accuracy / float(int(val_data_num / Data_Size_Per_Iter))
+			
 		print("")
-		print("Epoch : {ep}".format(ep = epoch))
-		print("Validation ... ")
-		is_validation = True 
-		_, valid_accuracy, _, _, _ = compute_accuracy(
-					xs                      = xs, 
-					ys                      = ys, 
-					is_training             = is_training, 
-					is_testing              = is_testing, 
-					is_validation           = is_validation, 
-					is_quantized_activation = is_quantized_activation, 
-					QUANTIZED_NOW           = QUANTIZED_NOW, 
-					prediction              = prediction, 
-					v_xs                    = valid_data, 
-					v_ys                    = valid_target, 
-					BATCH_SIZE              = BATCH_SIZE, 
-					sess                    = sess)
-		is_validation = False
-		print("")
-		print("Validation Accuracy = {Valid_Accuracy}".format(Valid_Accuracy=valid_accuracy))
+		print("Validation Accuracy = {Valid_Accuracy}".format(Valid_Accuracy=total_valid_accuracy))
 		
 		# Learning Rate Decay
 		if (((epoch+1) % EPOCH_DECADE==0) and (epoch != 0)):
@@ -696,15 +816,27 @@ def color_result(result):
 					RGB[i][x][y][2] = np.uint8(0)
 	return RGB
 
-def read_dataset_file(Path, text_file_name):
-	data_index = open(Path + text_file_name, 'r').read().splitlines()
-			
+def read_dataset_file(data_index, Path, Dataset, H_resize, W_resize, IS_TARGET=False):
 	for i, file_name in enumerate(data_index):
+		# Read Data
+		data_tmp  = misc.imread(Path + file_name)
+		shape_tmp = np.shape(data_tmp)[0:2]
+
+		# Data Preprocessing
+		if Dataset=='ade20k':
+			data_tmp = scipy.misc.imresize(data_tmp, (H_resize, W_resize))
+			if len(np.shape(data_tmp))==2 and (not IS_TARGET):
+				data_tmp = np.repeat(data_tmp[:, :, np.newaxis], 3, axis=2)
+
+
+		# Concatenate the Data
 		if i==0:
-			data = np.expand_dims(misc.imread(Path + file_name), axis=0)
+			data  = np.expand_dims(data_tmp , axis=0)
+			shape = np.expand_dims(shape_tmp, axis=0)
 		else:
-			data = np.concatenate([data, np.expand_dims(misc.imread(Path + file_name), axis=0)], axis=0)
-	return data, data_index
+			data  = np.concatenate([data , np.expand_dims(data_tmp , axis=0)], axis=0)
+			shape = np.concatenate([shape, np.expand_dims(shape_tmp, axis=0)], axis=0)
+	return data, shape
 
 def Save_result_as_image(Path, result, file_index):
 	for i, target in enumerate(result):
@@ -762,6 +894,10 @@ def per_class_accuracy(prediction, batch_ys):
 	correct_num = np.zeros([CLASS_NUM, 1])
 	total_num = np.zeros([CLASS_NUM, 1])
 	
+	print_per_row = 10
+	cn = np.zeros([print_per_row], np.int32)
+	tn = np.zeros([print_per_row], np.int32)
+
 	for i in range(CLASS_NUM):
 		y_tmp = np.equal(np.argmax(batch_ys, -1), i)
 		p_tmp = np.equal(np.argmax(prediction, -1), i)
@@ -773,7 +909,15 @@ def per_class_accuracy(prediction, batch_ys):
 		else:
 			accuracy = float(correct_num) / float(total_num)
 		
-		print("    Class{Iter}	: {predict} / {target}".format(Iter = i, predict=correct_num, target=total_num))
+
+		if CLASS_NUM <= 15:
+			print("    Class{Iter}	: {predict} / {target}".format(Iter = i, predict=correct_num, target=total_num))
+		else:
+			iter = i%print_per_row
+			cn[iter] = correct_num
+			tn[iter] = total_num
+			if i%print_per_row==0:
+				print("    Class{Iter}	: {predict} / {target}".format(Iter = i, predict=np.sum(cn), target=np.sum(tn)))
 	
 		
 def compute_accuracy(xs, ys, is_training, is_testing, is_validation, is_quantized_activation, QUANTIZED_NOW, prediction, v_xs, v_ys, BATCH_SIZE, sess):
@@ -1149,8 +1293,8 @@ def Analyzer(Analysis, net, type, kernel_shape=None, stride=0, group=1,
 	# Estimate the Cycle Times which will be taken in hardware
 	## Hardware Environment
 	if type!='TOTAL':
-		PE_row = 14
-		PE_col = 12
+		PE_row = 15
+		PE_col = 16
 		
 		Tile_row = 8
 		Tile_col = 8
@@ -1160,27 +1304,41 @@ def Analyzer(Analysis, net, type, kernel_shape=None, stride=0, group=1,
 		Memory_Bandwidth = 128
 
 		## Some Meaningful Variable
-		Kernel_Retake_Times = (H * W) / (Tile_row * Tile_col)
-		Partial_Output_Times = 1
-		Input_Retake_Times = 1
+		# initialization
+		Input_Retake_Times  = 1
+		Kernel_Retake_Times = 1
+		Output_Retake_Times = 1
+		# conv
 		if type=='CONV':
 			if is_depthwise:
-				Input_Retake_Times = 1
+				Input_Retake_Times  = 1
+				Kernel_Retake_Times = (H / Tile_row) * (W / Tile_col)
 			else:
-				Input_Retake_Times = o / (PE_row*PE_col/(h*w))
+				Input_Retake_Times  = o / ((PE_row / h) * (PE_col / Tile_row))
+				Kernel_Retake_Times = (H / Tile_row) * (W / Tile_col)
+		
 			if Input_Retake_Times<1:
 				Input_Retake_Times = 1
+			if Kernel_Retake_Times<1: 
+				Kernel_Retake_Times = 1
+
+		# Data Access In Cycle
 		Data_Access_In_One_Cycle = Memory_Bandwidth / Data_Bits
 
 		## Cycle times
-		Macc_Cycle   = macc / (PE_row * PE_col)
-		Input_Cycle  = (H * W * D) * (Input_Retake_Times) / (Data_Access_In_One_Cycle)		 
 		if type=='CONV':
+			Macc_Cycle   = macc / (PE_row * PE_col)
+			Input_Cycle  = (H * W * D) * (Input_Retake_Times) / (Data_Access_In_One_Cycle)		 
 			Kernel_Cycle = (h * w * i * o * group) * (Kernel_Retake_Times) / (Data_Access_In_One_Cycle)		
+			Output_Cycle = (activation) * (Output_Retake_Times) / (Data_Access_In_One_Cycle)		 
 		else:
+			Macc_Cycle   = comp + add +div + exp 
+			Input_Cycle  = (H * W * D) * (Input_Retake_Times) / (Data_Access_In_One_Cycle)		 
 			Kernel_Cycle = 0 
-		Output_Cycle = (activation) * (Partial_Output_Times) / (Data_Access_In_One_Cycle)		 
-		Bottleneck = max(Macc_Cycle, Input_Cycle, Kernel_Cycle, Output_Cycle)
+			Output_Cycle = (activation) * (Output_Retake_Times) / (Data_Access_In_One_Cycle)		 
+		
+		# Bottleneck
+		Bottleneck = max(Macc_Cycle, Input_Cycle + Kernel_Cycle + Output_Cycle)
 		
 
 	components = {'name'         : name, 
@@ -2339,9 +2497,7 @@ def get_real_prediction(Prediction, batch_table):
 #
 #	return Y_pre, target
 
-def read_Y_pre_file(Path, text_file_name, layer=None):
-	data_index = open(Path + text_file_name, 'r').read().splitlines()
-
+def read_Y_pre_file(data_index, Path, layer=None):
 	for i, file_name in enumerate(data_index):
 		file_name = file_name.split('.')[0]
 		if layer==None:
