@@ -818,7 +818,27 @@ def PSPNet(net, class_num, is_training, is_testing, is_ternary, is_quantized_act
 		utils.Save_Analyzsis_as_csv(Analysis, FILE)
 	return net
 	
-def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, FILE, reuse=None, scope="SegNet_VGG_16"):
+def SegNet_VGG_16(
+		net                     ,
+		class_num               ,
+		# Placerholder          
+		is_training             ,
+		is_testing              ,
+		is_ternary              ,
+		# Hyperparameter        
+		is_quantized_activation ,
+		IS_TERNARY              ,
+		IS_QUANTIZED_ACTIVATION ,
+		IS_CONV_BIAS            , #(Not Use)
+		Activation              , #(Not Use)
+		IS_DROPOUT              ,
+		DROPOUT_RATE            ,
+		IS_BN                   ,
+		# Analysis File Path    
+		FILE                    ,
+		reuse = None            , 
+		scope = "SegNet_VGG_16" 
+	):
 	with tf.variable_scope(scope, reuse=reuse):
 		Analysis = utils.Analyzer({}, net, type='DATA', name='Input')
 		with tf.variable_scope("encoder"):
@@ -826,7 +846,7 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -842,7 +862,7 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -861,7 +881,7 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -877,7 +897,7 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -896,7 +916,7 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1, 
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -912,7 +932,7 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -928,7 +948,7 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -947,7 +967,7 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -963,7 +983,7 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -979,7 +999,7 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -998,7 +1018,7 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1014,7 +1034,7 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1030,7 +1050,7 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1052,7 +1072,7 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1068,7 +1088,7 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1084,7 +1104,7 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1103,7 +1123,7 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1119,7 +1139,7 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=512, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1135,7 +1155,7 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1154,7 +1174,7 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1170,7 +1190,7 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1186,7 +1206,7 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1205,7 +1225,7 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1221,7 +1241,7 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1242,7 +1262,7 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1254,7 +1274,10 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							scope					= "conv1")
 							
 				tf.add_to_collection("partial_output", net)
-
+				
+				if IS_DROPOUT:
+					net = tf.cond(is_testing, lambda: net, lambda: tf.layers.dropout(net, DROPOUT_RATE))
+					
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=class_num, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
@@ -1275,7 +1298,27 @@ def SegNet_VGG_16(net, class_num, is_training, is_testing, is_ternary, is_quanti
 	
 	
 	
-def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, FILE, reuse=None, scope="SegNet_VGG_10"):
+def SegNet_VGG_10(
+		net                     ,
+		class_num               ,
+		# Placerholder          
+		is_training             ,
+		is_testing              ,
+		is_ternary              ,
+		# Hyperparameter        
+		is_quantized_activation ,
+		IS_TERNARY              ,
+		IS_QUANTIZED_ACTIVATION ,
+		IS_CONV_BIAS            , #(Not Use)
+		Activation              , #(Not Use)
+		IS_DROPOUT              ,
+		DROPOUT_RATE            ,
+		IS_BN                   ,
+		# Analysis File Path    
+		FILE                    ,
+		reuse = None            , 
+		scope = "SegNet_VGG_10" ):
+		
 	with tf.variable_scope(scope, reuse=reuse):
 		Analysis = utils.Analyzer({}, net, type='DATA', name='Input')
 		with tf.variable_scope("encoder"):
@@ -1283,7 +1326,7 @@ def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1297,7 +1340,7 @@ def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1314,7 +1357,7 @@ def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1328,7 +1371,7 @@ def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1345,7 +1388,7 @@ def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1, 
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1359,7 +1402,7 @@ def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1373,7 +1416,7 @@ def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1393,7 +1436,7 @@ def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1407,7 +1450,7 @@ def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1421,7 +1464,7 @@ def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1438,7 +1481,7 @@ def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1452,7 +1495,7 @@ def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1469,7 +1512,7 @@ def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quanti
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1479,7 +1522,10 @@ def SegNet_VGG_10(net, class_num, is_training, is_testing, is_ternary, is_quanti
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
 							Analysis				= Analysis,
 							scope					= "conv1")
-							
+				
+				if IS_DROPOUT:
+					net = tf.cond(is_testing, lambda: net, lambda: tf.layers.dropout(net, DROPOUT_RATE))
+				
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=class_num, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
@@ -3820,7 +3866,7 @@ def SegNet_VGG_10_depthwise_5x5(net, class_num, is_training, is_testing, is_tern
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
 							Analysis				= Analysis,
 							scope					= "conv1")
-							
+				
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=class_num, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
