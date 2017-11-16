@@ -1296,8 +1296,6 @@ def SegNet_VGG_16(
 		utils.Save_Analyzsis_as_csv(Analysis, FILE)
 	return net
 	
-	
-	
 def SegNet_VGG_10(
 		net                     ,
 		class_num               ,
@@ -1542,7 +1540,27 @@ def SegNet_VGG_10(
 		utils.Save_Analyzsis_as_csv(Analysis, FILE)
 	return net
 	
-def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_QUANTIZED_ACTIVATION, IS_TERNARY, FILE, reuse=None, scope="SegNet_VGG_10_dilated"):
+def SegNet_VGG_10_dilated(net, 
+                          class_num, 
+                          # Placerholder
+                          is_training, 
+                          is_testing, 
+                          is_ternary, 
+                          # Hyperparameter
+                          is_quantized_activation, 
+                          IS_TERNARY, 
+                          IS_QUANTIZED_ACTIVATION, 
+                          IS_CONV_BIAS, # (No Use)
+                          Activation,   # (No Use)
+                          IS_DROPOUT,
+                          DROPOUT_RATE,
+                          IS_BN,
+                          # Analysis File Path
+                          FILE, 
+                          
+                          reuse=None, 
+                          scope="SegNet_VGG_10"
+                          ):
 	with tf.variable_scope(scope, reuse=reuse):
 		Analysis = utils.Analyzer({}, net, type='DATA', name='Input')
 		with tf.variable_scope("encoder"):
@@ -1550,7 +1568,7 @@ def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, i
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1564,7 +1582,7 @@ def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, i
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1579,7 +1597,7 @@ def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, i
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=2,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= True, 
@@ -1593,7 +1611,7 @@ def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, i
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=2,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= True, 
@@ -1608,7 +1626,7 @@ def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, i
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=4, 
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= True, 
@@ -1622,7 +1640,7 @@ def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, i
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=4,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= True, 
@@ -1636,7 +1654,7 @@ def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, i
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=4,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= True, 
@@ -1652,7 +1670,7 @@ def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, i
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=4,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= True, 
@@ -1666,7 +1684,7 @@ def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, i
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=4,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= True, 
@@ -1680,7 +1698,7 @@ def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, i
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=4,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= True, 
@@ -1698,7 +1716,7 @@ def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, i
 							is_batch_norm			= True, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
-							is_dilated				= True, 
+							is_dilated				= IS_BN, 
 							is_ternary      		= is_ternary,
 							is_quantized_activation = is_quantized_activation,
 							IS_TERNARY				= IS_TERNARY,
@@ -1709,7 +1727,7 @@ def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, i
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=2,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= True, 
@@ -1724,7 +1742,7 @@ def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, i
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1750,7 +1768,6 @@ def SegNet_VGG_10_dilated(net, class_num, is_training, is_testing, is_ternary, i
 							scope					= "conv2")	
 		utils.Save_Analyzsis_as_csv(Analysis, FILE)
 	return net
-	
 	
 def SegNet_VGG_10_v2(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, FILE, reuse=None, scope="SegNet_VGG_10"):
 	with tf.variable_scope(scope, reuse=reuse):
@@ -1973,9 +1990,28 @@ def SegNet_VGG_10_v2(net, class_num, is_training, is_testing, is_ternary, is_qua
 		utils.Save_Analyzsis_as_csv(Analysis, FILE)
 	return net
 	
-	
+def SegNet_VGG_10_depthwise(net, 
+                            class_num, 
+                            # Placerholder
+                            is_training, 
+                            is_testing, 
+                            is_ternary, 
+                            # Hyperparameter
+                            is_quantized_activation, 
+                            IS_TERNARY, 
+                            IS_QUANTIZED_ACTIVATION, 
+                            IS_CONV_BIAS, # (No Use)
+                            Activation,   # (No Use)
+                            IS_DROPOUT,
+                            DROPOUT_RATE,
+                            IS_BN,
+                            # Analysis File Path
+                            FILE, 
+                            
+                            reuse=None, 
+                            scope="SegNet_VGG_10"
+                            ):
 
-def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, FILE, reuse=None, scope="SegNet_VGG_10"):
 	with tf.variable_scope(scope, reuse=reuse):
 		Analysis = utils.Analyzer({}, net, type='DATA', name='Input')
 		with tf.variable_scope("encoder"):
@@ -1983,7 +2019,7 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -1998,7 +2034,7 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -2016,7 +2052,7 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -2031,7 +2067,7 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -2049,7 +2085,7 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1, 
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -2064,7 +2100,7 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -2079,7 +2115,7 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -2100,7 +2136,7 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -2115,7 +2151,7 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -2130,7 +2166,7 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -2148,7 +2184,7 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -2163,7 +2199,7 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -2181,7 +2217,7 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -2192,7 +2228,10 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 							IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
 							Analysis				= Analysis,
 							scope					= "conv1")
-							
+				
+				if IS_DROPOUT:
+					net = tf.cond(is_testing, lambda: net, lambda: tf.layers.dropout(net, DROPOUT_RATE))
+				
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=class_num, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
@@ -2210,7 +2249,6 @@ def SegNet_VGG_10_depthwise(net, class_num, is_training, is_testing, is_ternary,
 		utils.Save_Analyzsis_as_csv(Analysis, FILE)
 	return net
 	
-
 def SegNet_VGG_10_depthwise_v2(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, reuse=None, scope="SegNet_VGG_10"):
 	with tf.variable_scope(scope, reuse=reuse):
 		Analysis = utils.Analyzer({}, net, type='DATA', name='Input')
@@ -2446,10 +2484,27 @@ def SegNet_VGG_10_depthwise_v2(net, class_num, is_training, is_testing, is_terna
 		utils.Save_Analyzsis_as_csv(Analysis, FILE)
 	return net
 	
-	
-
-
-def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, FILE, reuse=None, scope="SegNet_VGG_10"):
+def SegNet_VGG_10_residual(net, 
+                           class_num, 
+                           # Placerholder
+                           is_training, 
+                           is_testing, 
+                           is_ternary, 
+                           # Hyperparameter
+                           is_quantized_activation, 
+                           IS_TERNARY, 
+                           IS_QUANTIZED_ACTIVATION, 
+                           IS_CONV_BIAS, # (No Use)
+                           Activation,   # (No Use)
+                           IS_DROPOUT,
+                           DROPOUT_RATE,
+                           IS_BN,
+                           # Analysis File Path
+                           FILE, 
+                           
+                           reuse=None, 
+                           scope="SegNet_VGG_10"
+                           ):
 	with tf.variable_scope(scope, reuse=reuse):
 		Analysis = utils.Analyzer({}, net, type='DATA', name='Input')
 		with tf.variable_scope("encoder"):
@@ -2457,7 +2512,7 @@ def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, 
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -2472,7 +2527,7 @@ def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, 
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -2491,7 +2546,7 @@ def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, 
 							is_shortcut				= True, 
 							is_bottleneck			= True, 
 							is_residual				= True,
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -2507,7 +2562,7 @@ def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, 
 							is_shortcut				= True, 
 							is_bottleneck			= True, 
 							is_residual				= True,
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -2526,7 +2581,7 @@ def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, 
 							is_shortcut				= True, 
 							is_bottleneck			= True, 
 							is_residual				= True,
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -2542,7 +2597,7 @@ def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, 
 							is_shortcut				= True, 
 							is_bottleneck			= True, 
 							is_residual				= True,
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -2558,7 +2613,7 @@ def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, 
 							is_shortcut				= True, 
 							is_bottleneck			= True, 
 							is_residual				= True,
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -2580,7 +2635,7 @@ def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, 
 							is_shortcut				= True, 
 							is_bottleneck			= True, 
 							is_residual				= True,
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -2596,7 +2651,7 @@ def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, 
 							is_shortcut				= True, 
 							is_bottleneck			= True, 
 							is_residual				= True,
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -2612,7 +2667,7 @@ def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, 
 							is_shortcut				= True, 
 							is_bottleneck			= True, 
 							is_residual				= True,
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -2631,7 +2686,7 @@ def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, 
 							is_shortcut				= True, 
 							is_bottleneck			= True, 
 							is_residual				= True,
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -2647,7 +2702,7 @@ def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, 
 							is_shortcut				= True, 
 							is_bottleneck			= True, 
 							is_residual				= True,
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -2665,7 +2720,7 @@ def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, 
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -2694,9 +2749,6 @@ def SegNet_VGG_10_residual(net, class_num, is_training, is_testing, is_ternary, 
 		utils.Save_Analyzsis_as_csv(Analysis, FILE)
 	return net
 	
-
-
-
 def SegNet_VGG_10_residual_v2(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, FILE, reuse=None, scope="SegNet_VGG_10"):
 	with tf.variable_scope(scope, reuse=reuse):
 		Analysis = utils.Analyzer({}, net, type='DATA', name='Input')
@@ -2942,10 +2994,27 @@ def SegNet_VGG_10_residual_v2(net, class_num, is_training, is_testing, is_ternar
 		utils.Save_Analyzsis_as_csv(Analysis, FILE)
 	return net
 	
-
-
-
-def SegNet_VGG_10_SEP(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, FILE, reuse=None, scope="SegNet_VGG_10"):
+def SegNet_VGG_10_SEP(net, 
+                      class_num, 
+                      # Placerholder
+                      is_training, 
+                      is_testing, 
+                      is_ternary, 
+                      # Hyperparameter
+                      is_quantized_activation, 
+                      IS_TERNARY, 
+                      IS_QUANTIZED_ACTIVATION, 
+                      IS_CONV_BIAS, # (No Use)
+                      Activation,   # (No Use)
+                      IS_DROPOUT,
+                      DROPOUT_RATE,
+                      IS_BN,
+                      # Analysis File Path
+                      FILE, 
+                      reuse=None, 
+                      scope="SegNet_VGG_10_SEP"
+                      ):
+					  
 	with tf.variable_scope(scope, reuse=reuse):
 		Analysis = utils.Analyzer({}, net, type='DATA', name='Input')
 		with tf.variable_scope("encoder"):
@@ -2953,7 +3022,7 @@ def SegNet_VGG_10_SEP(net, class_num, is_training, is_testing, is_ternary, is_qu
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -2967,7 +3036,7 @@ def SegNet_VGG_10_SEP(net, class_num, is_training, is_testing, is_ternary, is_qu
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -2985,7 +3054,7 @@ def SegNet_VGG_10_SEP(net, class_num, is_training, is_testing, is_ternary, is_qu
 							is_shortcut				= True, 
 							is_bottleneck			= False, 
 							is_SEP					= True,
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -3002,7 +3071,7 @@ def SegNet_VGG_10_SEP(net, class_num, is_training, is_testing, is_ternary, is_qu
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1, 
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -3017,7 +3086,7 @@ def SegNet_VGG_10_SEP(net, class_num, is_training, is_testing, is_ternary, is_qu
 							is_shortcut				= True, 
 							is_bottleneck			= False, 
 							is_SEP					= True,
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -3037,7 +3106,7 @@ def SegNet_VGG_10_SEP(net, class_num, is_training, is_testing, is_ternary, is_qu
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -3052,7 +3121,7 @@ def SegNet_VGG_10_SEP(net, class_num, is_training, is_testing, is_ternary, is_qu
 							is_shortcut				= True, 
 							is_bottleneck			= False, 
 							is_SEP					= True,
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -3070,7 +3139,7 @@ def SegNet_VGG_10_SEP(net, class_num, is_training, is_testing, is_ternary, is_qu
 							is_shortcut				= True, 
 							is_bottleneck			= False, 
 							is_SEP					= True,
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -3087,7 +3156,7 @@ def SegNet_VGG_10_SEP(net, class_num, is_training, is_testing, is_ternary, is_qu
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -3114,7 +3183,6 @@ def SegNet_VGG_10_SEP(net, class_num, is_training, is_testing, is_ternary, is_qu
 		utils.Save_Analyzsis_as_csv(Analysis, FILE)
 	return net
 	
-
 def SegNet_VGG_16_5x5(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, FILE, reuse=None, scope="SegNet_VGG_16"):
 	with tf.variable_scope(scope, reuse=reuse):
 		Analysis = utils.Analyzer({}, net, type='DATA', name='Input')
@@ -3461,8 +3529,26 @@ def SegNet_VGG_16_5x5(net, class_num, is_training, is_testing, is_ternary, is_qu
 		utils.Save_Analyzsis_as_csv(Analysis, FILE)
 	return net
 	
-
-def SegNet_VGG_10_depthwise_residual(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, FILE, reuse=None, scope="SegNet_VGG_10"):
+def SegNet_VGG_10_depthwise_residual(net, 
+                                     class_num, 
+                                     # Placerholder
+                                     is_training, 
+                                     is_testing, 
+                                     is_ternary, 
+                                     # Hyperparameter
+                                     is_quantized_activation, 
+                                     IS_TERNARY, 
+                                     IS_QUANTIZED_ACTIVATION, 
+                                     IS_CONV_BIAS, # (No Use)
+                                     Activation,   # (No Use)
+                                     IS_DROPOUT,
+                                     DROPOUT_RATE,
+                                     IS_BN,
+                                     # Analysis File Path
+                                     FILE, 
+                                     reuse=None, 
+                                     scope="SegNet_VGG_10_SEP"
+                                     ):
 	with tf.variable_scope(scope, reuse=reuse):
 		Analysis = utils.Analyzer({}, net, type='DATA', name='Input')
 		with tf.variable_scope("encoder"):
@@ -3470,7 +3556,7 @@ def SegNet_VGG_10_depthwise_residual(net, class_num, is_training, is_testing, is
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -3485,7 +3571,7 @@ def SegNet_VGG_10_depthwise_residual(net, class_num, is_training, is_testing, is
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -3504,7 +3590,7 @@ def SegNet_VGG_10_depthwise_residual(net, class_num, is_training, is_testing, is
 							is_shortcut				= True, 
 							is_bottleneck			= True, 
 							is_residual				= True,
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -3520,7 +3606,7 @@ def SegNet_VGG_10_depthwise_residual(net, class_num, is_training, is_testing, is
 							is_shortcut				= True, 
 							is_bottleneck			= True, 
 							is_residual				= True,
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -3539,7 +3625,7 @@ def SegNet_VGG_10_depthwise_residual(net, class_num, is_training, is_testing, is
 							is_shortcut				= True, 
 							is_bottleneck			= True, 
 							is_residual				= True,
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -3555,7 +3641,7 @@ def SegNet_VGG_10_depthwise_residual(net, class_num, is_training, is_testing, is
 							is_shortcut				= True, 
 							is_bottleneck			= True, 
 							is_residual				= True,
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -3571,7 +3657,7 @@ def SegNet_VGG_10_depthwise_residual(net, class_num, is_training, is_testing, is
 							is_shortcut				= True, 
 							is_bottleneck			= True, 
 							is_residual				= True,
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -3593,7 +3679,7 @@ def SegNet_VGG_10_depthwise_residual(net, class_num, is_training, is_testing, is
 							is_shortcut				= True, 
 							is_bottleneck			= True, 
 							is_residual				= True,
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -3609,7 +3695,7 @@ def SegNet_VGG_10_depthwise_residual(net, class_num, is_training, is_testing, is
 							is_shortcut				= True, 
 							is_bottleneck			= True, 
 							is_residual				= True,
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -3625,7 +3711,7 @@ def SegNet_VGG_10_depthwise_residual(net, class_num, is_training, is_testing, is
 							is_shortcut				= True, 
 							is_bottleneck			= True, 
 							is_residual				= True,
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -3644,7 +3730,7 @@ def SegNet_VGG_10_depthwise_residual(net, class_num, is_training, is_testing, is
 							is_shortcut				= True, 
 							is_bottleneck			= True, 
 							is_residual				= True,
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -3660,7 +3746,7 @@ def SegNet_VGG_10_depthwise_residual(net, class_num, is_training, is_testing, is
 							is_shortcut				= True, 
 							is_bottleneck			= True, 
 							is_residual				= True,
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -3678,7 +3764,7 @@ def SegNet_VGG_10_depthwise_residual(net, class_num, is_training, is_testing, is
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -3707,8 +3793,6 @@ def SegNet_VGG_10_depthwise_residual(net, class_num, is_training, is_testing, is
 		utils.Save_Analyzsis_as_csv(Analysis, FILE)
 	return net
 	
-
-
 def SegNet_VGG_10_depthwise_5x5(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, FILE, reuse=None, scope="SegNet_VGG_10"):
 	with tf.variable_scope(scope, reuse=reuse):
 		Analysis = utils.Analyzer({}, net, type='DATA', name='Input')
@@ -3884,8 +3968,26 @@ def SegNet_VGG_10_depthwise_5x5(net, class_num, is_training, is_testing, is_tern
 		utils.Save_Analyzsis_as_csv(Analysis, FILE)
 	return net
 	
-
-def SegNet_VGG_10_depthwise_group10(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, FILE, reuse=None, scope="SegNet_VGG_10"):
+def SegNet_VGG_10_depthwise_group10(net,
+                                    class_num, 
+                                    # Placerholder
+                                    is_training, 
+                                    is_testing, 
+                                    is_ternary, 
+                                    # Hyperparameter
+                                    is_quantized_activation, 
+                                    IS_TERNARY, 
+                                    IS_QUANTIZED_ACTIVATION, 
+                                    IS_CONV_BIAS, # (No Use)
+                                    Activation,   # (No Use)
+                                    IS_DROPOUT,
+                                    DROPOUT_RATE,
+                                    IS_BN,
+                                    # Analysis File Path
+                                    FILE, 
+                                    reuse=None, 
+                                    scope="SegNet_VGG_10_SEP"
+                                    ):
 	with tf.variable_scope(scope, reuse=reuse):
 		g = 10
 		Analysis = utils.Analyzer({}, net, type='DATA', name='Input')
@@ -3894,7 +3996,7 @@ def SegNet_VGG_10_depthwise_group10(net, class_num, is_training, is_testing, is_
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -3909,7 +4011,7 @@ def SegNet_VGG_10_depthwise_group10(net, class_num, is_training, is_testing, is_
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -3927,7 +4029,7 @@ def SegNet_VGG_10_depthwise_group10(net, class_num, is_training, is_testing, is_
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1, group=g,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -3942,7 +4044,7 @@ def SegNet_VGG_10_depthwise_group10(net, class_num, is_training, is_testing, is_
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1, group=g,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -3960,7 +4062,7 @@ def SegNet_VGG_10_depthwise_group10(net, class_num, is_training, is_testing, is_
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1, group=g, 
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -3975,7 +4077,7 @@ def SegNet_VGG_10_depthwise_group10(net, class_num, is_training, is_testing, is_
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1, group=g,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -3990,7 +4092,7 @@ def SegNet_VGG_10_depthwise_group10(net, class_num, is_training, is_testing, is_
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1, group=g,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -4011,7 +4113,7 @@ def SegNet_VGG_10_depthwise_group10(net, class_num, is_training, is_testing, is_
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1, group=g,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -4026,7 +4128,7 @@ def SegNet_VGG_10_depthwise_group10(net, class_num, is_training, is_testing, is_
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1, group=g,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -4041,7 +4143,7 @@ def SegNet_VGG_10_depthwise_group10(net, class_num, is_training, is_testing, is_
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1, group=g,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -4059,7 +4161,7 @@ def SegNet_VGG_10_depthwise_group10(net, class_num, is_training, is_testing, is_
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=128, rate=1, group=g,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -4074,7 +4176,7 @@ def SegNet_VGG_10_depthwise_group10(net, class_num, is_training, is_testing, is_
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1, group=g,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -4092,7 +4194,7 @@ def SegNet_VGG_10_depthwise_group10(net, class_num, is_training, is_testing, is_
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -4317,8 +4419,26 @@ def SegNet_VGG_10_5x5(net, class_num, is_training, is_testing, is_ternary, is_qu
 		utils.Save_Analyzsis_as_csv(Analysis, FILE)
 	return net
 	
-
-def SegNet_VGG_10_depthwise_5x5_group10(net, class_num, is_training, is_testing, is_ternary, is_quantized_activation, IS_TERNARY, IS_QUANTIZED_ACTIVATION, FILE, reuse=None, scope="SegNet_VGG_10"):
+def SegNet_VGG_10_depthwise_5x5_group10(net,
+                                        class_num, 
+                                        # Placerholder
+                                        is_training, 
+                                        is_testing, 
+                                        is_ternary, 
+                                        # Hyperparameter
+                                        is_quantized_activation, 
+                                        IS_TERNARY, 
+                                        IS_QUANTIZED_ACTIVATION, 
+                                        IS_CONV_BIAS, # (No Use)
+                                        Activation,   # (No Use)
+                                        IS_DROPOUT,
+                                        DROPOUT_RATE,
+                                        IS_BN,
+                                        # Analysis File Path
+                                        FILE, 
+                                        reuse=None, 
+                                        scope="SegNet_VGG_10_SEP"
+                                        ):
 	with tf.variable_scope(scope, reuse=reuse):
 		g = 10
 		Analysis = utils.Analyzer({}, net, type='DATA', name='Input')
@@ -4327,7 +4447,7 @@ def SegNet_VGG_10_depthwise_5x5_group10(net, class_num, is_training, is_testing,
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -4342,7 +4462,7 @@ def SegNet_VGG_10_depthwise_5x5_group10(net, class_num, is_training, is_testing,
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -4360,7 +4480,7 @@ def SegNet_VGG_10_depthwise_5x5_group10(net, class_num, is_training, is_testing,
 				net = utils.conv2D(net, kernel_size=5, stride=1, output_channel=128, rate=1, group=g,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -4378,7 +4498,7 @@ def SegNet_VGG_10_depthwise_5x5_group10(net, class_num, is_training, is_testing,
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1, group=g, 
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -4393,7 +4513,7 @@ def SegNet_VGG_10_depthwise_5x5_group10(net, class_num, is_training, is_testing,
 				net = utils.conv2D(net, kernel_size=5, stride=1, output_channel=256, rate=1, group=g,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -4414,7 +4534,7 @@ def SegNet_VGG_10_depthwise_5x5_group10(net, class_num, is_training, is_testing,
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=256, rate=1, group=g,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -4429,7 +4549,7 @@ def SegNet_VGG_10_depthwise_5x5_group10(net, class_num, is_training, is_testing,
 				net = utils.conv2D(net, kernel_size=5, stride=1, output_channel=128, rate=1, group=g,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -4447,7 +4567,7 @@ def SegNet_VGG_10_depthwise_5x5_group10(net, class_num, is_training, is_testing,
 				net = utils.conv2D(net, kernel_size=5, stride=1, output_channel=64, rate=1, group=g,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
@@ -4465,7 +4585,7 @@ def SegNet_VGG_10_depthwise_5x5_group10(net, class_num, is_training, is_testing,
 				net = utils.conv2D(net, kernel_size=3, stride=1, output_channel=64, rate=1,
 							is_shortcut				= False, 
 							is_bottleneck			= False, 
-							is_batch_norm			= True, 
+							is_batch_norm			= IS_BN, 
 							is_training				= is_training, 
 							is_testing				= is_testing, 
 							is_dilated				= False, 
