@@ -12,9 +12,9 @@ import os
 import time
 
 
-#=======================#
-#	Global Parameter	#
-#=======================#
+#========================#
+#    Global Parameter    #
+#========================#
 Dataset = 'CamVid' 
 Model_first_name  = 'SegNet' #sys.argv[1] # e.g. : SegNet
 Model_second_name = 'VGG_10' #sys.argv[2] # e.g. : VGG_16
@@ -26,9 +26,9 @@ IS_HYPERPARAMETER_OPT = False
 IS_TRAINING 		  = True
 IS_TESTING  		  = True
 
-#==========#
-#   Path   #
-#==========#
+#============#
+#    Path    #
+#============#
 # For Loading Dataset
 Dataset_Path = '/home/2016/b22072117/ObjectSegmentation/codes/dataset/' + Dataset
 if Dataset=='ade20k':
@@ -48,11 +48,10 @@ test_Y_pre_path   = '/home/2016/b22072117/ObjectSegmentation/codes/nets/' + Data
 # For Loading Trained Model
 TESTING_WEIGHT_PATH   = '/home/2016/b22072117/ObjectSegmentation/codes/nets/SegNet_Model/' + 'SegNet_VGG_16_2017.10.31_09:15/'
 TESTINGN_WEIGHT_MODEL = 'SegNet_VGG_16_200'
-#============# 
-#	Define   #
-#============#
 
-
+#==============# 
+#    Define    #
+#==============#
 def main(argv=None):
 	train_accuracy, valid_accuracy, test_accuracy = utils.run(
 		Hyperparameter			= None,

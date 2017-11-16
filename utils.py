@@ -128,7 +128,7 @@ def run(
 		H_resize 					= 224
 		W_resize 					= 224 
 
-    #------------------------------#
+	#------------------------------#
 	#   Hyperparameter : Testing   #
 	#------------------------------#
 	if ((not IS_TRAINING) and IS_TESTING):
@@ -184,9 +184,9 @@ def run(
 	print("\033[1;32;40mBATCH_SIZE\033[0m = \033[1;37;40m{BS}\033[0m" .format(BS=BATCH_SIZE))
 	
 	
-	#=========================#
-	#	Training Model Save   #
-	#=========================#
+	#===========================#
+	#    Training Model Save    #
+	#===========================#
 	if IS_TRAINING and (not IS_HYPERPARAMETER_OPT):
 		#if (not os.path.exists(Model_first_name + '_Model/')) :
 		#	print("\n\033[1;35;40m%s\033[0m is not exist!" %Model_first_name)
@@ -261,7 +261,7 @@ def run(
 		#np.savetxt(Dir + '/Hyperparameter.csv', HP, delimiter=", ", fmt="%s")
 
 	#===============#
-	#	Data Info	#
+	#   Data Info   #
 	#===============#
 	if Dataset=='CamVid': # original : [360, 480]
 		class_num = 12
@@ -291,7 +291,7 @@ def run(
 	xImage = xs
 	
 	#===========#
-	#	Model	#
+	#   Model   #
 	#===========#
 	net = xImage
 	
@@ -322,9 +322,9 @@ def run(
 		params_Dis       = tf.get_collection("params", scope=None)[np.shape(params)[0]:] 
 		prediction_Dis_1 = Model.Discriminator(ys, is_training, is_testing, reuse=True)
 
-	#===============#
-	#	Collection	#
-	#===============#	
+	#================#
+	#   Collection   #
+	#================#	
 	weights_collection	 		  	= tf.get_collection("weights"           , scope=None)
 	biases_collection  	    	  	= tf.get_collection("biases"            , scope=None)
 	mean_collection  	    	  	= tf.get_collection("batch_mean"        , scope=None)
@@ -347,7 +347,7 @@ def run(
 	params 							= tf.get_collection("params"			, scope=None) 
 
 	#=======================#
-	#	Training Strategy	#
+	#   Training Strategy   #
 	#=======================#	
 	# KL divergence
 	KL = tf.nn.softmax_cross_entropy_with_logits(labels = ys, logits = prediction) 
@@ -386,7 +386,7 @@ def run(
 			train_step  = opt.minimize(loss)
 
 	#=======================#
-	#	Weight Parameters	#
+	#   Weight Parameters   #
 	#=======================#	
 	"""
 	keys = ['conv1_1', 'conv1_1_b', 'conv1_1_mean', 'conv1_1_var', 'conv1_1_scale', 'conv1_1_shift',
@@ -430,7 +430,7 @@ def run(
 	saver = tf.train.Saver()
 
 	#=================#
-	#	Session Run   #
+	#   Session Run   #
 	#=================#
 	with tf.Session() as sess:
 		if IS_TRAINING == True:
@@ -696,7 +696,7 @@ def Training_and_Validation(
 		sess							= None):
 
 	#-------------------------------#
-	#	Loading Pre-trained Model	#
+	#   Loading Pre-trained Model   #
 	#-------------------------------#
 	if TRAINED_WEIGHT_FILE!=None:
 		print ""
@@ -735,7 +735,7 @@ def Training_and_Validation(
 	Data_Size_Per_Iter = BATCH_SIZE
 
 	#---------------#
-	#	Per Epoch	#
+	#   Per Epoch   #
 	#---------------#
 	########################
 	tStart_All = time.time()
@@ -822,7 +822,7 @@ def Training_and_Validation(
 				batch_ys    = train_target [i*BATCH_SIZE : (i+1)*BATCH_SIZE]
 				
 				#-----------------------#
-				#	Run Training Step	#
+				#   Run Training Step   #
 				#-----------------------#	
 				if IS_GAN:
 				# (GAN) Generator
@@ -837,9 +837,9 @@ def Training_and_Validation(
 					for assign_var_list_iter, assign_var_list in enumerate(assign_var_list_collection):
 						sess.run(assign_var_list, feed_dict={is_ternary: TERNARY_NOW})
 				
-				#-----------#
-				#	Result	#
-				#-----------#
+				#------------#
+				#   Result   #
+				#------------#
 				y_pre = np.argmax(Prediction, -1)
 				batch_accuracy = np.mean(np.equal(np.argmax(batch_ys, -1), y_pre))
 				
@@ -904,9 +904,9 @@ def Training_and_Validation(
 		print("It cost {TIME} sec\n" .format(TIME=tEnd - tStart))
 		
 		
-		#---------------#
-		#	Validation	#
-		#---------------#
+		#----------------#
+		#   Validation   #
+		#----------------#
 		print("Validation ... ")
 		print("\033[1;34;40mEpoch\033[0m : {ep}".format(ep = epoch))
 		total_valid_accuracy = 0
@@ -981,7 +981,7 @@ def Training_and_Validation(
 		
 		
 		#==============================#
-		#	Training Directory Build   #
+		#   Training Directory Build   #
 		#==============================#
 		if ((not IS_HYPERPARAMETER_OPT) and ((epoch+1)==160)):
 			if (not os.path.exists(Model_first_name + '_Model/')) :
@@ -999,9 +999,9 @@ def Training_and_Validation(
 			
 			np.savetxt(Dir + '/Hyperparameter.csv', HP, delimiter=", ", fmt="%s")
 		
-		#---------------------------#
-		#	Saving trained weights	#
-		#---------------------------#
+		#----------------------------#
+		#   Saving trained weights   #
+		#----------------------------#
 		if not IS_HYPERPARAMETER_OPT:
 		#	batch_xs = train_data[0 : BATCH_SIZE]
 		#	assign_trained_mean_and_var(mean_collection, var_collection, trained_mean_collection, trained_var_collection, params, xs, ys, is_training, is_testing, batch_xs, sess)
@@ -1019,7 +1019,7 @@ def Training_and_Validation(
 	print("Total cost {TIME} sec\n" .format(TIME=tEnd_All - tStart_All))
 
 	#-----------------------------------#
-	#	Saving Train info as csv file	#
+	#   Saving Train info as csv file   #
 	#-----------------------------------#
 	if ((not IS_HYPERPARAMETER_OPT) and (EPOCH_TIME==160)):
 		Train_acc_per_epoch  = np.expand_dims(Train_acc_per_epoch , axis=1)
@@ -1029,7 +1029,7 @@ def Training_and_Validation(
 		
 		
 	#***********#
-	#	DEBUG   #
+	#   DEBUG   #
 	#***********#
 	"""
 	train_data_index   = open(Dataset_Path + '/train.txt', 'r').read().splitlines()
@@ -1195,7 +1195,7 @@ def Testing(
 		print("Testing    Data Number = {DS}\n" .format(DS = test_data_num))
 	
 	#***********#
-	#	TRAIN	#
+	#   TRAIN   #
 	#***********#
 	print("Training   Data Result ... ")
 	Data_Size_Per_Iter = BATCH_SIZE
@@ -1267,7 +1267,7 @@ def Testing(
 	#Save_file_as_csv('debug_test' , train_accuracy_total)
 	
 	#***********#
-	#	VALID	#
+	#   VALID   #
 	#***********#
 	print("Validation Data Result ... ")
 	for data_iter in range(valid_data_num/Data_Size_Per_Iter):
@@ -1339,7 +1339,7 @@ def Testing(
 	
 
 	#***********#
-	#	TEST	#
+	#   TEST   #
 	#***********#
 	if Dataset!='ade20k':
 		print("Testing    Data Result ... ")
@@ -1817,7 +1817,6 @@ def read_dataset_file(data_index, Path, Dataset, H_resize, W_resize, IS_TARGET=F
 #===============#
 #   File Save   #
 #===============#
-
 def Save_file_as_csv(Path, file):
 	np.savetxt(Path + '.csv', file, delimiter=",")
 
@@ -2526,7 +2525,7 @@ def Residual_Block( net, kernel_size, stride, input_channel, internal_channel, o
 					Analysis				): 
 
 	#===============================#
-	#	Bottleneck Residual Block	#
+	#   Bottleneck Residual Block   #
 	#===============================#
 	if is_bottleneck: 
 		with tf.variable_scope("bottle_neck"):
@@ -2635,7 +2634,7 @@ def Residual_Block( net, kernel_size, stride, input_channel, internal_channel, o
 
 
 	#===========================#
-	#	Normal Residual Block	#
+	#   Normal Residual Block   #
 	#===========================#
 	else: 
 		with tf.variable_scope("conv1_3x3"):
@@ -2873,7 +2872,7 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 								 Analysis				 )
 		
 		#===============================#
-		#	Bottleneck Residual Block	#
+		#   Bottleneck Residual Block   #
 		#===============================#
 		if is_residual:
 			net_Res = Residual_Block( net, kernel_size, stride, input_channel, internal_channel, output_channel, rate,
@@ -2892,9 +2891,9 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 							          IS_SAVER			      , 
 							          padding			      ,
 									  Analysis				  ) 
-		#===================#
-		#	Shortcut Block	#
-		#===================#
+		#====================#
+		#   Shortcut Block   #
+		#====================#
 		if is_shortcut:
 			shortcut, Analysis =  shortcut_Module( net, kernel_size, stride, input_channel, internal_channel, output_channel, rate,
 						  		         		   initializer             ,
@@ -2928,9 +2927,9 @@ def conv2D(	net, kernel_size=3, stride=1, internal_channel=64, output_channel=64
 			
 			
 
-		#===========================================#
-		#	Normal Convolution Block (No Shortcut)  #
-		#===========================================#
+		#============================================#
+		#   Normal Convolution Block (No Shortcut)   #
+		#============================================#
 		else:  
 			if not is_depthwise:
 				group=1
