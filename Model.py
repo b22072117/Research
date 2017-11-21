@@ -8,6 +8,7 @@ from scipy import misc
 import utils
 
 
+	
 def Discriminator(net, is_training, is_testing, reuse=None, scope="Discriminator"):
 	with tf.variable_scope(scope, reuse=reuse):
 		net = residual_50(net, 

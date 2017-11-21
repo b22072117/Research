@@ -17,9 +17,9 @@ import time
 #========================#
 Dataset = 'CamVid' 
 Model_first_name  = 'SegNet' #sys.argv[1] # e.g. : SegNet
-Model_second_name = 'VGG_10_depthwise_5x5_group10' #sys.argv[2] # e.g. : VGG_16
+Model_second_name = 'VGG_10' #sys.argv[2] # e.g. : VGG_16
 Model_Name = Model_first_name + '_' + Model_second_name
-Model_Call = getattr(Model, Model_Name)
+
 print('\n\033[1;32;40mMODEL NAME\033[0m =\033[1;37;40m {MODEL_NAME}\033[0m' .format(MODEL_NAME=Model_Name))
 
 IS_HYPERPARAMETER_OPT = False
@@ -59,8 +59,6 @@ def main(argv=None):
 		Dataset 				= Dataset,
 		Model_first_name 		= Model_first_name,
 		Model_second_name 		= Model_second_name,
-		Model_Name 				= Model_Name,
-		Model_Call 				= Model_Call,
 		IS_HYPERPARAMETER_OPT 	= IS_HYPERPARAMETER_OPT,
 		IS_TRAINING 			= IS_TRAINING,
 		IS_TESTING 				= IS_TESTING,
