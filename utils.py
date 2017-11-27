@@ -240,7 +240,7 @@ def run(
 	else:
 		HP_dict, Model_dict = Hyperparameter_Decoder(Hyperparameter, Model_dict)
 		prediction, Analysis, max_parameter = Model_dict_Decoder(net, Model_dict, is_training, is_testing, DROPOUT_RATE)
-		
+	Model_csv_Generator(Model_dict, 'LeNet_5_debug')	
 	#================#
 	#   Collection   #
 	#================#	
