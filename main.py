@@ -5,78 +5,87 @@ import pdb
 import math
 from PIL import Image
 from scipy import misc
+import argparse
 import utils
 import Model
 import sys
 import os
 import time
 
-
 #========================#
 #    Global Parameter    #
 #========================#
-Dataset = 'CamVid' 
-Model_first_name  = 'SegNet' #sys.argv[1] # e.g. : SegNet
-Model_second_name = 'VGG_10' #sys.argv[2] # e.g. : VGG_16
-Model_Name = Model_first_name + '_' + Model_second_name
+parser = argparse.ArgumentParser()
 
-print('\n\033[1;32;40mMODEL NAME\033[0m :\033[1;37;40m {MODEL_NAME}\033[0m' .format(MODEL_NAME=Model_Name))
+parser.add_argument('--Dataset'        , type = str, default = 'cifar10')
+parser.add_argument('--Model_1st'      , type = str, default = 'ResNet')
+parser.add_argument('--Model_2nd'      , type = str, default = '20_cifar10')
+parser.add_argument('--BatchSize'      , type = int, default = 128)
+parser.add_argument('--Epoch'          , type = int, default = 250)
+parser.add_argument('--epochs_per_eval', type = int, default = 10)
 
+
+FLAGs = parser.parse_args()
+
+Model_Name = FLAGs.Model_1st + '_' + FLAGs.Model_2nd
 IS_HYPERPARAMETER_OPT = False
-IS_TRAINING 		  = True
-IS_TESTING  		  = True
-EPOCH_TIME            = 200
 
+print('\n\033[1;32;40mMODEL NAME\033[0m :\033[1;37;40m {MODEL_NAME}\033[0m' .format(MODEL_NAME = Model_Name))
 #============#
 #    Path    #
 #============#
 # For Loading Dataset
-Dataset_Path = '/home/2016/b22072117/ObjectSegmentation/codes/dataset/' + Dataset
-if Dataset=='ade20k':
+Dataset_Path = '/home/2016/b22072117/ObjectSegmentation/codes/dataset/' + FLAGs.Dataset
+if FLAGs.Dataset=='ade20k':
 	Dataset_Path = Dataset_Path + '/ADEChallengeData2016'
-Y_pre_Path   = '/home/2016/b22072117/ObjectSegmentation/codes/nets/' + Model_first_name + '_Y_pre/' + Dataset
+Y_pre_Path   = '/home/2016/b22072117/ObjectSegmentation/codes/nets/' + FLAGs.Model_1st + '_Y_pre/' + FLAGs.Dataset
 
 # For Saving Result Picture of Testing
-train_target_path = '/home/2016/b22072117/ObjectSegmentation/codes/result/' + Dataset + '/' + Model_first_name + '/' 
-valid_target_path = '/home/2016/b22072117/ObjectSegmentation/codes/result/' + Dataset + '/' + Model_first_name + '/' 
-test_target_path  = '/home/2016/b22072117/ObjectSegmentation/codes/result/' + Dataset + '/' + Model_first_name + '/' 
+train_target_path = '/home/2016/b22072117/ObjectSegmentation/codes/result/' + FLAGs.Dataset + '/' + FLAGs.Model_1st + '/' 
+valid_target_path = '/home/2016/b22072117/ObjectSegmentation/codes/result/' + FLAGs.Dataset + '/' + FLAGs.Model_1st + '/' 
+test_target_path  = '/home/2016/b22072117/ObjectSegmentation/codes/result/' + FLAGs.Dataset + '/' + FLAGs.Model_1st + '/' 
 
 # For Saving Result in .npz file
-train_Y_pre_path  = '/home/2016/b22072117/ObjectSegmentation/codes/nets/Y_pre/' + Model_first_name + '/' + Dataset + '/'
-valid_Y_pre_path  = '/home/2016/b22072117/ObjectSegmentation/codes/nets/Y_pre/' + Model_first_name + '/' + Dataset + '/'
-test_Y_pre_path   = '/home/2016/b22072117/ObjectSegmentation/codes/nets/Y_pre/' + Model_first_name + '/' + Dataset + '/'
+train_Y_pre_path  = '/home/2016/b22072117/ObjectSegmentation/codes/nets/Y_pre/' + FLAGs.Model_1st + '/' + FLAGs.Dataset + '/'
+valid_Y_pre_path  = '/home/2016/b22072117/ObjectSegmentation/codes/nets/Y_pre/' + FLAGs.Model_1st + '/' + FLAGs.Dataset + '/'
+test_Y_pre_path   = '/home/2016/b22072117/ObjectSegmentation/codes/nets/Y_pre/' + FLAGs.Model_1st + '/' + FLAGs.Dataset + '/'
 
 # For Loading Trained Model
-TESTING_WEIGHT_PATH   = '/home/2016/b22072117/ObjectSegmentation/codes/nets/SegNet_Model/' + 'SegNet_VGG_16_2017.10.31_09:15/'
-TESTINGN_WEIGHT_MODEL = 'SegNet_VGG_16_200'
+Model_Path = None
+Model = None
 
 #==============# 
 #    Define    #
 #==============#
-def main(argv=None):
-	train_accuracy, valid_accuracy, test_accuracy, max_parameter = utils.run(
-		Hyperparameter			= None,
-		# Info
-		Dataset 				= Dataset,
-		Model_first_name 		= Model_first_name,
-		Model_second_name 		= Model_second_name,
-		IS_HYPERPARAMETER_OPT 	= IS_HYPERPARAMETER_OPT,
-		IS_TRAINING 			= IS_TRAINING,
-		IS_TESTING 				= IS_TESTING,
-		EPOCH_TIME              = EPOCH_TIME,
-		# Path
-		Dataset_Path			= Dataset_Path,
-		Y_pre_Path				= Y_pre_Path,
-		train_target_path		= train_target_path,
-		valid_target_path		= valid_target_path,
-		test_target_path		= test_target_path,
-		train_Y_pre_path		= train_Y_pre_path,
-		valid_Y_pre_path		= valid_Y_pre_path,
-		test_Y_pre_path			= test_Y_pre_path,
-		TESTING_WEIGHT_PATH     = TESTING_WEIGHT_PATH,
-		TESTINGN_WEIGHT_MODEL   = TESTINGN_WEIGHT_MODEL
-	)
-	
+def main(argv):
+    # -- Training --
+    for _ in range(FLAGs.Epoch//FLAGs.epochs_per_eval)
+        Model_Path, Model = utils.run_training( 
+            Hyperparameter        = None                 ,               
+            FLAGs                 = FLAGs                ,
+            Epoch                 = FLAGs.epochs_per_eval,
+            IS_HYPERPARAMETER_OPT = IS_HYPERPARAMETER_OPT,
+            Dataset_Path          = Dataset_Path         ,
+            Y_pre_Path            = Y_pre_Path           ,
+            trained_model_path    = Model_Path           ,
+            trained_model         = Model                )
+    
+        # -- Testing --
+        test_accuracy = utils.run_testing( 
+            Hyperparameter        = None                 ,               
+            FLAGs                 = FLAGs                ,
+            IS_HYPERPARAMETER_OPT = IS_HYPERPARAMETER_OPT,  
+            Dataset_Path          = Dataset_Path         ,
+            testing_model_path    = Model_Path           ,
+            testing_model         = Model                ,
+            train_target_path     = train_target_path    ,
+            valid_target_path     = valid_target_path    ,
+            test_target_path      = test_target_path     ,
+            train_Y_pre_path      = train_Y_pre_path     ,
+            valid_Y_pre_path      = valid_Y_pre_path     ,
+            test_Y_pre_path       = test_Y_pre_path      )
+    
 if __name__ == "__main__":
-	tf.app.run()
+    FLAGS, unparsed = parser.parse_known_args()
+    tf.app.run(argv=[sys.argv[0]] + unparsed)
 
