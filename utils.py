@@ -20,8 +20,10 @@ import sys
 import time
 
 import argparse
+from sys import platform
 from sklearn import linear_model
 from sklearn.preprocessing import PolynomialFeatures
+from functools import reduce
 
 import Model
 
@@ -33,6 +35,7 @@ def run_training(
     # Info               
     FLAGs                ,
     Epoch                ,
+    Global_Epoch         ,
     IS_HYPERPARAMETER_OPT,
     # Path               
     Dataset_Path         ,
@@ -72,8 +75,10 @@ def run_training(
     #----------------#
     #   Model_dict   #
     #----------------#
-    Model_dict = Model_dict_Generator('Model/' + Model_first_name + '_Model/' + Model_Name + '.csv', class_num)
-    
+    if platform == 'win32':
+        Model_dict = Model_dict_Generator('Model\\' + Model_first_name + '_Model\\' + Model_Name + '.csv', class_num)
+    else:
+        Model_dict = Model_dict_Generator('Model/' + Model_first_name + '_Model/' + Model_Name + '.csv', class_num)
     #-----------------------------------#
     #   Hyperparameter : User Defined   #
     #-----------------------------------#
@@ -83,7 +88,7 @@ def run_training(
         HP.update({'Epoch'                     : EPOCH     })
         HP.update({'H_Resize'                  : H_Resize  })
         HP.update({'W_Resize'                  : W_Resize  })
-        HP.update({'LR'                        : 1e-2      })
+        HP.update({'LR'                        : 1e-1      })
         HP.update({'LR_Strategy'               : '2times'  })
         HP.update({'LR_Final'                  : 1e-3      })
         HP.update({'LR_Decade'                 : 10        })   
@@ -170,6 +175,7 @@ def run_training(
         Y_pre_Path            = Y_pre_Path            ,
         class_num             = class_num             ,            
         HP                    = HP                    ,
+        Global_Epoch          = Global_Epoch          ,
         weights_bd_ratio      = 50                    ,
         biases_bd_ratio       = 50                    ,         
         HP_csv                = HP_csv                ,
@@ -276,6 +282,7 @@ def Training(
     class_num            ,
     # Parameter	
     HP                   ,
+    Global_Epoch         ,
     weights_bd_ratio     ,
     biases_bd_ratio      ,
     # Model Save         
@@ -308,19 +315,30 @@ def Training(
     #------------------#
     data_shape = [None, HP['H_Resize'], HP['W_Resize'], 3]
     global_step = tf.train.get_or_create_global_step()
-    batches_per_epoch = train_data_num / HP['Batch_Size']
-    
+    batches_per_epoch = train_data_num / HP['Batch_Size'] 
     ## Is_training
     is_training = tf.placeholder(tf.bool)
+    
     ## Learning Rate
-    initial_learning_rate = HP['LR']
-    boundaries = [int(batches_per_epoch * epoch) for epoch in [HP['LR_Decade_1st_Epoch'], HP['LR_Decade_2nd_Epoch'], 200]]
-    values = [initial_learning_rate * decay for decay in [1, 0.1, 0.01, 0.001]]
-    learning_rate = tf.train.piecewise_constant(tf.cast(global_step, tf.int32), boundaries, values)
+    #initial_learning_rate = HP['LR']
+    #boundaries = [int(batches_per_epoch * epoch) for epoch in [HP['LR_Decade_1st_Epoch'], HP['LR_Decade_2nd_Epoch'], 200]]
+    #values = [initial_learning_rate * decay for decay in [1, 0.1, 0.01, 0.001]]
+    #learning_rate = tf.train.piecewise_constant(tf.cast(global_step, tf.int32), boundaries, values)
+    
+    if Global_Epoch <= HP['LR_Decade_1st_Epoch']:
+        learning_rate = HP['LR']
+    elif Global_Epoch <= HP['LR_Decade_1st_Epoch']:
+        learning_rate = HP['LR'] / HP['LR_Decade']
+    elif Global_Epoch <= 200:
+        learning_rate = HP['LR'] / HP['LR_Decade'] / HP['LR_Decade'] 
+    else:
+        learning_rate = HP['LR'] / HP['LR_Decade'] / HP['LR_Decade'] / HP['LR_Decade']
+    
     ## is_quantized_activation
     is_quantized_activation = {}
     for layer in range(len(Model_dict)):
         is_quantized_activation.update({'layer%d'%layer : tf.placeholder(tf.bool)}) 
+        
     ## is_ternary
     is_ternary = {}
     for layer in range(len(Model_dict)):
@@ -330,9 +348,9 @@ def Training(
     #    Building Model    #
     #----------------------# 
     print("Building Model ...")
-    device = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
-    device_num = len(os.environ['CUDA_VISIBLE_DEVICES'].split(','))
-    device_batch = HP['Batch_Size'] / device_num
+    device = [0]
+    device_num = 1
+    device_batch = int(HP['Batch_Size'] / device_num)
     prediction_list = []
     # Assign Usage of CPU and GPU
     for d in range(device_num):
@@ -342,8 +360,13 @@ def Training(
             net = xs[ d*device_batch : (d+1)*device_batch ]
             Model_dict_ = copy.deepcopy(Model_dict)
             if d == 0:
+<<<<<<< HEAD
                 #import Model
                 #model_ = Model.cifar10_resnet_v2_generator(20, 10, data_format = None)
+=======
+                #import resnet_model
+                #model_ = resnet_model.cifar10_resnet_v2_generator(resnet_size=20, num_classes=10, data_format=None)
+>>>>>>> 1c1081c1d37fba4575123f60d1cb47d3b7a0b010
                 #prediction = model_(net, True)
                 
                 prediction, Analysis, max_parameter, inputs_and_kernels = Model_dict_Decoder(
@@ -383,7 +406,7 @@ def Training(
                 print("\033[0;36m=======================\033[0m")
                 print("\033[0;36m Model Size\033[0m = {}" .format(Model_Size))
                 print("\033[0;36m=======================\033[0m")
-            
+
             # -- Collection --
             if d == 0:
                 ## Ternary
@@ -404,10 +427,7 @@ def Training(
 
             # -- Loss --
             labels = ys[ d*device_batch : (d+1)*device_batch ]
-            # KL divergence
-            KL = tf.nn.softmax_cross_entropy_with_logits(labels = labels, logits = prediction_list[d])
-            # Corss Entopy
-            cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=tf.argmax(labels, -1), logits=prediction_list[d])
+            
             # L2 Regularization
             l2_norm   = tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()])
             l2_lambda = tf.constant(HP['L2_Lambda'])
@@ -485,7 +505,11 @@ def Training(
             print("Loading the trained weights ... ")
             print("\033[0;35m{}\033[0m" .format(trained_model_path + trained_model))
             save_path = saver.restore(sess, trained_model_path + trained_model)
+<<<<<<< HEAD
         
+=======
+  
+>>>>>>> 1c1081c1d37fba4575123f60d1cb47d3b7a0b010
         #-------------#
         #    Epoch    #
         #-------------#
@@ -506,7 +530,7 @@ def Training(
             train_target = train_target[shuffle_index]
             """
             ## -- Quantizad Activation --
-            if IS_QUANTIZED_ACTIVATION and (epoch+1)==HP['Quantized_Activation_Epoch']:
+            if IS_QUANTIZED_ACTIVATION and (epoch+1+Global_Epoch)==HP['Quantized_Activation_Epoch']:
                 batch_xs = train_data[0:HP['Batch_Size']]
                 # Calculate Each Activation's appropriate mantissa and fractional bit
                 m, f = quantized_m_and_f(float32_net_collection, is_quantized_activation_collection, xs, Model_dict, batch_xs, sess)	
@@ -516,7 +540,7 @@ def Training(
                 QUANTIZED_NOW = True
             
             ## -- Ternary --
-            if IS_TERNARY and (epoch+1)==HP['Ternary_Epoch']:
+            if IS_TERNARY and (epoch+1+Global_Epoch)==HP['Ternary_Epoch']:
                 # Calculate the ternary boundary of each layer's weights
                 weights_bd, biases_bd, weights_table, biases_table = tenarized_bd(
                     float32_weights_collection,  
@@ -553,8 +577,8 @@ def Training(
                 """
                 # Run Training Step
                 feed_dict_train.update({is_training: True}) # xs: batch_xs, ys: batch_ys, learning_rate: lr, 
-                _, Loss, Prediction_list, L2_norm, batch_ys, Learning_Rate = sess.run(
-                    [train_step, loss, prediction_list, l2_norm, ys, learning_rate], 
+                _, Loss, Prediction_list, L2_norm, batch_ys = sess.run(
+                    [train_step, loss, prediction_list, l2_norm, ys], 
                     feed_dict = feed_dict_train)
                 # Combine Different Device Prediction
                 for d in range(len(Prediction_list)):
@@ -575,7 +599,7 @@ def Training(
                 Train_loss        = Train_loss + np.mean(Loss)  
                 # Per Batch Size Info
                 """
-                print("\033[1;34;40mEpoch\033[0m : {}" .format(epoch))
+                print("\033[1;34;40mEpoch\033[0m : {}" .format(epoch+Global_Epoch))
                 print("\033[1;34;40mData Iteration\033[0m : {}" .format(batch_iter*HP['Batch_Size']))
                 print("\033[1;32;40m  Batch Accuracy\033[0m : {}".format(batch_accuracy))
                 print("\033[1;32;40m  Loss          \033[0m : {}".format(np.mean(Loss)))
@@ -589,9 +613,9 @@ def Training(
             tEnd = time.time()            
             Train_acc  = total_correct_num  / (total_correct_num + total_error_num)
             Train_loss = Train_loss / iteration 
-            print("\r\033[0;33mEpoch{}\033[0m" .format(epoch), end = "")
+            print("\r\033[0;33mEpoch{}\033[0m" .format(epoch+Global_Epoch), end = "")
             print(" (Cost {TIME} sec)" .format(TIME = tEnd - tStart))
-            print("\033[0;32mLearning Rate    \033[0m : {}".format(Learning_Rate))
+            print("\033[0;32mLearning Rate    \033[0m : {}".format(learning_rate))
             print("\033[0;32mTraining Accuracy\033[0m : {}".format(Train_acc))
             print("\033[0;32mTraining Loss    \033[0m : {} (l2_norm: {})".format(Train_loss, L2_norm))
             
@@ -746,8 +770,8 @@ def Testing(
     #    Loading Model    #
     #---------------------#
     print("Building Model ...")
-    device = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
-    device_num = len(os.environ['CUDA_VISIBLE_DEVICES'].split(','))
+    device = [0]
+    device_num = 1
     device_batch = int(BATCH_SIZE / device_num)
     prediction_list = []
     # Assign Usage of CPU and GPU
@@ -877,7 +901,7 @@ def Testing(
     accuracy = np.concatenate([title_col, accuracy_test], axis=0)
     # Save
     np.savetxt(testing_model_path + 'Accuracy.csv', accuracy, delimiter=",	", fmt="%5s")	
-
+    tf.reset_default_graph()
     return test_accuracy
  
 def Model_dict_Generator(
@@ -1187,7 +1211,7 @@ def Model_dict_Decoder(
                                   IS_QUANTIZED_ACTIVATION = layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE', 
                                   name                    = 'shortcut_ADD')  
                 
-            # Show the model
+            ## Show the model
             print("\033[0;33mlayer{}\033[0m -> {}" .format(layer, net.shape))
                 
             # -- Destination --
@@ -1247,12 +1271,12 @@ def Model_dict_Decoder(
                     net = Model.batch_norm(net, is_training)
                     # Activation
                     if layer_now['Activation'] == 'ReLU':
-                        # Show the model
+                        ## Show the model
                         print("-> ReLU")
                         net = tf.nn.relu(net)
                     elif layer_now['Activation'] == 'Sigmoid':
                         net = tf.nn.sigmoid(net)
-                        # Show the model
+                        ## Show the model
                         print("-> Sigmoid")
 
                 # -- Convolution --
@@ -2244,7 +2268,7 @@ def compute_accuracy(
     
     test_batch_size = BATCH_SIZE
     #batch_num = int(len(v_xs) / test_batch_size)
-    batch_num = 10000/128
+    batch_num = int(10000/128)
     total_correct_num_top1 = 0
     total_correct_num_top2 = 0
     total_correct_num_top3 = 0

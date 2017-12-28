@@ -308,6 +308,7 @@ def conv2d_fixed_padding(
                 filter  = filters, 
                 strides = [1, stride, stride, 1], 
                 padding = ('SAME' if stride == 1 else 'VALID'))
+<<<<<<< HEAD
     """
     outputs = tf.layers.conv2d(
       inputs             = inputs, 
@@ -316,6 +317,15 @@ def conv2d_fixed_padding(
       strides            = strides,
       padding            = ('SAME' if strides == 1 else 'VALID'), use_bias=False,
       kernel_initializer = tf.variance_scaling_initializer())
+=======
+    #outputs = tf.layers.conv2d(
+    #  inputs             = inputs, 
+    #  filters            = filters, 
+    #  kernel_size        = kernel_size, 
+    #  strides            = stride,
+    #  padding            = ('SAME' if stride == 1 else 'VALID'), use_bias=False,
+    #  kernel_initializer = tf.variance_scaling_initializer())            
+>>>>>>> 1c1081c1d37fba4575123f60d1cb47d3b7a0b010
     return outputs
         
 def conv2D_Module( 
@@ -355,8 +365,8 @@ def conv2D_Module(
                         padding                 = padding, 
                         name                    = 'Conv')
         
-        group_input_channel = input_channel / group
-        group_output_channel = output_channel / group
+        group_input_channel = int(input_channel / group)
+        group_output_channel = int(output_channel / group)
         
         net_tmp_list = []
         for g in range(group):
@@ -488,8 +498,8 @@ def shortcut_Module(
     with tf.variable_scope("shortcut"):
         # Height & Width & Depth
         if input_height!=output_height or input_width!=output_width or input_channel!=output_channel or is_projection_shortcut:
-            stride_height = input_height / output_height
-            stride_width  = input_width  / output_width
+            stride_height = int(input_height / output_height)
+            stride_width  = int(input_width  / output_width )
             
             shortcut = conv2D_Module( net, kernel_size=1, stride=stride_height, output_channel=output_channel, rate=1, group=1,
                                       initializer              = initializer              ,
@@ -1020,7 +1030,11 @@ def indice_unpool(
         net = tf.scatter_nd(indices, values, output_shape)
         
     return net
+<<<<<<< HEAD
    
+=======
+
+>>>>>>> 1c1081c1d37fba4575123f60d1cb47d3b7a0b010
 #           # Combine the net
 #        for g in range(group):
 #            with tf.variable_scope('group%d'%(g)):
