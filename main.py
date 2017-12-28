@@ -59,7 +59,9 @@ Model = None
 #==============#
 def main(argv):
     # -- Training --
-    for _ in range(FLAGs.Epoch//FLAGs.epochs_per_eval)
+    Model_Path = None
+    Model = None
+    for _ in range(FLAGs.Epoch//FLAGs.epochs_per_eval):
         Model_Path, Model = utils.run_training( 
             Hyperparameter        = None                 ,               
             FLAGs                 = FLAGs                ,

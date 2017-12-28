@@ -342,9 +342,10 @@ def Training(
             net = xs[ d*device_batch : (d+1)*device_batch ]
             Model_dict_ = copy.deepcopy(Model_dict)
             if d == 0:
-                model = cifar10_resnet_v2_generator(resnet_size, num_classes, data_format=None)
-                prediction = model(net, True)
-                """
+                #import Model
+                #model_ = Model.cifar10_resnet_v2_generator(20, 10, data_format = None)
+                #prediction = model_(net, True)
+                
                 prediction, Analysis, max_parameter, inputs_and_kernels = Model_dict_Decoder(
                     net                     = net, 
                     Model_dict              = Model_dict_, 
@@ -353,7 +354,7 @@ def Training(
                     is_quantized_activation = is_quantized_activation,
                     DROPOUT_RATE            = HP['Dropout_Rate'],
                     reuse                   = None)
-                """
+                
             else:
                 prediction, Analysis, max_parameter, inputs_and_kernels = Model_dict_Decoder(
                     net                     = net, 
@@ -364,7 +365,7 @@ def Training(
                     DROPOUT_RATE            = HP['Dropout_Rate'],
                     reuse                   = True)
             
-            #prediction = tf.squeeze(prediction, [1, 2])
+            prediction = tf.squeeze(prediction, [1, 2])
             prediction_list.append(prediction)
             
             # -- Model Size --
@@ -429,6 +430,7 @@ def Training(
             # Batch norm requires update ops to be added as a dependency to the train_op
             update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
             with tf.control_dependencies(update_ops):
+                #train_step = opt.minimize(loss)
                 # Compute Gradients
                 gradients = opt.compute_gradients(loss, var_list = var_list_collection)
                 if d == 0:
@@ -479,19 +481,11 @@ def Training(
         #--------------------------#
         #   Load trained weights   #
         #--------------------------#
-        if trained_model_path!=None && trained_model!=None:
+        if trained_model_path!=None and trained_model!=None:
             print("Loading the trained weights ... ")
             print("\033[0;35m{}\033[0m" .format(trained_model_path + trained_model))
             save_path = saver.restore(sess, trained_model_path + trained_model)
         
-        #-------------------------------#
-        #   Loading Pre-trained Model   #
-        #-------------------------------#
-        if TRAINED_WEIGHT_FILE!=None:
-            print("Loading Pre-trained weights ...")
-            save_path = saver.load(sess, TRAINED_WEIGHT_FILE + ".ckpt")
-            print(save_path)
-            
         #-------------#
         #    Epoch    #
         #-------------#
