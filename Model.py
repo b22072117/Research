@@ -308,7 +308,13 @@ def conv2d_fixed_padding(
                 filter  = filters, 
                 strides = [1, stride, stride, 1], 
                 padding = ('SAME' if stride == 1 else 'VALID'))
-                
+    #outputs = tf.layers.conv2d(
+    #  inputs             = inputs, 
+    #  filters            = filters, 
+    #  kernel_size        = kernel_size, 
+    #  strides            = stride,
+    #  padding            = ('SAME' if stride == 1 else 'VALID'), use_bias=False,
+    #  kernel_initializer = tf.variance_scaling_initializer())            
     return outputs
         
 def conv2D_Module( 
@@ -348,8 +354,8 @@ def conv2D_Module(
                         padding                 = padding, 
                         name                    = 'Conv')
         
-        group_input_channel = input_channel / group
-        group_output_channel = output_channel / group
+        group_input_channel = int(input_channel / group)
+        group_output_channel = int(output_channel / group)
         
         net_tmp_list = []
         for g in range(group):
@@ -481,8 +487,8 @@ def shortcut_Module(
     with tf.variable_scope("shortcut"):
         # Height & Width & Depth
         if input_height!=output_height or input_width!=output_width or input_channel!=output_channel or is_projection_shortcut:
-            stride_height = input_height / output_height
-            stride_width  = input_width  / output_width
+            stride_height = int(input_height / output_height)
+            stride_width  = int(input_width  / output_width )
             
             shortcut = conv2D_Module( net, kernel_size=1, stride=stride_height, output_channel=output_channel, rate=1, group=1,
                                       initializer              = initializer              ,
@@ -1014,93 +1020,6 @@ def indice_unpool(
         
     return net
 
-def conv2d_fixed_padding(inputs, filters, kernel_size, strides, data_format):
-    """Strided 2-D convolution with explicit padding."""
-    # The padding is consistent and is based only on `kernel_size`, not on the
-    # dimensions of `inputs` (as opposed to using `tf.layers.conv2d` alone).
-    if strides > 1:
-        inputs = fixed_padding(inputs, kernel_size, data_format)
-    
-    return tf.layers.conv2d(
-        inputs=inputs, filters=filters, kernel_size=kernel_size, strides=strides,
-        padding=('SAME' if strides == 1 else 'VALID'), use_bias=False,
-        kernel_initializer=tf.variance_scaling_initializer(),
-        data_format=data_format)
-def building_block(inputs, filters, is_training, projection_shortcut, strides,
-                    data_format):
-    """Standard building block for residual networks with BN before convolutions.
-    
-    Args:
-    inputs: A tensor of size [batch, channels, height_in, width_in] or
-        [batch, height_in, width_in, channels] depending on data_format.
-    filters: The number of filters for the convolutions.
-    is_training: A Boolean for whether the model is in training or inference
-        mode. Needed for batch normalization.
-    projection_shortcut: The function to use for projection shortcuts (typically
-        a 1x1 convolution when downsampling the input).
-    strides: The block's stride. If greater than 1, this block will ultimately
-        downsample the input.
-    data_format: The input format ('channels_last' or 'channels_first').
-    
-    Returns:
-    The output tensor of the block.
-    """
-    shortcut = inputs
-    inputs = batch_norm_relu(inputs, is_training, data_format)
-    
-    # The projection shortcut should come after the first batch norm and ReLU
-    # since it performs a 1x1 convolution.
-    if projection_shortcut is not None:
-        shortcut = projection_shortcut(inputs)
-    
-    inputs = conv2d_fixed_padding(
-        inputs=inputs, filters=filters, kernel_size=3, strides=strides,
-        data_format=data_format)
-    
-    inputs = batch_norm_relu(inputs, is_training, data_format)
-    inputs = conv2d_fixed_padding(
-        inputs=inputs, filters=filters, kernel_size=3, strides=1,
-        data_format=data_format)
-    
-    return inputs + shortcut
-
-def block_layer(inputs, filters, block_fn, blocks, strides, is_training, name,
-                data_format):
-    """Creates one layer of blocks for the ResNet model.
-    
-    Args:
-    inputs: A tensor of size [batch, channels, height_in, width_in] or
-        [batch, height_in, width_in, channels] depending on data_format.
-    filters: The number of filters for the first convolution of the layer.
-    block_fn: The block to use within the model, either `building_block` or
-        `bottleneck_block`.
-    blocks: The number of blocks contained in the layer.
-    strides: The stride to use for the first convolution of the layer. If
-        greater than 1, this layer will ultimately downsample the input.
-    is_training: Either True or False, whether we are currently training the
-        model. Needed for batch norm.
-    name: A string name for the tensor output of the block layer.
-    data_format: The input format ('channels_last' or 'channels_first').
-    
-    Returns:
-    The output tensor of the block layer.
-    """
-    # Bottleneck blocks end with 4x the number of filters as they start with
-    filters_out = 4 * filters if block_fn is bottleneck_block else filters
-    
-    def projection_shortcut(inputs):
-        return conv2d_fixed_padding(
-            inputs=inputs, filters=filters_out, kernel_size=1, strides=strides,
-            data_format=data_format)
-    
-    # Only the first block per block_layer uses projection_shortcut and strides
-    inputs = block_fn(inputs, filters, is_training, projection_shortcut, strides, data_format)
-    
-    for _ in range(1, blocks):
-        inputs = block_fn(inputs, filters, is_training, None, 1, data_format)
-    
-    return tf.identity(inputs, name) 
-   
 #           # Combine the net
 #        for g in range(group):
 #            with tf.variable_scope('group%d'%(g)):
