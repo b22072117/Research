@@ -85,10 +85,7 @@ def main(argv):
     # -- Training --
     Model_Path = None
     Model = None
-<<<<<<< HEAD
-=======
     Global_Epoch = 0
->>>>>>> 1c1081c1d37fba4575123f60d1cb47d3b7a0b010
     for _ in range(FLAGs.Epoch//FLAGs.epochs_per_eval):
         Model_Path, Model = utils.run_training( 
             Hyperparameter        = None                 ,               

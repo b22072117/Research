@@ -26,6 +26,7 @@ from sklearn.preprocessing import PolynomialFeatures
 from functools import reduce
 
 import Model
+import resnet_model
 
 #=========#
 #   Run   #
@@ -88,13 +89,14 @@ def run_training(
         HP.update({'Epoch'                     : EPOCH     })
         HP.update({'H_Resize'                  : H_Resize  })
         HP.update({'W_Resize'                  : W_Resize  })
-        HP.update({'LR'                        : 1e-1      })
-        HP.update({'LR_Strategy'               : '2times'  })
+        HP.update({'LR'                        : 1e-1      }) 
+        HP.update({'LR_Strategy'               : '3times'  })
         HP.update({'LR_Final'                  : 1e-3      })
         HP.update({'LR_Decade'                 : 10        })   
         HP.update({'LR_Decade_1st_Epoch'       : 100       })
         HP.update({'LR_Decade_2nd_Epoch'       : 150       })
-        HP.update({'L2_Lambda'                 : 1e-5      })
+        HP.update({'LR_Decade_3rd_Epoch'       : 200       })
+        HP.update({'L2_Lambda'                 : 2e-4      })
         HP.update({'Opt_Method'                : 'Momentum'})
         HP.update({'Momentum_Rate'             : 0.9       })
         HP.update({'IS_STUDENT'                : False     })
@@ -119,6 +121,7 @@ def run_training(
         HP.update({'LR_Final'                  : int(HP_dict['LR_Final'])                  }) 
         HP.update({'LR_Decade_1st_Epoch'       : int(HP_dict['LR_Decade_1st_Epoch'])       })
         HP.update({'LR_Decade_2nd_Epoch'       : int(HP_dict['LR_Decade_2nd_Epoch'])       })
+        HP.update({'LR_Decade_3rd_Epoch'       : int(HP_dict['LR_Decade_3rd_Epoch'])       })
         HP.update({'L2_Lambda'                 : float(HP_dict['L2_Lambda'])               })
         HP.update({'Opt_Method'                : HP_dict['Opt_Method']                     })
         HP.update({'Momentum_Rate'             : float(HP_dict['Momentum_Rate'])           })
@@ -143,13 +146,14 @@ def run_training(
                                'LR_Decade'                 ,
                                'LR_Decade_1st_Epoch'       ,
                                'LR_Decade_2nd_Epoch'       ,
+                               'LR_Decade_3rd_Epoch'       ,
                                'L2_Lambda'                 ,
                                'Opt_Method'                ,
                                'Momentum_Rate'             ,
                                'IS_STUDENT'                ,
                                'Ternary_Epoch'             ,
                                'Quantized_Activation_Epoch',
-                               'Dropout_Rate'              ])     
+                               'Dropout_Rate'              ])
         
         for iter, component in enumerate(components):
             if iter == 0:
@@ -320,19 +324,36 @@ def Training(
     is_training = tf.placeholder(tf.bool)
     
     ## Learning Rate
-    #initial_learning_rate = HP['LR']
-    #boundaries = [int(batches_per_epoch * epoch) for epoch in [HP['LR_Decade_1st_Epoch'], HP['LR_Decade_2nd_Epoch'], 200]]
-    #values = [initial_learning_rate * decay for decay in [1, 0.1, 0.01, 0.001]]
-    #learning_rate = tf.train.piecewise_constant(tf.cast(global_step, tf.int32), boundaries, values)
+    """ This is the better way but not good to use
+    initial_learning_rate = HP['LR']
+    boundaries = [int(batches_per_epoch * epoch) for epoch in [HP['LR_Decade_1st_Epoch'], HP['LR_Decade_2nd_Epoch'], 200]]
+    values = [initial_learning_rate * decay for decay in [1, 0.1, 0.01, 0.001]]
+    learning_rate = tf.train.piecewise_constant(tf.cast(global_step, tf.int32), boundaries, values)
+    """
     
-    if Global_Epoch <= HP['LR_Decade_1st_Epoch']:
-        learning_rate = HP['LR']
-    elif Global_Epoch <= HP['LR_Decade_1st_Epoch']:
-        learning_rate = HP['LR'] / HP['LR_Decade']
-    elif Global_Epoch <= 200:
-        learning_rate = HP['LR'] / HP['LR_Decade'] / HP['LR_Decade'] 
-    else:
-        learning_rate = HP['LR'] / HP['LR_Decade'] / HP['LR_Decade'] / HP['LR_Decade']
+    """
+    if HP['LR_Strategy'] == 'PerEpoch':
+        if epoch == 0:
+            alpha = (HP['LR_Final'] / HP['LR'])**(1./HP['Epoch'])
+        lr = alpha * lr
+    elif HP['LR_Strategy'] == '2times':
+        # 1st
+        if (epoch+1) == HP['LR_Decade_1st_Epoch']:
+            lr = lr / HP['LR_Decade']
+        # 2nd
+        if (epoch+1) == HP['LR_Decade_2nd_Epoch']:
+            lr = lr / HP['LR_Decade']
+    """
+
+    if HP['LR_Strategy'] == '3times':
+        if   (Global_Epoch+1) <= HP['LR_Decade_1st_Epoch']:
+            learning_rate = HP['LR'] / pow(HP['LR_Decade'], 0)
+        elif (Global_Epoch+1) <= HP['LR_Decade_2nd_Epoch']:
+            learning_rate = HP['LR'] / pow(HP['LR_Decade'], 1)
+        elif (Global_Epoch+1) <= HP['LR_Decade_3rd_Epoch']:
+            learning_rate = HP['LR'] / pow(HP['LR_Decade'], 2)
+        else:
+            learning_rate = HP['LR'] / pow(HP['LR_Decade'], 3)
     
     ## is_quantized_activation
     is_quantized_activation = {}
@@ -348,8 +369,8 @@ def Training(
     #    Building Model    #
     #----------------------# 
     print("Building Model ...")
-    device = [0]
-    device_num = 1
+    device = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
+    device_num = len(os.environ['CUDA_VISIBLE_DEVICES'].split(','))
     device_batch = int(HP['Batch_Size'] / device_num)
     prediction_list = []
     # Assign Usage of CPU and GPU
@@ -359,16 +380,7 @@ def Training(
             # -- Build Model --
             net = xs[ d*device_batch : (d+1)*device_batch ]
             Model_dict_ = copy.deepcopy(Model_dict)
-            if d == 0:
-<<<<<<< HEAD
-                #import Model
-                #model_ = Model.cifar10_resnet_v2_generator(20, 10, data_format = None)
-=======
-                #import resnet_model
-                #model_ = resnet_model.cifar10_resnet_v2_generator(resnet_size=20, num_classes=10, data_format=None)
->>>>>>> 1c1081c1d37fba4575123f60d1cb47d3b7a0b010
-                #prediction = model_(net, True)
-                
+            if d == 0:      
                 prediction, Analysis, max_parameter, inputs_and_kernels = Model_dict_Decoder(
                     net                     = net, 
                     Model_dict              = Model_dict_, 
@@ -376,8 +388,8 @@ def Training(
                     is_ternary              = is_ternary,
                     is_quantized_activation = is_quantized_activation,
                     DROPOUT_RATE            = HP['Dropout_Rate'],
+                    data_format             = "NCHW",
                     reuse                   = None)
-                
             else:
                 prediction, Analysis, max_parameter, inputs_and_kernels = Model_dict_Decoder(
                     net                     = net, 
@@ -386,27 +398,27 @@ def Training(
                     is_ternary              = is_ternary,
                     is_quantized_activation = is_quantized_activation,
                     DROPOUT_RATE            = HP['Dropout_Rate'],
+                    data_format             = "NCHW",
                     reuse                   = True)
             
-            prediction = tf.squeeze(prediction, [1, 2])
             prediction_list.append(prediction)
             
             # -- Model Size --
             if d == 0:
                 # Your grade will depend on this value.
-                all_variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope="Model")
+                all_variables = tf.trainable_variables() #tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope="Model")
                 # Model Size
                 Model_Size = 0
                 for iter, variable in enumerate(all_variables):
                     Model_Size += reduce(lambda x, y: x*y, variable.get_shape().as_list())
                     # See all your variables in termainl	
-                    """
-                    print(variable)
-                    """
+                    
+                    #print(variable)
+                    
                 print("\033[0;36m=======================\033[0m")
                 print("\033[0;36m Model Size\033[0m = {}" .format(Model_Size))
                 print("\033[0;36m=======================\033[0m")
-
+                #pdb.set_trace()
             # -- Collection --
             if d == 0:
                 ## Ternary
@@ -462,7 +474,7 @@ def Training(
     # Apply Gradients
     with tf.device(tf.train.replica_device_setter(worker_device = '/device:GPU:%d' %int(device[0]), ps_device = '/device:CPU:0', ps_tasks=1)):
         train_step  = opt.apply_gradients(gra_and_var, global_step)
-    
+
     #-----------------------------#
     #   Some Control Parameters   #
     #-----------------------------#
@@ -486,7 +498,7 @@ def Training(
     #    Session    #
     #---------------#
     config = tf.ConfigProto()
-    config.gpu_options.allow_growth = True
+    #config.gpu_options.allow_growth = True
     #config.log_device_placement = True
     config.allow_soft_placement = True
     config.intra_op_parallelism_threads = 256
@@ -505,11 +517,6 @@ def Training(
             print("Loading the trained weights ... ")
             print("\033[0;35m{}\033[0m" .format(trained_model_path + trained_model))
             save_path = saver.restore(sess, trained_model_path + trained_model)
-<<<<<<< HEAD
-        
-=======
-  
->>>>>>> 1c1081c1d37fba4575123f60d1cb47d3b7a0b010
         #-------------#
         #    Epoch    #
         #-------------#
@@ -627,22 +634,6 @@ def Training(
                 Train_acc_per_epoch  = np.concatenate([Train_acc_per_epoch , np.array([Train_acc ])], axis=0)
                 Train_loss_per_epoch = np.concatenate([Train_loss_per_epoch, np.array([Train_loss])], axis=0)
             
-            #-------------------------#
-            #   Learning Rate Decay   #
-            #-------------------------#
-            """
-            if HP['LR_Strategy'] == 'PerEpoch':
-                if epoch == 0:
-                    alpha = (HP['LR_Final'] / HP['LR'])**(1./HP['Epoch'])
-                lr = alpha * lr
-            elif HP['LR_Strategy'] == '2times':
-                # 1st
-                if (epoch+1) == HP['LR_Decade_1st_Epoch']:
-                    lr = lr / HP['LR_Decade']
-                # 2nd
-                if (epoch+1) == HP['LR_Decade_2nd_Epoch']:
-                    lr = lr / HP['LR_Decade']
-            """
             ##similar_group(inputs_and_kernels, sess)
             
             #---------------------------#
@@ -765,13 +756,16 @@ def Testing(
             'W_Resize'  : W_Resize,
             'Batch_Size': BATCH_SIZE,
             'Epoch'     : None})
+    test_data_index   = np.array(open(Dataset_Path + '/test.txt', 'r').read().splitlines())
+    test_target_index = np.array(open(Dataset_Path + '/testannot.txt', 'r').read().splitlines())
+    test_data_num = len(test_data_index)
     
     #---------------------#
     #    Loading Model    #
     #---------------------#
     print("Building Model ...")
-    device = [0]
-    device_num = 1
+    device = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
+    device_num = len(os.environ['CUDA_VISIBLE_DEVICES'].split(','))
     device_batch = int(BATCH_SIZE / device_num)
     prediction_list = []
     # Assign Usage of CPU and GPU
@@ -789,6 +783,7 @@ def Testing(
                     is_ternary              = is_ternary,
                     is_quantized_activation = is_quantized_activation,
                     DROPOUT_RATE            = None,
+                    data_format             = "NHWC",
                     reuse                   = None)
             else:
                 prediction, Analysis, max_parameter, inputs_and_kernels = Model_dict_Decoder(
@@ -798,9 +793,9 @@ def Testing(
                     is_ternary              = is_ternary,
                     is_quantized_activation = is_quantized_activation,
                     DROPOUT_RATE            = None,
+                    data_format             = "NHWC",
                     reuse                   = True)
-                
-            prediction = tf.squeeze(prediction, [1, 2])
+               
             prediction_list.append(prediction)
             
             # -- Model Size --
@@ -809,7 +804,7 @@ def Testing(
                 #    Compute Model Size    #
                 #--------------------------#
                 # Your grade will depend on this value.
-                all_variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope="Model")
+                all_variables = tf.trainable_variables() #tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope="Model")
                 # Model Size
                 Model_Size = 0
                 for iter, variable in enumerate(all_variables):
@@ -865,6 +860,7 @@ def Testing(
             Model_dict              = Model_dict,                
             QUANTIZED_NOW           = True, 
             prediction_list         = prediction_list, 
+            data_num                = test_data_num,
             BATCH_SIZE              = BATCH_SIZE, 
             sess                    = sess)
         print("\033[0;32mtesting Data Accuracy\033[0m = {test_Accuracy}, top2 = {top2}, top3 = {top3}\n"
@@ -1156,8 +1152,12 @@ def Model_dict_Decoder(
     is_ternary,
     is_quantized_activation,
     DROPOUT_RATE,
+    data_format,
     reuse = None
     ):
+    
+    if data_format == "NCHW":
+        net = tf.transpose(net, [0, 3, 1, 2])
     
     Analysis = {}
     inputs_and_kernels = {} # For finding the similar weights
@@ -1168,38 +1168,50 @@ def Model_dict_Decoder(
     with tf.variable_scope("Model", reuse = reuse):
         for layer in range(len(Model_dict)):
             layer_now = Model_dict['layer'+str(layer)]
-            
-            # -- Shortcut --
+            #----------------#
+            #    Shortcut    #
+            #----------------#
             if bool(layer_now.get('shortcut_num')):
                 for shortcut_index in range(layer_now['shortcut_num']):
                     with tf.variable_scope(layer_now['shortcut_input_layer'][str(shortcut_index)]):
                         shortcut_input_layer = Model_dict[layer_now['shortcut_input_layer'][str(shortcut_index)]]
                         shortcut = layer_now['shortcut_input'][str(shortcut_index)]
-                        ## Show the model
                         shortcut_layer = layer_now['shortcut_input_layer'][str(shortcut_index)]
-                        print("\033[0;35mShortcut from {}\033[0m" .format(shortcut_layer))
+                        ## Show the model
+                        #print("\033[0;35mShortcut from {}\033[0m" .format(shortcut_layer))
                         # Add shortcut 
                         shortcut = Model.shortcut_Module(
                             net                     = shortcut, 
+                            group                   = int(shortcut_input_layer['group']),
                             destination             = net,
                             initializer             = tf.contrib.layers.variance_scaling_initializer(),
                             is_training             = is_training,
                             is_add_biases           = shortcut_input_layer['is_add_biases']           == 'TRUE',
+                            is_combine_group        = shortcut_input_layer['combine_group']           == 'TRUE',
                             is_projection_shortcut  = shortcut_input_layer['is_projection_shortcut']  == 'TRUE',
+                            shortcut_type           = shortcut_input_layer['shortcut_type']                    ,
                             is_batch_norm           = shortcut_input_layer['is_batch_norm']           == 'TRUE',
                             is_ternary              = is_ternary[shortcut_layer]                               ,
                             is_quantized_activation = is_quantized_activation[shortcut_layer]                  ,
                             IS_TERNARY              = shortcut_input_layer['IS_TERNARY']              == 'TRUE', 	
                             IS_QUANTIZED_ACTIVATION = shortcut_input_layer['IS_QUANTIZED_ACTIVATION'] == 'TRUE',
-                            padding                 = "SAME",			     
+                            padding                 = "SAME",			 
+                            data_format             = data_format,
                             Analysis                = Analysis)
                         
                     with tf.variable_scope('layer%d' %(layer)):
-                        if shortcut_input_layer['is_shuffle'] == "TRUE" and shortcut_input_layer['stride'] == '2':
-                            net = tf.concat([net, shortcut], axis = 3)
-                        else:
+                        if shortcut_input_layer['shortcut_connection'] == "ADD":
+                            ## Show the model
+                            #print("-> ADD")
                             net = tf.add(net, shortcut)
-                        
+                        elif shortcut_input_layer['shortcut_connection'] == "CONCAT":
+                            ## Show the model
+                            #print("-> CONCAT")
+                            if data_format == "NHWC":
+                                net = tf.concat([net, shortcut], axis = 3)
+                            elif data_format == "NCHW":
+                                net = tf.concat([net, shortcut], axis = 1)
+                                
                         # Activation Quantization
                         if layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE':
                             quantize_Module(net, is_quantized_activation['layer'+str(layer)])
@@ -1212,9 +1224,11 @@ def Model_dict_Decoder(
                                   name                    = 'shortcut_ADD')  
                 
             ## Show the model
-            print("\033[0;33mlayer{}\033[0m -> {}" .format(layer, net.shape))
-                
-            # -- Destination --
+            #print("\033[0;33mlayer{}\033[0m -> {}, scope = {}" .format(layer, net.shape, layer_now['scope']))
+            
+            #-------------------#
+            #    Destination    #
+            #-------------------#
             if layer_now['is_shortcut'] == 'TRUE':
                 if bool(Model_dict[layer_now['shortcut_destination']].get('shortcut_num')):
                     shortcut_num = Model_dict[layer_now['shortcut_destination']]['shortcut_num'] + 1
@@ -1227,12 +1241,16 @@ def Model_dict_Decoder(
                     Model_dict[layer_now['shortcut_destination']].update({'shortcut_input':{str(shortcut_num-1):net}})
                     Model_dict[layer_now['shortcut_destination']].update({'shortcut_input_layer':{str(shortcut_num-1):'layer%d' %(layer)}})
             
-            # -- Pooling, Unpooling, Convolution --
+            # Other Operation
             with tf.variable_scope('layer%d' %(layer)):                
-                # -- Max Pooling --
-                if layer_now['type'] == 'MAX_POOL':
+                #-------------------#
+                #    Max Pooling    #
+                #-------------------#
+                if layer_now['type'] == 'MAX_POOL':         
                     ## Show the model
-                    print("-> Max Pooling, Ksize={}, Stride={}".format(int(layer_now['kernel_size']), int(layer_now['stride'])))
+                    #print("-> Max Pooling, Ksize={}, Stride={}".format(int(layer_now['kernel_size']), int(layer_now['stride'])))
+                    if data_format == "NCHW":
+                        net = tf.transpose(net, [0, 2, 3, 1])
                     net, indices, output_shape = Model.indice_pool( 
                         net, 
                         kernel_size             = int(layer_now['kernel_size']), 
@@ -1240,79 +1258,127 @@ def Model_dict_Decoder(
                         IS_QUANTIZED_ACTIVATION = layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE',
                         Analysis                = Analysis,
                         scope                   = layer_now['scope'])
-                        
+                    if data_format == "NCHW":
+                        net = tf.transpose(net, [0, 3, 1, 2])    
                     if layer_now['indice'] != 'None' and layer_now['indice'] != 'FALSE':
                         Model_dict[layer_now['indice']].update({'indice':indices, 'output_shape':output_shape})
-                
-                # -- Max Unpooling --
+                #---------------------#
+                #    Max Unpooling    #
+                #---------------------#
                 elif layer_now['type'] == 'MAX_UNPOOL':
                     ## Show the model
-                    print("-> Max Unpooling")
+                    #print("-> Max Unpooling")
+                    if data_format == "NCHW":
+                        net = tf.transpose(net, [0, 2, 3, 1])
                     net = Model.indice_unpool( 
                         net,  
                         output_shape = layer_now['output_shape'], 
                         indices      = layer_now['indice'], 
                         scope        = layer_now['scope'])
-                        
-                # -- Avg Pooling --
+                    if data_format == "NCHW":
+                        net = tf.transpose(net, [0, 3, 1, 2])    
+                #-------------------#
+                #    Avg Pooling    #
+                #-------------------#
                 elif layer_now['type'] == 'AVG_POOL':
                     ## Show the model
-                    print("-> Avg Pooling")
+                    #print("-> Avg Pooling")
+                    if data_format == "NHWC":
+                        ksize   = [1, int(layer_now['kernel_size']), int(layer_now['kernel_size']), 1]
+                        strides = [1, int(layer_now['stride']), int(layer_now['stride']), 1]
+                    elif data_format == "NCHW":
+                        ksize   = [1, 1, int(layer_now['kernel_size']), int(layer_now['kernel_size'])]
+                        strides = [1, 1, int(layer_now['stride']), int(layer_now['stride'])]
                     net = tf.nn.avg_pool(
-                        value   = net,
-                        ksize   = [1, int(layer_now['kernel_size']), int(layer_now['kernel_size']), 1],
-                        strides = [1, int(layer_now['stride']), int(layer_now['stride']), 1],
-                        padding = 'SAME')
-
-                # -- Batch Normalization --
+                        value       = net,
+                        ksize       = ksize,
+                        strides     = strides,
+                        padding     = 'SAME',
+                        data_format = data_format)
+                #---------------#
+                #    Shuffle    #
+                #---------------#
+                elif layer_now['type'] == "SHUFFLE":
+                    ## Show the model
+                    #print("-> Shuffle")
+                    net = Model.shuffle_net(
+                        net         = net, 
+                        group       = int(layer_now['group']),
+                        data_format = data_format) 
+                #---------------------------#
+                #    Batch Normalization    #
+                #---------------------------#
                 elif layer_now['type'] == 'BN':
                     ## Show the model
-                    print("-> Batch_Norm")
-                    net = Model.batch_norm(net, is_training)
+                    #print("-> Batch_Norm")
+                    net = Model.batch_norm(
+                        net         = net, 
+                        is_training = is_training, 
+                        data_format = data_format)
                     # Activation
                     if layer_now['Activation'] == 'ReLU':
                         ## Show the model
-                        print("-> ReLU")
+                        #print("-> ReLU")
                         net = tf.nn.relu(net)
                     elif layer_now['Activation'] == 'Sigmoid':
                         net = tf.nn.sigmoid(net)
                         ## Show the model
-                        print("-> Sigmoid")
-
-                # -- Convolution --
+                        #print("-> Sigmoid")
+                #-----------------------#
+                #    Fully Connected    #
+                #-----------------------#
+                elif layer_now['type'] == 'FC':
+                    ## Show the model
+                    #print("-> Fully-Connected")
+                    # Dropout
+                    if layer==(len(Model_dict)-1):
+                        net = tf.cond(is_training, lambda: tf.layers.dropout(net, DROPOUT_RATE), lambda: net)
+                    # FC                   
+                    net = tf.reshape(net, [-1, reduce(lambda x, y: x*y, net.get_shape().as_list()[1:4])])
+    
+                    net = tf.layers.dense(
+                        inputs = net, 
+                        units  = int(layer_now['output_channel']))
+                #-------------------#
+                #    Convolution    #
+                #-------------------#
                 elif layer_now['type'] == 'CONV':
                     # Dropout
-                    #if layer==(len(Model_dict)-1):
-                    #    net = tf.cond(is_training, lambda: tf.layers.dropout(net, DROPOUT_RATE), lambda: net)
+                    if layer==(len(Model_dict)-1):
+                        net = tf.cond(is_training, lambda: tf.layers.dropout(net, DROPOUT_RATE), lambda: net)
 
                     # For finding the similar weights
                     inputs_and_kernels.update({'layer%d' %(layer): {'inputs' : net}})
                     
-                    net  = Model.conv2D( net, 
-                                        kernel_size             = int(layer_now['kernel_size']     ), 
-                                        stride                  = int(layer_now['stride']          ),
-                                        internal_channel        = int(layer_now['internal_channel']),
-                                        output_channel          = int(layer_now['output_channel']  ),
-                                        rate                    = int(layer_now['rate']            ),
-                                        group                   = int(layer_now['group']           ),
-                                        initializer             = tf.variance_scaling_initializer(), 
-                                        is_training             = is_training,
-                                        is_add_biases           = layer_now['is_add_biases']           == 'TRUE',
-                                        is_bottleneck           = layer_now['is_bottleneck']           == 'TRUE',                  
-                                        is_batch_norm           = layer_now['is_batch_norm']           == 'TRUE',      
-                                        is_dilated              = layer_now['is_dilated']              == 'TRUE',      
-                                        is_depthwise            = layer_now['is_depthwise']            == 'TRUE',  
-                                        is_inception            = layer_now['is_inception']            == 'TRUE',
-                                        is_shuffle              = layer_now['is_shuffle']              == 'TRUE',
-                                        is_ternary              = is_ternary['layer'+str(layer)]                ,
-                                        is_quantized_activation = is_quantized_activation['layer'+str(layer)]   ,
-                                        IS_TERNARY              = layer_now['IS_TERNARY']              == 'TRUE',     
-                                        IS_QUANTIZED_ACTIVATION = layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE',						              
-                                        Activation              = layer_now['Activation'],
-                                        padding                 = "SAME",
-                                        Analysis                = Analysis,
-                                        scope                   = layer_now['scope'])
-
+                    # Convolution
+                    net = Model.conv2D( 
+                        net, 
+                        kernel_size             = int(layer_now['kernel_size']     ), 
+                        stride                  = int(layer_now['stride']          ),
+                        internal_channel        = int(layer_now['internal_channel']),
+                        output_channel          = int(layer_now['output_channel']  ),
+                        rate                    = int(layer_now['rate']            ),
+                        group                   = int(layer_now['group']           ),
+                        initializer             = tf.variance_scaling_initializer(), 
+                        is_training             = is_training,
+                        is_add_biases           = layer_now['is_add_biases']           == 'TRUE', 
+                        is_combine_group        = layer_now['combine_group']           == 'TRUE',
+                        is_batch_norm           = layer_now['is_batch_norm']           == 'TRUE',      
+                        is_dilated              = layer_now['is_dilated']              == 'TRUE',      
+                        is_depthwise            = layer_now['is_depthwise']            == 'TRUE',  
+                        is_ternary              = is_ternary['layer'+str(layer)]                ,
+                        is_quantized_activation = is_quantized_activation['layer'+str(layer)]   ,
+                        IS_TERNARY              = layer_now['IS_TERNARY']              == 'TRUE',     
+                        IS_QUANTIZED_ACTIVATION = layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE',						              
+                        Activation              = layer_now['Activation'],
+                        padding                 = "SAME",
+                        data_format             = data_format,
+                        Analysis                = Analysis,
+                        scope                   = layer_now['scope'])
+                    
+                    if layer==(len(Model_dict)-1) and data_format == "NCHW":
+                        net = tf.transpose(net, [0, 2, 3, 1])
+                        
         # For finding the similar weights
         for layer in range(len(Model_dict)):
             try:
@@ -1376,15 +1442,15 @@ def Model_csv_Generator(
                       'rate'                   ,
                       'group'                  ,
                       'is_add_biases'          ,
+                      'combine_group'          ,
                       'is_shortcut'            ,
                       'shortcut_destination'   ,
                       'is_projection_shortcut' ,
-                      'is_bottleneck'          ,
+                      'shortcut_type'          ,
+                      'shortcut_connection'    ,
                       'is_batch_norm'          ,
                       'is_dilated'             ,
                       'is_depthwise'           ,
-                      'is_inception'           ,
-                      'is_shuffle'             ,
                       'IS_TERNARY'             ,
                       'IS_QUANTIZED_ACTIVATION',
                       'Activation'             ,
@@ -2261,14 +2327,15 @@ def compute_accuracy(
     QUANTIZED_NOW, 
     prediction_list, 
     #v_xs, 
-    #v_ys, 
+    #v_ys,
+    data_num,
     BATCH_SIZE, 
     sess
     ):
     
     test_batch_size = BATCH_SIZE
     #batch_num = int(len(v_xs) / test_batch_size)
-    batch_num = int(10000/128)
+    batch_num = int(data_num/BATCH_SIZE)
     total_correct_num_top1 = 0
     total_correct_num_top2 = 0
     total_correct_num_top3 = 0
@@ -2283,13 +2350,18 @@ def compute_accuracy(
         dict_test.update({dict_index: dict_data})
     
     for i in range(batch_num): 
+    #i = 0
+    #while True:
         #v_xs_part = v_xs[i*test_batch_size : (i+1)*test_batch_size]
         #v_ys_part = v_ys[i*test_batch_size : (i+1)*test_batch_size]
         dict = dict_test
         dict_test.update({ is_training: False}) #xs: v_xs_part,
-
-        Y_pre_list, v_ys_part = sess.run([prediction_list, ys], feed_dict = dict_test)				
-        
+        Y_pre_list, v_ys_part = sess.run([prediction_list, ys], feed_dict = dict_test)	
+        #try:
+        #    Y_pre_list, v_ys_part = sess.run([prediction_list, ys], feed_dict = dict_test)				
+        #except tf.errors.OutOfRangeError:
+        #    break
+            
         # Combine Different Device Prediction
         for d in range(len(Y_pre_list)):
             if d == 0:
@@ -2313,7 +2385,7 @@ def compute_accuracy(
         top1 = np.argsort(-Y_pre, axis=-1)[:, 0] 
         top2 = np.argsort(-Y_pre, axis=-1)[:, 1] 
         top3 = np.argsort(-Y_pre, axis=-1)[:, 2] 
-
+        
         correct_prediction_top1 = np.equal(top1, np.argmax(v_ys_part, -1))
         correct_prediction_top2 = np.equal(top2, np.argmax(v_ys_part, -1)) | correct_prediction_top1
         correct_prediction_top3 = np.equal(top3, np.argmax(v_ys_part, -1)) | correct_prediction_top2
@@ -2340,9 +2412,9 @@ def compute_accuracy(
         
         ## if you just want to see the result of top1 accuarcy, then using follwing codes
         if i==0:
-        	result = np.argmax(Y_pre, -1)
+            result = np.argmax(Y_pre, -1)
         else:
-        	result = np.concatenate([result, np.argmax(Y_pre, -1)], axis=0)
+            result = np.concatenate([result, np.argmax(Y_pre, -1)], axis=0)
         
         ## if you want to see the top2 result, then using the following codes
         #if i==0:
@@ -2356,7 +2428,8 @@ def compute_accuracy(
         #else:
         #    result = np.concatenate([result, np.multiply(~correct_prediction_top3, top1) + np.multiply(correct_prediction_top3, np.argmax(v_ys_part, -1))], axis=0)
         
-        print("\r{} / {} -> Accuracy:{}" .format(i*test_batch_size, 10000, accuracy_top1), end = "")
+        print("\r{} / {} -> Accuracy:{}" .format(i*test_batch_size, 10000, accuracy_top1), end = "") 
+        i = i + 1
         
     print("")    
     return result, accuracy_top1, accuracy_top2, accuracy_top3, Y_pre_total
