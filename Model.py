@@ -189,26 +189,195 @@ def shuffle_net(
         
     group_size = input_channel / group
     
-    for channel_out in range(input_channel):
-        which_group = channel_out % group
-        which_channel_in_group = channel_out / group
-        channel_in = which_group * group_size + which_channel_in_group
-        #print("{}, {}, {}" .format(which_group, which_channel_in_group, channel_in))
+    if group_size > group:
+        group_group_size = group_size / group
+        group_group = pow(group, 2)
+    else:
+        group_group_size = 1
+        group_group = input_channel
+    
+    for group_group_out in range(group_group):
+        which_group = group_group_out % group
+        which_group_in_group = group_group_out / group
+        start_point = which_group * group_size + which_group_in_group * group_group_size
+        #print("{}, {}, {}" .format(which_group, which_group_in_group, start_point))
         
         if data_format == "NHWC":
-            net_in = tf.expand_dims(net[:, :, :, channel_in], axis = 3)
+            net_in = net[:, :, :, start_point : start_point + group_group_size]
         elif data_format == "NCHW":
-            net_in = tf.expand_dims(net[:, channel_in, :, :], axis = 1)
-
-        if channel_out == 0:
+            net_in = net[:, start_point : start_point + group_group_size, :, :]
+        #print(net_in.get_shape().as_list())
+        if group_group_out == 0:
             net_tmp = net_in
         else:
             if data_format == "NHWC":
                 net_tmp = tf.concat([net_tmp, net_in], axis = 3)
             elif data_format == "NCHW":
                 net_tmp = tf.concat([net_tmp, net_in], axis = 1)
-    
+    #pdb.set_trace()
     return net_tmp
+
+def combine_add(
+    net,
+    is_training,
+    group,
+    combine_number,
+    is_batch_norm,
+    Activation,
+    initializer,
+    data_format,
+    scope
+    ):
+    with tf.variable_scope(scope):
+        if data_format == "NHWC":
+            input_channel = net.get_shape().as_list()[-1]
+            net = tf.concat([net, net], axis = 3)
+        elif data_format == "NCHW":
+            input_channel = net.get_shape().as_list()[1]
+            net = tf.concat([net, net], axis = 1)
+        
+        group_input_channel = int(input_channel / group)
+        
+        # Define each group in list
+        net_tmp_list = []
+        for g in range(group):
+            if data_format == "NHWC":
+                net_tmp_list.append(net[:, :, :, g*group_input_channel:(g+1)*group_input_channel])
+            elif data_format == "NCHW":
+                net_tmp_list.append(net[:, g*group_input_channel:(g+1)*group_input_channel, :, :])
+        ## Define combine variables
+        #combine_weights = tf.get_variable("combine_weights", [combine_number], tf.float32, initializer = initializer)
+        # Combine
+        for g in range(group):
+            with tf.variable_scope('group%d'%(g)):
+                # Define combine variables
+                combine_weights = tf.get_variable("combine_weights", [combine_number], tf.float32, initializer = initializer)
+                #combine_weights = tf.ones([combine_number], tf.float32)
+                # add all up
+                for gg in range(combine_number):
+                    if gg == 0:
+                        net_tmp = net_tmp_list[g] 
+                        net_tmp = tf.multiply(net_tmp, combine_weights[0])
+                    else:
+                        net_tmp = tf.add(net_tmp, tf.multiply(net_tmp_list[(g+gg)%group], combine_weights[gg]))
+                # Output
+                # merge every group net together
+                if g==0:
+                    net_ = net_tmp
+                else:
+                    if data_format == "NHWC":
+                        net_ = tf.concat([net_, net_tmp], axis=3)
+                    elif data_format == "NCHW":
+                        net_ = tf.concat([net_, net_tmp], axis=1)
+        
+        net = net_
+        
+        # Batch Normalization
+        if is_batch_norm == True:
+            ## Show the model
+            #print("-> Batch_Norm")
+            net = batch_norm(net, is_training, data_format)
+        
+        # Activation
+        if Activation == 'ReLU':
+            ## Show the model
+            #print("-> ReLU")
+            net = tf.nn.relu(net)
+        elif Activation == 'Sigmoid':
+            ## Show the model
+            #print("-> Sigmoid")
+            net = tf.nn.sigmoid(net)
+        elif Activation == 'CReLU':
+            ## Show the model
+            #print("-> CReLU")
+            net = CReLU(net, initializer = initializer)
+        else:
+            net = net
+
+    return net
+    
+def combine_conv(
+    net,
+    is_training,
+    group,
+    combine_number,
+    is_batch_norm,
+    Activation,
+    initializer,
+    data_format,
+    scope
+    ):
+    with tf.variable_scope(scope):
+        if data_format == "NHWC":
+            input_channel = net.get_shape().as_list()[-1]
+            net = tf.concat([net, net], axis = 3)
+        elif data_format == "NCHW":
+            input_channel = net.get_shape().as_list()[1]
+            net = tf.concat([net, net], axis = 1)
+        
+        group_input_channel = int(input_channel / group)
+        group_output_channel = int(input_channel / group)
+        
+        # Define combine variables
+        combine_weights_input_channel = group_input_channel * combine_number
+        combine_weights_output_channel = group_output_channel
+        combine_weights = tf.get_variable(
+            name        = "combine_weights", 
+            shape       = [1, 1, combine_weights_input_channel, combine_weights_output_channel], 
+            dtype       = tf.float32, 
+            initializer = initializer)
+        # Combine
+        for g in range(group):
+            with tf.variable_scope('group%d'%(g)):
+                # input
+                start = g * group_input_channel
+                end = start + combine_weights_input_channel
+                if data_format == "NHWC":
+                    net_tmp = net[:, :, :, start:end]
+                elif data_format == "NCHW":
+                    net_tmp = net[:, start:end, :, :]
+                # 1x1 conv
+                net_tmp = conv2d_fixed_padding(
+                    inputs      = net_tmp, 
+                    filters     = combine_weights, 
+                    kernel_size = 1, 
+                    stride      = 1, 
+                    data_format = data_format)
+                # Output
+                # merge every group net together
+                if g==0:
+                    net_ = net_tmp
+                else:
+                    if data_format == "NHWC":
+                        net_ = tf.concat([net_, net_tmp], axis=3)
+                    elif data_format == "NCHW":
+                        net_ = tf.concat([net_, net_tmp], axis=1)
+    
+        net = net_
+        
+        # Batch Normalization
+        if is_batch_norm == True:
+            ## Show the model
+            #print("-> Batch_Norm")
+            net = batch_norm(net, is_training, data_format)
+        
+        # Activation
+        if Activation == 'ReLU':
+            ## Show the model
+            #print("-> ReLU")
+            net = tf.nn.relu(net)
+        elif Activation == 'Sigmoid':
+            ## Show the model
+            #print("-> Sigmoid")
+            net = tf.nn.sigmoid(net)
+        elif Activation == 'CReLU':
+            ## Show the model
+            #print("-> CReLU")
+            net = CReLU(net, initializer = initializer)
+        else:
+            net = net
+    
+    return net
     
 def conv2D_Variable(
     kernel_size,
@@ -247,6 +416,21 @@ def conv2D_Variable(
     if is_add_biases:
         tf.add_to_collection("float32_params" , float32_biases)
     
+    # Pruning Mask
+    float32_weights_mask = tf.Variable(
+        initial_value = tf.ones_like(tensor = float32_weights, dtype = tf.float32),
+        trainable     = False,
+        name          = "float32_weights_mask",
+        dtype         = tf.float32)
+    tf.add_to_collection("float32_weights_mask", float32_weights_mask)
+    
+    if is_add_biases:    
+        float32_biases_mask = tf.Variable(
+            initial_value = tf.ones_like(tensor = float32_biases, dtype = tf.float32),
+            trainable     = False,
+            name          = "float32_biases_mask",
+            dtype         = tf.float32)
+        tf.add_to_collection("float32_biases_mask", float32_biases_mask)
     #-------------------------#
     #    Ternary Variables    #
     #-------------------------#
@@ -295,8 +479,11 @@ def conv2D_Variable(
         tf.add_to_collection("var_list", float32_weights)
         if is_add_biases:
             tf.add_to_collection("var_list", float32_biases)
-            
-        return float32_weights, float32_biases
+        
+        if is_add_biases:
+            return tf.multiply(float32_weights, float32_weights_mask), tf.multiply(float32_biases, float32_biases_mask)
+        else:
+            return tf.multiply(float32_weights, float32_weights_mask), None
 
 def fixed_padding(
     inputs, 
@@ -349,7 +536,6 @@ def conv2D_Module(
 	initializer             ,
     is_training             ,
     is_add_biases           ,
-    is_combine_group        ,
 	is_batch_norm           ,
 	is_dilated              ,
 	is_depthwise            ,
@@ -364,7 +550,6 @@ def conv2D_Module(
 	scope
 	):
     with tf.variable_scope(scope):
-        test = {}
         if data_format == "NHWC":
             input_channel = net.get_shape().as_list()[-1]
         elif data_format == "NCHW":
@@ -461,22 +646,13 @@ def conv2D_Module(
                     net_tmp = tf.nn.bias_add(net_tmp, biases, data_format)
                 
                 ## For checking the final weights/biases is ternary or not
-                """
                 tf.add_to_collection("final_weights", weights)
                 if is_add_biases:
                     tf.add_to_collection("final_biases", biases)
-                """
                 # List the net_tmp
+                """
                 net_tmp_list.append(net_tmp)
-        #-----------------------#
-        #    Combine the net    #
-        #-----------------------#
-        for g in range(group):
-            with tf.variable_scope('group%d'%(g)):
-                if group >= 4 and is_combine_group:
-                    net_tmp = tf.add(net_tmp_list[g], net_tmp_list[(g+1)%group])
-                else:
-                    net_tmp = net_tmp_list[g] 
+                """
                 # Output
                 # merge every group net together
                 if g==0:
@@ -486,6 +662,7 @@ def conv2D_Module(
                         net_ = tf.concat([net_, net_tmp], axis=3)
                     elif data_format == "NCHW":
                         net_ = tf.concat([net_, net_tmp], axis=1)
+
         #-----------------#
         #    Operation    #
         #-----------------#
@@ -536,9 +713,9 @@ def shortcut_Module(
     initializer             ,
     is_training             ,
     is_add_biases           ,
-    is_combine_group        ,
     is_projection_shortcut  ,
     shortcut_type           ,
+    shortcut_connection     ,
     is_batch_norm           ,
     is_ternary              ,
     is_quantized_activation ,
@@ -558,7 +735,10 @@ def shortcut_Module(
         
     with tf.variable_scope("shortcut"):
         # Height & Width & Depth
-        if input_height!=output_height or input_width!=output_width or input_channel!=output_channel or is_projection_shortcut:
+        size_not_equal = input_height!=output_height or input_width!=output_width
+        depth_not_equal = input_channel!=output_channel and shortcut_connection == "ADD"
+        
+        if size_not_equal or depth_not_equal or is_projection_shortcut:
             stride_height = int(input_height / output_height)
             stride_width  = int(input_width  / output_width )
             
@@ -568,7 +748,6 @@ def shortcut_Module(
                     initializer             = initializer            ,
                     is_training             = is_training            ,
                     is_add_biases           = is_add_biases          ,
-                    is_combine_group        = is_combine_group       ,
                     is_batch_norm           = False                  ,
                     is_dilated              = False                  ,
                     is_depthwise            = False                  ,
@@ -581,6 +760,7 @@ def shortcut_Module(
                     data_format             = data_format            ,
                     Analysis                = Analysis               ,
                     scope                   = "conv_1x1"             )
+                    
             elif shortcut_type == "AVG_POOL":
                 if data_format == "NHWC":
                     ksize   = [1, stride_height, stride_height, 1]
@@ -852,7 +1032,6 @@ def conv2D(
     initializer             = tf.contrib.layers.variance_scaling_initializer(),
     is_training             = False,
     is_add_biases           = True,
-    is_combine_group        = False,
     is_batch_norm           = True,       # For Batch Normalization
     is_dilated              = False,      # For Dilated Convoution
     is_depthwise            = False,      # For Depthwise Convolution
@@ -878,7 +1057,6 @@ def conv2D(
             initializer             = initializer              ,
             is_training             = is_training              ,
             is_add_biases           = is_add_biases            ,
-            is_combine_group        = is_combine_group         ,
             is_batch_norm           = is_batch_norm            ,
             is_dilated              = is_dilated               ,
             is_depthwise            = is_depthwise             ,
@@ -893,6 +1071,231 @@ def conv2D(
             scope                   = "conv"                   )
     return net
 
+def FC_Variable(
+    kernel_size_h,
+    kernel_size_w,
+    input_channel,
+    output_channel, 
+    initializer,
+    is_add_biases,
+    is_ternary,
+    IS_TERNARY,
+    is_depthwise,
+    data_format
+    ):
+    
+    # float32 Variable
+    if data_format == "NHWC":
+        float32_weights = tf.get_variable("float32_weights", [kernel_size_h, kernel_size_w, input_channel, output_channel], tf.float32, initializer = initializer)
+    elif data_format == "NCHW":
+        float32_weights = tf.get_variable("float32_weights", [kernel_size_h, kernel_size_w, input_channel, output_channel], tf.float32, initializer = initializer)
+    if is_add_biases:
+        float32_biases = tf.get_variable("float32_biases" , [output_channel], tf.float32, initializer = initializer)
+    else:
+        float32_biases = None
+
+    tf.add_to_collection("float32_weights", float32_weights)
+    if is_add_biases:
+        tf.add_to_collection("float32_biases" , float32_biases)
+    
+    tf.add_to_collection("float32_params" , float32_weights)
+    if is_add_biases:
+        tf.add_to_collection("float32_params" , float32_biases)
+    
+    # Pruning Mask
+    float32_weights_mask = tf.Variable(
+        initial_value = tf.ones_like(tensor = float32_weights, dtype = tf.float32),
+        trainable     = False,
+        name          = "float32_weights_mask",
+        dtype         = tf.float32)
+    tf.add_to_collection("float32_weights_mask", float32_weights_mask)
+    
+    if is_add_biases:    
+        float32_biases_mask = tf.Variable(
+            initial_value = tf.ones_like(tensor = float32_biases, dtype = tf.float32),
+            trainable     = False,
+            name          = "float32_biases_mask",
+            dtype         = tf.float32)
+        tf.add_to_collection("float32_biases_mask", float32_biases_mask)
+    #-------------------------#
+    #    Ternary Variables    #
+    #-------------------------#
+    if IS_TERNARY:
+        # Ternary boundary of weights and biases 
+        ternary_weights_bd = tf.get_variable("ternary_weights_bd", [2], tf.float32, initializer = initializer)
+        if is_add_biases:
+            ternary_biases_bd  = tf.get_variable("ternary_biases_bd" , [2], tf.float32, initializer = initializer)
+        tf.add_to_collection("ternary_weights_bd", ternary_weights_bd)
+        if is_add_biases:
+            tf.add_to_collection("ternary_biases_bd" , ternary_biases_bd)
+        
+        # Choose Precision
+        weights_tmp = tf.cond(is_ternary, lambda: ternarize_weights(float32_weights, ternary_weights_bd), lambda: float32_weights)
+        if is_add_biases:
+            biases_tmp = tf.cond(is_ternary, lambda: ternarize_biases (float32_biases , ternary_biases_bd) , lambda: float32_biases )
+    
+        final_weights = tf.get_variable("final_weights", [kernel_size_h, kernel_size_w, input_channel, output_channel], tf.float32, initializer=initializer)
+        if is_add_biases:
+            final_biases = tf.get_variable("final_biases" , [output_channel], tf.float32, initializer = initializer)
+        else:
+            final_biases = None
+            
+        # var_list : Record the variables which will be computed gradients
+        tf.add_to_collection("var_list", final_weights)
+        if is_add_biases:
+            tf.add_to_collection("var_list", final_biases)
+        
+        assign_final_weights = tf.assign(final_weights, weights_tmp)
+        if is_add_biases:
+            assign_final_biases = tf.assign(final_biases , biases_tmp)
+        tf.add_to_collection("assign_var_list", assign_final_weights)
+        if is_add_biases:
+            tf.add_to_collection("assign_var_list", assign_final_biases)
+        
+        return final_weights, final_biases
+    else:
+        # var_list : Record the variables which will be computed gradients
+        tf.add_to_collection("var_list", float32_weights)
+        if is_add_biases:
+            tf.add_to_collection("var_list", float32_biases)
+        
+        if is_add_biases:
+            return tf.multiply(float32_weights, float32_weights_mask), tf.multiply(float32_biases, float32_biases_mask)
+        else:
+            return tf.multiply(float32_weights, float32_weights_mask), None
+
+def FC(
+    net                     , 
+    output_channel          ,
+	initializer             ,
+    is_training             ,
+    is_add_biases           ,
+	is_batch_norm           ,
+	is_dilated              ,
+	is_ternary              ,
+	is_quantized_activation ,
+	IS_TERNARY              ,
+	IS_QUANTIZED_ACTIVATION ,
+	Activation              ,
+    data_format             ,
+	Analysis                ,
+	scope
+	):
+    with tf.variable_scope(scope):
+        stride = 1
+        group = 1
+        rate = 1
+        is_depthwise = False
+        padding = 'VALID'
+        
+        if data_format == "NHWC":
+            input_channel = net.get_shape().as_list()[-1]
+            kernel_size_h = net.get_shape().as_list()[1]
+            kernel_size_w = net.get_shape().as_list()[2]
+        elif data_format == "NCHW":
+            input_channel = net.get_shape().as_list()[1]
+            kernel_size_h = net.get_shape().as_list()[2]
+            kernel_size_w = net.get_shape().as_list()[3]
+        
+        # -- Analyzer --
+        utils.Analyzer( Analysis, 
+                        net, 
+                        type                    = 'CONV', 
+                        kernel_shape            = [kernel_size_h, kernel_size_w, input_channel, output_channel], 
+                        stride                  = stride, 
+                        group                   = group, 
+                        is_depthwise            = is_depthwise,
+                        IS_TERNARY              = IS_TERNARY,
+                        IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION,
+                        padding                 = padding, 
+                        name                    = 'Conv')
+
+        #-------------------#
+        #    Convolution    #
+        #-------------------#
+        # Variable define
+        weights, biases = FC_Variable(
+            kernel_size_h  = kernel_size_h,
+            kernel_size_w  = kernel_size_w,
+            input_channel  = input_channel,
+            output_channel = output_channel,
+            initializer    = initializer,
+            is_add_biases  = is_add_biases,
+            is_ternary     = is_ternary,
+            IS_TERNARY     = IS_TERNARY,
+            is_depthwise   = is_depthwise,
+            data_format    = data_format)
+        
+        # Convolution
+        if is_dilated:
+            ## Show the model
+            #print("-> Dilated Conv, Weights:{}, stride:{}" .format(weights.get_shape().as_list(), stride))
+            net = tf.nn.atrous_conv2d( 
+                value       = net, 
+                filters     = weights, 
+                rate        = rate, 
+                padding     = padding)
+        else:
+            ## Show the model
+            #print("-> Conv, Weights:{}, stride:{}" .format(weights.get_shape().as_list(), stride))
+            net = tf.nn.conv2d( 
+                input       = net, 
+                filter      = weights, 
+                strides     = [1, stride, stride, 1] if data_format == "NHWC" else [1, 1, stride, stride], 
+                padding     = padding,
+                data_format = data_format)
+
+        if is_add_biases:
+            ## Show the model
+            #print("-> Add Biases, Biases:{}".format(biases.get_shape().as_list()))
+            net = tf.nn.bias_add(net, biases, data_format)
+        
+        ## For checking the final weights/biases is ternary or not
+        tf.add_to_collection("final_weights", weights)
+        if is_add_biases:
+            tf.add_to_collection("final_biases", biases)
+
+        #-----------------#
+        #    Operation    #
+        #-----------------#
+        # Ternary Scale
+        if IS_TERNARY:
+            ## Show the model
+            #print("-> Ternary")
+            with tf.variable_scope('Ternary_Scalse'):
+                ternary_scale = tf.get_variable("ternary_scale", [1], tf.float32, initializer=initializer)
+                tf.add_to_collection("ternary_scale", ternary_scale)
+                net = tf.multiply(net, ternary_scale)
+        
+        # Batch Normalization
+        if is_batch_norm == True:
+            ## Show the model
+            #print("-> Batch_Norm")
+            net = batch_norm(net, is_training, data_format)
+        
+        # Activation
+        if Activation == 'ReLU':
+            ## Show the model
+            #print("-> ReLU")
+            net = tf.nn.relu(net)
+        elif Activation == 'Sigmoid':
+            ## Show the model
+            #print("-> Sigmoid")
+            net = tf.nn.sigmoid(net)
+        elif Activation == 'CReLU':
+            ## Show the model
+            #print("-> CReLU")
+            net = CReLU(net, initializer = initializer)
+        else:
+            net = net
+            
+        # Activation Quantization
+        if IS_QUANTIZED_ACTIVATION:
+            ## Show the model
+            #print("-> Activation Quantization")
+            net = quantize_Module(net, is_quantized_activation)
+            
+    return net
 #------------#
 #    POOL    #
 #------------#
