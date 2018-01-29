@@ -74,46 +74,31 @@ else:
     test_Y_pre_path   = 'Y_pre/' + FLAGs.Model_1st + '/' + FLAGs.Dataset + '/'
     
     # For Loading Trained Model
-    Model_Path = None
-    Model = None
+    if FLAGs.Model_2nd == '110_cifar10_0':
+        Model_Path = 'Model/ResNet_Model/ResNet_110_cifar10_0_99_cifar10_2018.01.22/'
+    elif FLAGs.Model_2nd == '20_cifar10_2':
+        Model_Path = 'Model/ResNet_Model/ResNet_20_cifar10_2_98_cifar10_2018.01.19_AnchorV474/'
+    Model = '10.ckpt'
 
 #==============# 
 #    Define    #
 #==============#
 def main(argv):
     print("start!")
-    # -- Training --
-    Model_Path = None
-    Model = None
-    Global_Epoch = 0
-    for _ in range(FLAGs.Epoch//FLAGs.epochs_per_eval):
-        Model_Path, Model = utils.run_training( 
-            Hyperparameter        = None                 ,               
-            FLAGs                 = FLAGs                ,
-            Epoch                 = FLAGs.epochs_per_eval,
-            Global_Epoch          = Global_Epoch         ,
-            IS_HYPERPARAMETER_OPT = IS_HYPERPARAMETER_OPT,
-            Dataset_Path          = Dataset_Path         ,
-            Y_pre_Path            = Y_pre_Path           ,
-            trained_model_path    = Model_Path           ,
-            trained_model         = Model                )
-    
-        # -- Testing --
-        test_accuracy = utils.run_testing( 
-            Hyperparameter        = None                 ,               
-            FLAGs                 = FLAGs                ,
-            IS_HYPERPARAMETER_OPT = IS_HYPERPARAMETER_OPT,  
-            Dataset_Path          = Dataset_Path         ,
-            testing_model_path    = Model_Path           ,
-            testing_model         = Model                ,
-            train_target_path     = train_target_path    ,
-            valid_target_path     = valid_target_path    ,
-            test_target_path      = test_target_path     ,
-            train_Y_pre_path      = train_Y_pre_path     ,
-            valid_Y_pre_path      = valid_Y_pre_path     ,
-            test_Y_pre_path       = test_Y_pre_path      )
-            
-        Global_Epoch = Global_Epoch + FLAGs.epochs_per_eval
+    # -- Testing --
+    test_accuracy = utils.run_testing( 
+        Hyperparameter        = None                 ,               
+        FLAGs                 = FLAGs                ,
+        IS_HYPERPARAMETER_OPT = IS_HYPERPARAMETER_OPT,  
+        Dataset_Path          = Dataset_Path         ,
+        testing_model_path    = Model_Path           ,
+        testing_model         = Model                ,
+        train_target_path     = train_target_path    ,
+        valid_target_path     = valid_target_path    ,
+        test_target_path      = test_target_path     ,
+        train_Y_pre_path      = train_Y_pre_path     ,
+        valid_Y_pre_path      = valid_Y_pre_path     ,
+        test_Y_pre_path       = test_Y_pre_path      )
         
 if __name__ == "__main__":
     FLAGS, unparsed = parser.parse_known_args()
