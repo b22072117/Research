@@ -423,7 +423,7 @@ def conv2D_Variable(
         name          = "float32_weights_mask",
         dtype         = tf.float32)
     tf.add_to_collection("float32_weights_mask", float32_weights_mask)
-    
+
     if is_add_biases:    
         float32_biases_mask = tf.Variable(
             initial_value = tf.ones_like(tensor = float32_biases, dtype = tf.float32),
@@ -431,6 +431,39 @@ def conv2D_Variable(
             name          = "float32_biases_mask",
             dtype         = tf.float32)
         tf.add_to_collection("float32_biases_mask", float32_biases_mask)
+        
+    # is_train Mask
+    is_train_float32_weights_mask = tf.Variable(
+        initial_value = tf.ones_like(tensor = float32_weights, dtype = tf.float32),
+        trainable     = False,
+        name          = "is_train_float32_weights_mask",
+        dtype         = tf.float32)
+    tf.add_to_collection("is_train_float32_weights_mask", is_train_float32_weights_mask)
+    
+    if is_add_biases:    
+        is_train_float32_biases_mask = tf.Variable(
+            initial_value = tf.ones_like(tensor = float32_biases, dtype = tf.float32),
+            trainable     = False,
+            name          = "is_train_float32_biases_mask",
+            dtype         = tf.float32)
+        tf.add_to_collection("is_train_float32_biases_mask", is_train_float32_biases_mask)
+    
+    # Constant Weights
+    constant_float32_weights = tf.Variable(
+        initial_value = tf.zeros_like(tensor = float32_weights, dtype = tf.float32),
+        trainable     = False,
+        name          = "constant_float32_weights",
+        dtype         = tf.float32)
+    tf.add_to_collection("constant_float32_weights", constant_float32_weights)
+    
+    if is_add_biases:    
+        constant_float32_biases = tf.Variable(
+            initial_value = tf.zeros_like(tensor = float32_biases, dtype = tf.float32),
+            trainable     = False,
+            name          = "constant_float32_biases",
+            dtype         = tf.float32)
+        tf.add_to_collection("constant_float32_biases", constant_float32_biases)
+    
     #-------------------------#
     #    Ternary Variables    #
     #-------------------------#
@@ -461,29 +494,34 @@ def conv2D_Variable(
             else:
                 final_biases = None
             
-        # var_list : Record the variables which will be computed gradients
-        tf.add_to_collection("var_list", final_weights)
-        if is_add_biases:
-            tf.add_to_collection("var_list", final_biases)
+        ## var_list : Record the variables which will be computed gradients
+        #tf.add_to_collection("var_list", final_weights)
+        #if is_add_biases:
+        #    tf.add_to_collection("var_list", final_biases)
         
         assign_final_weights = tf.assign(final_weights, weights_tmp)
         if is_add_biases:
             assign_final_biases = tf.assign(final_biases , biases_tmp)
+            
         tf.add_to_collection("assign_var_list", assign_final_weights)
         if is_add_biases:
             tf.add_to_collection("assign_var_list", assign_final_biases)
         
         return final_weights, final_biases
     else:
-        # var_list : Record the variables which will be computed gradients
-        tf.add_to_collection("var_list", float32_weights)
+        ## var_list : Record the variables which will be computed gradients
+        #tf.add_to_collection("var_list", float32_weights)
+        #if is_add_biases:
+        #    tf.add_to_collection("var_list", float32_biases)
+        
+        weights_ = tf.add(tf.multiply(tf.multiply(float32_weights, float32_weights_mask), is_train_float32_weights_mask), constant_float32_weights)
         if is_add_biases:
-            tf.add_to_collection("var_list", float32_biases)
+            biases_ = tf.add(tf.multiply(tf.multiply(float32_biases, float32_biases_mask), is_train_float32_biases_mask), constant_float32_biases)
         
         if is_add_biases:
-            return tf.multiply(float32_weights, float32_weights_mask), tf.multiply(float32_biases, float32_biases_mask)
+            return weights_, biases_
         else:
-            return tf.multiply(float32_weights, float32_weights_mask), None
+            return weights_, None
 
 def fixed_padding(
     inputs, 
@@ -1117,6 +1155,7 @@ def FC_Variable(
             name          = "float32_biases_mask",
             dtype         = tf.float32)
         tf.add_to_collection("float32_biases_mask", float32_biases_mask)
+    
     #-------------------------#
     #    Ternary Variables    #
     #-------------------------#
@@ -1140,10 +1179,10 @@ def FC_Variable(
         else:
             final_biases = None
             
-        # var_list : Record the variables which will be computed gradients
-        tf.add_to_collection("var_list", final_weights)
-        if is_add_biases:
-            tf.add_to_collection("var_list", final_biases)
+        ## var_list : Record the variables which will be computed gradients
+        #tf.add_to_collection("var_list", final_weights)
+        #if is_add_biases:
+        #    tf.add_to_collection("var_list", final_biases)
         
         assign_final_weights = tf.assign(final_weights, weights_tmp)
         if is_add_biases:
@@ -1154,10 +1193,10 @@ def FC_Variable(
         
         return final_weights, final_biases
     else:
-        # var_list : Record the variables which will be computed gradients
-        tf.add_to_collection("var_list", float32_weights)
-        if is_add_biases:
-            tf.add_to_collection("var_list", float32_biases)
+        ## var_list : Record the variables which will be computed gradients
+        #tf.add_to_collection("var_list", float32_weights)
+        #if is_add_biases:
+        #    tf.add_to_collection("var_list", float32_biases)
         
         if is_add_biases:
             return tf.multiply(float32_weights, float32_weights_mask), tf.multiply(float32_biases, float32_biases_mask)

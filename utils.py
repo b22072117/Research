@@ -92,9 +92,9 @@ def run_training(
         HP.update({'LR_Strategy'               : '3times'  })
         HP.update({'LR_Final'                  : 1e-3      })
         HP.update({'LR_Decade'                 : 10        })   
-        HP.update({'LR_Decade_1st_Epoch'       : 100       })
-        HP.update({'LR_Decade_2nd_Epoch'       : 150       })
-        HP.update({'LR_Decade_3rd_Epoch'       : 250       }) 
+        HP.update({'LR_Decade_1st_Epoch'       : 80        })
+        HP.update({'LR_Decade_2nd_Epoch'       : 120       })
+        HP.update({'LR_Decade_3rd_Epoch'       : 200       }) 
         HP.update({'L2_Lambda'                 : 2e-4      })
         HP.update({'Opt_Method'                : 'Momentum'})
         HP.update({'Momentum_Rate'             : 0.9       })
@@ -333,7 +333,7 @@ def run_pruning(
     HP.update({'LR_Strategy'               : '3times'        })
     HP.update({'LR_Final'                  : 1e-3            })
     HP.update({'LR_Decade'                 : 10              })   
-    HP.update({'LR_Decade_1st_Epoch'       : 75              })
+    HP.update({'LR_Decade_1st_Epoch'       : 50              })
     HP.update({'LR_Decade_2nd_Epoch'       : 150             })
     HP.update({'LR_Decade_3rd_Epoch'       : 150             })
     HP.update({'L2_Lambda'                 : 2e-4            })
@@ -343,8 +343,8 @@ def run_pruning(
     HP.update({'Ternary_Epoch'             : 50              })
     HP.update({'Quantized_Activation_Epoch': 100             })
     HP.update({'Dropout_Rate'              : 0.0             })
-    HP.update({'Pruning_Propotion_Per'     : 0.2             })
-    HP.update({'Pruning_Retrain_Epoch'     : 150             })
+    HP.update({'Pruning_Propotion_Per'     : 0.1             })
+    HP.update({'Pruning_Retrain_Epoch'     : 100             })
     HP.update({'Pruning_Strategy'          : Pruning_Strategy})
     
     print("\033[1;32;40mBATCH SIZE\033[0m : \033[1;37;40m{}\033[0m" .format(HP['Batch_Size']))
@@ -403,6 +403,144 @@ def run_pruning(
     
     return Model_Path, Model
     
+def run_rebuilding(
+    # Info               
+    FLAGs                     ,
+    Epoch                     ,
+    Global_Epoch              ,
+    # Path                    
+    Dataset_Path              ,
+    Y_pre_Path                ,
+    rebuilding_model_path_base,
+    rebuilding_model_path     ,
+    rebuilding_model
+    ):
+    
+    Dataset           = FLAGs.Dataset
+    Model_first_name  = FLAGs.Model_1st
+    Model_second_name = FLAGs.Model_2nd
+    EPOCH             = Epoch
+    BATCH_SIZE        = FLAGs.BatchSize
+    
+    Model_Name = Model_first_name + '_' + Model_second_name
+    
+    #---------------#
+    #   Data Info   #
+    #---------------#
+    if Dataset=='CamVid':   # original : [360, 480, 12]
+        H_Resize = 360
+        W_Resize = 480
+        class_num = 12
+    elif Dataset=='ade20k': # original : All Different
+        H_Resize = 224
+        W_Resize = 224
+        class_num = 151
+    elif Dataset=='mnist':  # original : [28, 28, 10]
+        H_Resize = 32
+        W_Resize = 32
+        class_num = 10
+    elif Dataset=='cifar10': # original : [28, 28, 10]
+        H_Resize = 32
+        W_Resize = 32
+        class_num = 10
+        
+    #----------------#
+    #   Model_dict   #
+    #----------------#
+    Model_dict = Model_dict_Generator(rebuilding_model_path + 'model.csv', class_num)
+    
+    #-----------------------------------#
+    #   Hyperparameter : User Defined   #
+    #-----------------------------------#
+    HP = {}
+    HP.update({'Batch_Size'                : BATCH_SIZE      })
+    HP.update({'Epoch'                     : EPOCH           })
+    HP.update({'H_Resize'                  : H_Resize        })
+    HP.update({'W_Resize'                  : W_Resize        })
+    HP.update({'LR'                        : 1e-3            }) 
+    HP.update({'LR_Strategy'               : '3times'        })
+    HP.update({'LR_Final'                  : 1e-3            })
+    HP.update({'LR_Decade'                 : 10              })   
+    HP.update({'LR_Decade_1st_Epoch'       : 80              })
+    HP.update({'LR_Decade_2nd_Epoch'       : 120             })
+    HP.update({'LR_Decade_3rd_Epoch'       : 200             })
+    HP.update({'L2_Lambda'                 : 2e-4            })
+    HP.update({'Opt_Method'                : 'Momentum'      })
+    HP.update({'Momentum_Rate'             : 0.9             })
+    HP.update({'IS_STUDENT'                : False           })
+    HP.update({'Ternary_Epoch'             : 50              })
+    HP.update({'Quantized_Activation_Epoch': 100             })
+    HP.update({'Dropout_Rate'              : 0.0             })
+    
+    print("\033[1;32;40mBATCH SIZE\033[0m : \033[1;37;40m{}\033[0m" .format(HP['Batch_Size']))
+    
+    #---------------------------#
+    #    Hyperparameter Save    #
+    #---------------------------#
+    components = np.array(['Batch_Size'                ,
+                           'Epoch'                     ,
+                           'H_Resize'                  ,
+                           'W_Resize'                  ,
+                           'LR'                        ,
+                           'LR_Strategy'               ,
+                           'LR_Final'                  ,
+                           'LR_Decade'                 ,
+                           'LR_Decade_1st_Epoch'       ,
+                           'LR_Decade_2nd_Epoch'       ,
+                           'LR_Decade_3rd_Epoch'       ,
+                           'L2_Lambda'                 ,
+                           'Opt_Method'                ,
+                           'Momentum_Rate'             ,
+                           'IS_STUDENT'                ,
+                           'Ternary_Epoch'             ,
+                           'Quantized_Activation_Epoch',
+                           'Dropout_Rate'              ])
+    
+    for iter, component in enumerate(components):
+        if iter == 0:
+            HP_csv = np.array([HP[component]])
+        else:
+            HP_csv = np.concatenate([HP_csv, np.array([HP[component]])], axis=0)
+            
+    components = np.expand_dims(components, axis=1)
+    HP_csv = np.expand_dims(HP_csv, axis=1)
+    HP_csv = np.concatenate([HP_csv, components], axis=1)
+    
+    base_mask = get_mask(
+        model_path = rebuilding_model_path_base,
+        model      = rebuilding_model,
+        H_Resize   = H_Resize,
+        W_Resize   = W_Resize,
+        class_num  = class_num)
+    
+    base_weights = get_weights(
+        model_path = rebuilding_model_path_base,
+        model      = rebuilding_model,
+        H_Resize   = H_Resize,
+        W_Resize   = W_Resize,
+        class_num  = class_num)
+    
+    Model_Path, Model = Rebuilding(
+        Model_dict                 = Model_dict                ,            
+        Dataset	                   = Dataset                   ,
+        Dataset_Path               = Dataset_Path              ,
+        Y_pre_Path                 = Y_pre_Path                ,
+        class_num                  = class_num                 ,
+        HP                         = HP                        ,
+        Global_Epoch               = Global_Epoch              ,
+        weights_bd_ratio           = 50                        ,
+        biases_bd_ratio            = 50                        ,    
+        HP_csv                     = HP_csv                    ,
+        Model_first_name           = Model_first_name          ,
+        Model_second_name          = Model_second_name         ,
+        rebuilding_model_path_base = rebuilding_model_path_base,
+        rebuilding_model_path      = rebuilding_model_path     ,
+        rebuilding_model           = rebuilding_model          ,
+        base_mask                  = base_mask                 ,
+        base_weights               = base_weights              )
+    
+    return Model_Path, Model
+
     
 def Training( 
     # Model
@@ -505,7 +643,7 @@ def Training(
     for d in range(device_num):
         device_use = device[d]
         with tf.device(tf.train.replica_device_setter(worker_device = '/device:GPU:%d' %int(device_use), ps_device = '/device:CPU:0', ps_tasks=1)):
-            # -- Build Model --
+            ## -- Build Model --
             net = xs[ d*device_batch : (d+1)*device_batch ]
             Model_dict_ = copy.deepcopy(Model_dict)
             if d == 0:      
@@ -518,6 +656,9 @@ def Training(
                     DROPOUT_RATE            = HP['Dropout_Rate'],
                     data_format             = "NCHW",
                     reuse                   = None)
+                #Analysis = {}
+                #network = resnet_model.cifar10_resnet_v2_generator(20, class_num, "channels_first")
+                #prediction = network(net, is_training)
             else:
                 prediction, Analysis, max_parameter, inputs_and_kernels, prune_info_dict = Model_dict_Decoder(
                     net                     = net, 
@@ -531,7 +672,7 @@ def Training(
             
             prediction_list.append(prediction)
             
-            # -- Model Size --
+            ## -- Model Size --
             if d == 0:
                 # Your grade will depend on this value.
                 all_variables = tf.trainable_variables() #tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope="Model")
@@ -540,13 +681,14 @@ def Training(
                 for iter, variable in enumerate(all_variables):
                     Model_Size += reduce(lambda x, y: x*y, variable.get_shape().as_list())
                     # See all your variables in termainl	
-                    #print(variable)
+                    #print("{}, {}" .format(iter, variable))
                     
                 print("\033[0;36m=======================\033[0m")
                 print("\033[0;36m Model Size\033[0m = {}" .format(Model_Size))
                 print("\033[0;36m=======================\033[0m")
                 #pdb.set_trace()
-            # -- Collection --
+            
+            ## -- Collection --
             if d == 0:
                 ## Ternary
                 float32_weights_collection          = tf.get_collection("float32_weights"        , scope=None)
@@ -564,7 +706,7 @@ def Training(
                 var_list_collection                 = tf.get_collection("var_list"               , scope=None)
                 float32_params                      = tf.get_collection("float32_params"         , scope=None) 
                 
-            # -- Loss --
+            ## -- Loss --
             labels = ys[ d*device_batch : (d+1)*device_batch ]
             
             # L2 Regularization
@@ -572,13 +714,15 @@ def Training(
             l2_lambda = tf.constant(HP['L2_Lambda'])
             l2_norm   = tf.multiply(l2_lambda, l2_norm)
             
-            # Loss
-            loss = tf.losses.softmax_cross_entropy(
+            # Cross Entropy
+            cross_entropy = tf.losses.softmax_cross_entropy(
                 onehot_labels = labels,
                 logits        = prediction_list[d])
-            loss = tf.add(loss, l2_norm)
             
-            # -- Optimizer --
+            # Loss
+            loss = cross_entropy + HP['L2_Lambda'] * tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()])
+            
+            ## -- Optimizer --
             if HP['Opt_Method']=='Adam':
                 opt = tf.train.AdamOptimizer(learning_rate, HP['Momentum_Rate'])
             elif HP['Opt_Method']=='Momentum':
@@ -590,18 +734,15 @@ def Training(
             update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
             with tf.control_dependencies(update_ops):
                 #train_step = opt.minimize(loss)
-                # Compute Gradients
-                gradients = opt.compute_gradients(loss, var_list = var_list_collection)
-                if d == 0:
-                    gra_and_var = [(gradients[i][0], float32_params[i]) for i in range(np.shape(gradients)[0])]
-                else:
-                    for i in range(np.shape(gradients)[0]):
-                        gra_and_var.append((gradients[i][0], float32_params[i]))
                 
-    # Apply Gradients
+                ## Compute Gradients
+                var_list = tf.trainable_variables()
+                gra_and_var = opt.compute_gradients(loss, var_list = var_list)
+                
+    ## Apply Gradients
     with tf.device(tf.train.replica_device_setter(worker_device = '/device:GPU:%d' %int(device[0]), ps_device = '/device:CPU:0', ps_tasks=1)):
         train_step  = opt.apply_gradients(gra_and_var, global_step)
-
+    
     #-----------------------------#
     #   Some Control Parameters   #
     #-----------------------------#
@@ -709,11 +850,13 @@ def Training(
                 batch_xs = train_data   [ batch_iter*HP['Batch_Size'] : (batch_iter+1)*HP['Batch_Size'] ]
                 batch_ys = train_target [ batch_iter*HP['Batch_Size'] : (batch_iter+1)*HP['Batch_Size'] ]
                 """
+
                 # Run Training Step
                 feed_dict_train.update({is_training: True}) # xs: batch_xs, ys: batch_ys, learning_rate: lr, 
                 _, Loss, Prediction_list, L2_norm, batch_ys = sess.run(
                     [train_step, loss, prediction_list, l2_norm, ys], 
                     feed_dict = feed_dict_train)
+
                 # Combine Different Device Prediction
                 for d in range(len(Prediction_list)):
                     if d == 0:
@@ -721,6 +864,7 @@ def Training(
                     else:
                         Prediction = np.concatenate([Prediction, Prediction_list[d]], axis = 0)
                 # Assign float32 or ternary weight and biases to final weights
+                # This may can be placed into GraphKeys.UPDATE_OPS, but i am not sure.
                 for assign_var_list_iter, assign_var_list in enumerate(assign_var_list_collection):
                     sess.run(assign_var_list, feed_dict = feed_dict_assign)
                 # Result
@@ -792,7 +936,7 @@ def Training(
                 # Model
                 Model_csv_Generator(Model_dict, Dir + 'model')
                 # Analysis
-                Save_Analyzsis_as_csv(Analysis, Dir + 'Analysis')
+                #Save_Analyzsis_as_csv(Analysis, Dir + 'Analysis')
                 
             #----------------------------#
             #   Saving trained weights   #
@@ -910,6 +1054,9 @@ def Testing(
                     DROPOUT_RATE            = None,
                     data_format             = "NHWC",
                     reuse                   = None)
+                #Analysis = {}
+                #network = resnet_model.cifar10_resnet_v2_generator(20, class_num, "channels_first")
+                #prediction = network(net, is_training)
             else:
                 prediction, Analysis, max_parameter, inputs_and_kernels, prune_info_dict = Model_dict_Decoder(
                     net                     = net, 
@@ -922,7 +1069,7 @@ def Testing(
                     reuse                   = True)
                
             prediction_list.append(prediction)
-
+            
             # -- Model Size --
             if d == 0:
                 #--------------------------#
@@ -935,9 +1082,8 @@ def Testing(
                 for iter, variable in enumerate(all_variables):
                     Model_Size += reduce(lambda x, y: x*y, variable.get_shape().as_list())
                     # See all your variables in termainl	
-                    """
-                    print(variable)
-                    """            
+                    #print(variable)
+                     
     #-----------------------------#
     #   Some Control Parameters   #
     #-----------------------------#
@@ -970,6 +1116,18 @@ def Testing(
         print("\033[0;35m{}\033[0m" .format(testing_model_path + testing_model))
         save_path = saver.restore(sess, testing_model_path + testing_model)
         
+        # Debug
+        """
+        constant = tf.get_collection('constant_float32_weights', scope = None)
+        is_train_mask = tf.get_collection('is_train_float32_weights_mask', scope = None)
+        weights = tf.get_collection('float32_weights', scope = None)
+        aa = sess.run(constant[0])
+        bb = sess.run(weights[0])
+        cc = sess.run(is_train_mask[0])
+        pdb.set_trace()
+        """
+        # End Debug
+        
         Pruned_Size = 0
         for iter, mask in enumerate(tf.get_collection('float32_weights_mask')):
             Pruned_Size = Pruned_Size + np.sum(sess.run(mask) == 0)
@@ -979,7 +1137,7 @@ def Testing(
         print("\033[0;36m=======================\033[0m")
         
         #pdb.set_trace()
-        similar_group(inputs_and_kernels, sess)
+        #similar_group(inputs_and_kernels, sess)
         print("Testing Data Result ... ")
         test_result, test_accuracy, test_accuracy_top2, test_accuracy_top3, test_Y_pre = compute_accuracy(
             xs                      = xs, 
@@ -1188,7 +1346,8 @@ def Pruning(
             # Batch norm requires update ops to be added as a dependency to the train_op
             update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
             with tf.control_dependencies(update_ops):
-                #train_step = opt.minimize(loss)
+                train_step = opt.minimize(loss)
+                """
                 # Compute Gradients
                 gradients = opt.compute_gradients(loss, var_list = var_list_collection)
                 if d == 0:
@@ -1196,11 +1355,12 @@ def Pruning(
                 else:
                     for i in range(np.shape(gradients)[0]):
                         gra_and_var.append((gradients[i][0], float32_params[i]))
-                
+                """
     # Apply Gradients
+    """
     with tf.device(tf.train.replica_device_setter(worker_device = '/device:GPU:%d' %int(device[0]), ps_device = '/device:CPU:0', ps_tasks=1)):
         train_step  = opt.apply_gradients(gra_and_var, global_step)
-
+    """
     #-----------------------------#
     #   Some Control Parameters   #
     #-----------------------------#
@@ -1249,20 +1409,14 @@ def Pruning(
         if Global_Epoch%HP['Pruning_Retrain_Epoch'] == 0:
             pruning_propotion = HP['Pruning_Propotion_Per']
             kernel_values_per_layer = similar_group(inputs_and_kernels, sess)
-            if HP['Pruning_Strategy'] == 'Filter_Anchor':
-                filter_prune_by_anchor(kernel_values_per_layer, pruning_propotion, sess)
+            if   HP['Pruning_Strategy'] == 'Filter_Angle':
+                filter_prune_by_angle(prune_info_dict, pruning_propotion, sess) 
             elif HP['Pruning_Strategy'] == 'Filter_Magnitude':
                 filter_prune_by_magnitude(kernel_values_per_layer, pruning_propotion, sess)
             elif HP['Pruning_Strategy'] == 'Sparse_Magnitude':
                 sparse_prune_by_magnitude(0.05, sess)
-            elif HP['Pruning_Strategy'] == 'Filter_AnchorV2':
-                filter_prune_by_anchor_v2(kernel_values_per_layer, pruning_propotion, sess)
-            elif HP['Pruning_Strategy'] == 'Filter_AnchorV3':
-                filter_prune_by_anchor_v3(prune_info_dict, pruning_propotion, sess)
-            elif HP['Pruning_Strategy'] == 'Filter_AnchorV4':
-                filter_prune_by_anchor_v4(prune_info_dict, pruning_propotion, sess) 
-            elif HP['Pruning_Strategy'] == 'Plane_Anchor':
-                plane_prune_by_anchor(prune_info_dict, pruning_propotion, sess)
+            elif HP['Pruning_Strategy'] == 'Plane_Angle':
+                plane_prune_by_angle(prune_info_dict, pruning_propotion, sess)
         #------------------#
         #    Model Size    #
         #------------------#
@@ -1440,7 +1594,432 @@ def Pruning(
     
     return Model_Path, Model
 
- 
+def Rebuilding(
+    # Model
+    Model_dict                 ,
+    # Dataset                  
+    Dataset	                   ,
+    Dataset_Path               ,
+    Y_pre_Path                 ,
+    class_num                  ,
+    # Parameter	               
+    HP                         ,
+    Global_Epoch               ,
+    weights_bd_ratio           ,
+    biases_bd_ratio            ,
+    # Model Save               
+    HP_csv                     ,
+    Model_first_name           ,
+    Model_second_name          ,
+    # Pre-trained Weights
+    rebuilding_model_path_base ,
+    rebuilding_model_path      ,
+    rebuilding_model           , 
+    base_mask                  ,
+    base_weights 
+    ):
+    
+    
+    Model_Name = Model_first_name + '_' + Model_second_name
+    
+    #---------------#
+    #    Dataset    #
+    #---------------#
+    print("Parsing Data ... ")
+    filenames = [os.path.join(Dataset_Path, 'data_batch_%d.bin'%(i+1)) for i in range(5)]
+    xs, ys = input_fn(filenames, class_num, True, HP)
+    train_data_index   = np.array(open(Dataset_Path + '/train.txt', 'r').read().splitlines())
+    train_target_index = np.array(open(Dataset_Path + '/trainannot.txt', 'r').read().splitlines())
+    train_data_num = len(train_data_index)
+
+    print("\033[0;32mTrain Data Number\033[0m : {}" .format(train_data_num))
+
+    #------------------#
+    #    Placeholder   #
+    #------------------#
+    data_shape = [None, HP['H_Resize'], HP['W_Resize'], 3]
+    global_step = tf.train.get_or_create_global_step()
+    batches_per_epoch = train_data_num / HP['Batch_Size'] 
+    ## Is_training
+    is_training = tf.placeholder(tf.bool)
+    
+    ## Learning Rate
+    if HP['LR_Strategy'] == '3times':
+        if   (Global_Epoch+1) <= HP['LR_Decade_1st_Epoch']:
+            learning_rate = HP['LR'] / pow(HP['LR_Decade'], 0)
+        elif (Global_Epoch+1) <= HP['LR_Decade_2nd_Epoch']:
+            learning_rate = HP['LR'] / pow(HP['LR_Decade'], 1)
+        elif (Global_Epoch+1) <= HP['LR_Decade_3rd_Epoch']:
+            learning_rate = HP['LR'] / pow(HP['LR_Decade'], 2)
+        else:
+            learning_rate = HP['LR'] / pow(HP['LR_Decade'], 3)
+    
+    ## is_quantized_activation
+    is_quantized_activation = {}
+    for layer in range(len(Model_dict)):
+        is_quantized_activation.update({'layer%d'%layer : tf.placeholder(tf.bool)}) 
+        
+    ## is_ternary
+    is_ternary = {}
+    for layer in range(len(Model_dict)):
+        is_ternary.update({'layer%d'%layer : tf.placeholder(tf.bool)})  
+    
+    #----------------------#
+    #    Building Model    #
+    #----------------------# 
+    print("Building Model ...")
+    device = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
+    device_num = len(os.environ['CUDA_VISIBLE_DEVICES'].split(','))
+    device_batch = int(HP['Batch_Size'] / device_num)
+    prediction_list = []
+    # Assign Usage of CPU and GPU
+    for d in range(device_num):
+        device_use = device[d]
+        with tf.device(tf.train.replica_device_setter(worker_device = '/device:GPU:%d' %int(device_use), ps_device = '/device:CPU:0', ps_tasks=1)):
+            # -- Build Model --
+            net = xs[ d*device_batch : (d+1)*device_batch ]
+            Model_dict_ = copy.deepcopy(Model_dict)
+            if d == 0:      
+                prediction, Analysis, max_parameter, inputs_and_kernels, prune_info_dict = Model_dict_Decoder(
+                    net                     = net, 
+                    Model_dict              = Model_dict_, 
+                    is_training             = is_training,
+                    is_ternary              = is_ternary,
+                    is_quantized_activation = is_quantized_activation,
+                    DROPOUT_RATE            = HP['Dropout_Rate'],
+                    data_format             = "NCHW",
+                    reuse                   = None)
+            else:
+                prediction, Analysis, max_parameter, inputs_and_kernels, prune_info_dict = Model_dict_Decoder(
+                    net                     = net, 
+                    Model_dict              = Model_dict_, 
+                    is_training             = is_training,
+                    is_ternary              = is_ternary,
+                    is_quantized_activation = is_quantized_activation,
+                    DROPOUT_RATE            = HP['Dropout_Rate'],
+                    data_format             = "NCHW",
+                    reuse                   = True)
+            
+            prediction_list.append(prediction)
+            
+            # -- Model Size --
+            if d == 0:
+                # Your grade will depend on this value.
+                all_variables = tf.trainable_variables() #tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope="Model")
+                # Model Size
+                Model_Size = 0
+                Pruned_Size = 0
+                for iter, variable in enumerate(all_variables):
+                    Model_Size += reduce(lambda x, y: x*y, variable.get_shape().as_list())
+                    #print(variable)
+                    
+            # -- Collection --
+            if d == 0:
+                ## Ternary
+                float32_weights_collection          = tf.get_collection("float32_weights"        , scope=None)
+                float32_biases_collection           = tf.get_collection("float32_biases"         , scope=None)
+                ternary_weights_bd_collection       = tf.get_collection("ternary_weights_bd"     , scope=None)
+                ternary_biases_bd_collection        = tf.get_collection("ternary_biases_bd"      , scope=None)  
+                ## assign ternary or float32 weights/biases to final weights/biases  
+                assign_var_list_collection          = tf.get_collection("assign_var_list"        , scope=None)  
+                ## Actvation Quantization    
+                float32_net_collection              = tf.get_collection("float32_net"            , scope=None)
+                is_quantized_activation_collection  = tf.get_collection("is_quantized_activation", scope=None)
+                mantissa_collection                 = tf.get_collection("mantissa"               , scope=None)
+                fraction_collection                 = tf.get_collection("fraction"               , scope=None)
+                ## Gradient Update
+                var_list_collection                 = tf.get_collection("var_list"               , scope=None)
+                float32_params                      = tf.get_collection("float32_params"         , scope=None) 
+                
+            # -- Loss --
+            labels = ys[ d*device_batch : (d+1)*device_batch ]
+            
+            # L2 Regularization
+            l2_norm   = tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()])
+            l2_lambda = tf.constant(HP['L2_Lambda'])
+            l2_norm   = tf.multiply(l2_lambda, l2_norm)
+            
+            # Loss
+            loss = tf.losses.softmax_cross_entropy(
+                onehot_labels = labels,
+                logits        = prediction_list[d])
+            loss = tf.add(loss, l2_norm)
+            
+            # -- Optimizer --
+            if HP['Opt_Method']=='Adam':
+                opt = tf.train.AdamOptimizer(learning_rate, HP['Momentum_Rate'])
+            elif HP['Opt_Method']=='Momentum':
+                opt = tf.train.MomentumOptimizer(
+                    learning_rate = learning_rate,
+                    momentum      = HP['Momentum_Rate'])
+                
+            # Batch norm requires update ops to be added as a dependency to the train_op
+            update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+            with tf.control_dependencies(update_ops):
+                ## var_list
+                var_list = tf.trainable_variables()
+                ## Compute Gradients
+                gra_and_var = opt.compute_gradients(loss, var_list = var_list)
+
+    ## Apply Gradients
+    with tf.device(tf.train.replica_device_setter(worker_device = '/device:GPU:%d' %int(device[0]), ps_device = '/device:CPU:0', ps_tasks=1)):
+        train_step  = opt.apply_gradients(gra_and_var)
+    #-----------------------------#
+    #   Some Control Parameters   #
+    #-----------------------------#
+    IS_TERNARY = False
+    IS_QUANTIZED_ACTIVATION = False
+    for layer in range(len(Model_dict)):
+        if Model_dict['layer'+str(layer)]['IS_TERNARY'] == 'TRUE':
+            IS_TERNARY = True
+        if Model_dict['layer'+str(layer)]['IS_QUANTIZED_ACTIVATION'] == 'TRUE':
+            IS_QUANTIZED_ACTIVATION = True
+            
+    TERNARY_NOW = False
+    QUANTIZED_NOW = False
+    
+    #-----------#
+    #   Saver   #
+    #-----------#	
+    saver = tf.train.Saver()
+    
+    #---------------#
+    #    Session    #
+    #---------------#
+    config = tf.ConfigProto()
+    #config.gpu_options.allow_growth = True
+    #config.log_device_placement = True
+    config.allow_soft_placement = True
+    config.intra_op_parallelism_threads = 256
+    with tf.Session(config = config) as sess: 
+        #----------------------#
+        #    Initialization    #
+        #----------------------#
+        print("Initializing ...")
+        init = tf.global_variables_initializer()
+        sess.run(init)
+
+        #--------------------------#
+        #   Load trained weights   #
+        #--------------------------#
+        print("Loading the trained weights ... ")
+        print("\033[0;35m{}\033[0m" .format(rebuilding_model_path + rebuilding_model))
+        save_path = saver.restore(sess, rebuilding_model_path + rebuilding_model)
+        
+        #-----------------------------------------------#
+        #    Assign untrained weights value and mask    #
+        #-----------------------------------------------#
+        # mask
+        is_train_mask_collection = tf.get_collection('is_train_float32_weights_mask', scope = None)
+        for iter in range(len(is_train_mask_collection)):
+            is_train_mask = is_train_mask_collection[iter]
+            mask_value = 1. - base_mask[iter]
+            sess.run(tf.assign(is_train_mask, mask_value))
+            
+        # weights
+        constant_weights_collection = tf.get_collection('constant_float32_weights', scope = None)
+        for iter in range(len(constant_weights_collection)):
+            constant_weights = constant_weights_collection[iter]
+            constant_weights_value = base_mask[iter] * base_weights[iter]
+            sess.run(tf.assign(constant_weights, constant_weights_value))
+
+        #------------------#
+        #    Model Size    #
+        #------------------#
+        Pruned_Size = 0
+        for iter, mask in enumerate(tf.get_collection('float32_weights_mask')):
+            Pruned_Size = Pruned_Size + np.sum(sess.run(mask) == 0)
+
+        print("\033[0;36m=======================\033[0m")
+        print("\033[0;36m Model Size\033[0m = {}" .format(Model_Size-Pruned_Size))
+        print("\033[0;36m=======================\033[0m")
+        
+        #-------------#
+        #    Epoch    #
+        #-------------#
+        lr = HP['LR']
+        tStart_All = time.time()       
+        print("Training ... ")
+        for epoch in range(HP['Epoch']):
+            total_correct_num = 0
+            total_error_num = 0
+            Train_loss = 0
+            iteration  = 0           
+            ## -- Quantizad Activation --
+            if IS_QUANTIZED_ACTIVATION and (epoch + 1 + Global_Epoch) == HP['Quantized_Activation_Epoch']:
+                batch_xs = train_data[0:HP['Batch_Size']]
+                # Calculate Each Activation's appropriate mantissa and fractional bit
+                m, f = quantized_m_and_f(float32_net_collection, is_quantized_activation_collection, xs, Model_dict, batch_xs, sess)	
+                # Assign mantissa and fractional bit to the tensor
+                assign_quantized_m_and_f(mantissa_collection, fraction_collection, m, f, sess)
+                # Start Quantize Activation
+                QUANTIZED_NOW = True
+            ## -- Ternary --
+            if IS_TERNARY and (epoch+1+Global_Epoch)==HP['Ternary_Epoch']:
+                # Calculate the ternary boundary of each layer's weights
+                weights_bd, biases_bd, weights_table, biases_table = tenarized_bd(
+                    float32_weights_collection,  
+                    float32_biases_collection, 
+                    weights_bd_ratio, 
+                    biases_bd_ratio, 
+                    sess)
+                # assign ternary boundary to tensor
+                assign_ternary_boundary(ternary_weights_bd_collection, ternary_biases_bd_collection, weights_bd, biases_bd, sess)
+                # Start Quantize Activation
+                TERNARY_NOW = True 
+            ## -- Set feed_dict --
+            # train_step
+            feed_dict_train = {}
+            for layer in range(len(Model_dict)):
+                feed_dict_train.update({is_ternary['layer'+str(layer)]: Model_dict['layer'+str(layer)]['IS_TERNARY']=='TRUE' and TERNARY_NOW})
+                feed_dict_train.update({is_quantized_activation['layer'+str(layer)]: Model_dict['layer'+str(layer)]['IS_QUANTIZED_ACTIVATION']=='TRUE' and QUANTIZED_NOW}) 
+            # Assign float32 or ternary weight and biases to final weights
+            feed_dict_assign = {}
+            for layer in range(len(Model_dict)):
+                feed_dict_assign.update({is_ternary['layer'+str(layer)]: Model_dict['layer'+str(layer)]['IS_TERNARY']=='TRUE' and TERNARY_NOW})
+            ## -- Training --
+            tStart = time.time()
+            total_batch_iter = int(train_data_num / HP['Batch_Size'])
+
+            for batch_iter in range(total_batch_iter):
+                iteration = iteration + 1
+                # Train data in BATCH SIZE
+                """
+                batch_xs = train_data   [ batch_iter*HP['Batch_Size'] : (batch_iter+1)*HP['Batch_Size'] ]
+                batch_ys = train_target [ batch_iter*HP['Batch_Size'] : (batch_iter+1)*HP['Batch_Size'] ]
+                """
+                ## Run Training Step ##
+                feed_dict_train.update({is_training: True}) # xs: batch_xs, ys: batch_ys, learning_rate: lr, 
+                _, Loss, Prediction_list, L2_norm, batch_ys, gradient = sess.run(
+                    [train_step, loss, prediction_list, l2_norm, ys, gra_and_var[0][0]], 
+                    feed_dict = feed_dict_train)
+                # Combine Different Device Prediction
+                for d in range(len(Prediction_list)):
+                    if d == 0:
+                        Prediction = Prediction_list[d]
+                    else:
+                        Prediction = np.concatenate([Prediction, Prediction_list[d]], axis = 0)
+                # Assign float32 or ternary weight and biases to final weights
+                for assign_var_list_iter, assign_var_list in enumerate(assign_var_list_collection):
+                    sess.run(assign_var_list, feed_dict = feed_dict_assign)
+                # Result
+                y_pre             = np.argmax(Prediction, -1)
+                correct_num       = np.sum(np.equal(np.argmax(batch_ys, -1), y_pre) == True , dtype = np.float32)
+                error_num         = np.sum(np.equal(np.argmax(batch_ys, -1), y_pre) == False, dtype = np.float32)
+                batch_accuracy    = correct_num / (correct_num + error_num)
+                total_correct_num = total_correct_num + correct_num
+                total_error_num   = total_error_num + error_num
+                Train_loss        = Train_loss + np.mean(Loss)  
+                # Per Batch Size Info
+                """
+                print("\033[1;34;40mEpoch\033[0m : {}" .format(epoch+Global_Epoch))
+                print("\033[1;34;40mData Iteration\033[0m : {}" .format(batch_iter*HP['Batch_Size']))
+                print("\033[1;32;40m  Batch Accuracy\033[0m : {}".format(batch_accuracy))
+                print("\033[1;32;40m  Loss          \033[0m : {}".format(np.mean(Loss)))
+                print("\033[1;32;40m  Learning Rate \033[0m : {}".format(lr))
+                """
+                # Per Class Accuracy
+                """
+                per_class_accuracy(Prediction, batch_ys)
+                """
+            
+            tEnd = time.time()            
+            Train_acc  = total_correct_num  / (total_correct_num + total_error_num)
+            Train_loss = Train_loss / iteration
+            print("\r\033[0;33mEpoch{}\033[0m" .format(epoch+Global_Epoch), end = "")
+            print(" (Cost {TIME} sec)" .format(TIME = tEnd - tStart))
+            print("\033[0;32mLearning Rate    \033[0m : {}".format(learning_rate))
+            print("\033[0;32mTraining Accuracy\033[0m : {}".format(Train_acc))
+            print("\033[0;32mTraining Loss    \033[0m : {} (l2_norm: {})".format(Train_loss, L2_norm))
+
+            # Record Per Epoch Training Result (Finally this will save as the .csv file)
+            if epoch==0:
+                Train_acc_per_epoch  = np.array([Train_acc ])
+                Train_loss_per_epoch = np.array([Train_loss])
+            else:
+                Train_acc_per_epoch  = np.concatenate([Train_acc_per_epoch , np.array([Train_acc ])], axis=0)
+                Train_loss_per_epoch = np.concatenate([Train_loss_per_epoch, np.array([Train_loss])], axis=0)
+            
+            #---------------------------#
+            #   Train Directory Build   #
+            #---------------------------#
+            if (epoch+1)==HP['Epoch']:
+                Dir = rebuilding_model_path_base[0:len(rebuilding_model_path_base)-1]
+                Pruned_Size = 0.
+                for iter, mask in enumerate(tf.get_collection('float32_weights_mask')):
+                    Pruned_Size = Pruned_Size + np.sum(sess.run(mask) == 0)
+                Pruning_Propotion_Now = int(Pruned_Size / Model_Size * 100)
+                
+                if len(Dir.split('Rebuild')) == 1:
+                    Dir = Dir + '_' + 'Rebuild' + str(Pruning_Propotion_Now) + '/'
+                else:
+                    Dir = Dir + '_' + str(Pruning_Propotion_Now) + '/'
+                
+                if (not os.path.exists(Dir)):
+                    print("\033[0;35m%s\033[0m is not exist!" %Dir)
+                    print("\033[0;35m%s\033[0m is created!" %Dir)
+                    os.makedirs(Dir)
+                
+                #------------------------------------------------------#
+                #   Update the constant weights to trainable weights   #
+                #------------------------------------------------------#
+                for iter in range(len(is_train_mask_collection)):
+                    constant_weights_value = base_mask[iter] * base_weights[iter]
+                    float32_weights = float32_weights_collection[iter]
+                    float32_weights_value = (1. - base_mask[iter]) * sess.run(float32_weights) + constant_weights_value
+                    sess.run(tf.assign(float32_weights, float32_weights_value))
+                
+                #--------------------#
+                #    Saving Model    #
+                #--------------------#
+                # Hyperparameter
+                np.savetxt(Dir + 'Hyperparameter.csv', HP_csv, delimiter=",", fmt="%s")
+                # Model
+                Model_csv_Generator(Model_dict, Dir + 'model')
+                # Analysis
+                Save_Analyzsis_as_csv(Analysis, Dir + 'Analysis')
+                
+            #----------------------------#
+            #   Saving trained weights   #
+            #----------------------------#
+            if (epoch+1)==HP['Epoch']:
+                print("Saving Trained Weights ...")
+                save_path = saver.save(sess, Dir + str(epoch+1) + ".ckpt")
+                print("\033[0;35m{}\033[0m" .format(save_path))
+        
+        tEnd_All = time.time()
+        print("Total costs {TIME} sec\n" .format(TIME = tEnd_All - tStart_All))
+
+        #-----------------------------------#
+        #   Saving Train info as csv file   #
+        #-----------------------------------#
+        Train_acc_per_epoch  = np.expand_dims(Train_acc_per_epoch , axis=1)
+        Train_loss_per_epoch = np.expand_dims(Train_loss_per_epoch, axis=1)
+        Train_info = np.concatenate([Train_acc_per_epoch, Train_loss_per_epoch], axis=1)
+        Save_file_as_csv(Dir+'train_info' , Train_info)
+        
+        
+        # Debug
+        """
+        constant = tf.get_collection('constant_float32_weights', scope = None)
+        is_train_mask = tf.get_collection('is_train_float32_weights_mask', scope = None)
+        weights = tf.get_collection('float32_weights', scope = None)
+        aa = sess.run(constant[0])
+        bb = sess.run(weights[0])
+        cc = sess.run(is_train_mask[0])
+        pdb.set_trace()
+        print("...")
+        """
+        # End Debug
+        
+    tf.reset_default_graph()
+        
+    Model_Path = Dir
+    Model = str(HP['Epoch']) + '.ckpt'
+    
+    return Model_Path, Model
+
+    
 def Model_dict_Generator(
     csv_file = None,
     class_num = 1
@@ -1822,25 +2401,37 @@ def Model_dict_Decoder(
                         indices      = layer_now['indice'], 
                         scope        = layer_now['scope'])
                     if data_format == "NCHW":
-                        net = tf.transpose(net, [0, 3, 1, 2])    
+                        net = tf.transpose(net, [0, 3, 1, 2])
                 #-------------------#
                 #    Avg Pooling    #
                 #-------------------#
                 elif layer_now['type'] == 'AVG_POOL':
                     ## Show the model
                     #print("-> Avg Pooling")
-                    if data_format == "NHWC":
-                        ksize   = [1, int(layer_now['kernel_size']), int(layer_now['kernel_size']), 1]
-                        strides = [1, int(layer_now['stride']), int(layer_now['stride']), 1]
-                    elif data_format == "NCHW":
-                        ksize   = [1, 1, int(layer_now['kernel_size']), int(layer_now['kernel_size'])]
-                        strides = [1, 1, int(layer_now['stride']), int(layer_now['stride'])]
-                    net = tf.nn.avg_pool(
-                        value       = net,
-                        ksize       = ksize,
-                        strides     = strides,
-                        padding     = 'SAME',
-                        data_format = data_format)
+                    #if data_format == "NHWC":
+                    #    ksize   = [1, int(layer_now['kernel_size']), int(layer_now['kernel_size']), 1]
+                    #    strides = [1, int(layer_now['stride']), int(layer_now['stride']), 1]
+                    #elif data_format == "NCHW":
+                    #    ksize   = [1, 1, int(layer_now['kernel_size']), int(layer_now['kernel_size'])]
+                    #    strides = [1, 1, int(layer_now['stride']), int(layer_now['stride'])]
+                    #
+                    #net = tf.nn.avg_pool(
+                    #    value       = net,
+                    #    ksize       = ksize,
+                    #    strides     = strides,
+                    #    padding     = 'SAME',
+                    #    data_format = data_format)
+                    if data_format == "NCHW":
+                        data_format_ = "channels_first"
+                    elif data_format == "NHWC":
+                        data_format_ = "channels_last"
+                        
+                    net = tf.layers.average_pooling2d(
+                        inputs      = net, 
+                        pool_size   = int(layer_now['kernel_size']), 
+                        strides     = 1, 
+                        padding     = 'VALID',
+                        data_format = data_format_)
                 #---------------#
                 #    Shuffle    #
                 #---------------#
@@ -1912,7 +2503,7 @@ def Model_dict_Decoder(
                     if layer==(len(Model_dict)-1):
                         net = tf.cond(is_training, lambda: tf.layers.dropout(net, DROPOUT_RATE), lambda: net)
                     # FC
-                    """
+                    
                     net = Model.FC(
                         net, 
                         output_channel          = int(layer_now['output_channel']),
@@ -1929,13 +2520,13 @@ def Model_dict_Decoder(
                         data_format             = data_format,
                         Analysis                = Analysis,
                         scope                   = layer_now['scope'])
-                    """
-                    net = tf.reshape(net, [-1, reduce(lambda x, y: x*y, net.get_shape().as_list()[1:4])])
                     
+                    net = tf.reshape(net, [-1, reduce(lambda x, y: x*y, net.get_shape().as_list()[1:4])])
+                    """
                     net = tf.layers.dense(
                         inputs = net, 
                         units  = int(layer_now['output_channel']))
-                    
+                    """
                 #-------------------#
                 #    Convolution    #
                 #-------------------#
@@ -2095,9 +2686,16 @@ def input_fn(
     is_training,
     HP
     ):
-    
+    # record dataset
     record_bytes = HP['H_Resize'] * HP['W_Resize'] * 3 + 1
     dataset = tf.data.FixedLengthRecordDataset(filenames, record_bytes)
+    
+    # When choosing shuffle buffer sizes, larger sizes result in better
+    # randomness, while smaller sizes have better performance. Because CIFAR-10
+    # is a relatively small dataset, we choose to shuffle the full epoch.
+    if is_training:
+        dataset = dataset.shuffle(buffer_size = 50000)
+    
     dataset = dataset.map(lambda raw_record: parse_record(raw_record, HP['H_Resize'], HP['W_Resize'], class_num))
     dataset = dataset.map(lambda image, label: (preprocess_image(image, is_training), label))
     dataset = dataset.prefetch(2 * HP['Batch_Size'])
@@ -2921,173 +3519,9 @@ def similar_group(
         #print(np.shape(kernel_values))
 
     return kernel_values_per_layer
-    
-def prune_by_anchor(
-    kernel_values_per_layer,
-    pruning_propotion,
-    sess
-    ):
-    print("pruning ...")
-    key = kernel_values_per_layer.keys()
-    sorted_layer = np.sort(np.array([int(key[i].split('layer')[-1]) for i in range(len(key))]))
-    sorted_layer = ['layer' + str(sorted_layer[i]) for i in range(len(key))]
 
-    # Build Pruned dict
-    pruned_dict = {}
-    for layer_iter in range(len(sorted_layer)):
-        layer = sorted_layer[layer_iter]
-        mask = sess.run(tf.get_collection("float32_weights_mask", scope = 'Model/' + layer + '/')[0])
-        depth = tf.get_collection("float32_weights_mask", scope = 'Model/' + layer + '/')[0].get_shape().as_list()[2]
-        tmp_dict = {}
-        for i in range(depth):
-            tmp_dict.update({str(i): np.mean(mask[:,:,i,:]) == 0})
-        pruned_dict.update({layer: tmp_dict})
-        #print(layer, pruned_dict[layer])
-
-    # Build the dictionary for anchor
-    dict = {}
-    iter = 0
-    for layer_iter in range(1, len(sorted_layer)):
-        layer = sorted_layer[layer_iter]
-        kernel = kernel_values_per_layer[layer]
-
-        # remove the pruned kernel
-        if layer_iter != len(sorted_layer)-1:
-            next_layer = sorted_layer[layer_iter+1]
-            kernel_num = np.shape(kernel)[2]
-            pruned_depths = []
-            for i in range(kernel_num):
-                if pruned_dict[next_layer][str(i)]:
-                    pruned_depths = np.append(pruned_depths, [i])
-            kernel = np.delete(kernel, pruned_depths, axis = 2)
-
-        # calculate anchor
-        past_layer = sorted_layer[layer_iter-1]
-        depth = np.shape(kernel)[-1]
-        for i in range(depth):
-            for j in range(i+1, depth):
-                # If the depth i or j has been pruned, we don't calculate its anchor to others
-                # By doing so, we will not prune the same kernel which has been pruned before.
-                if not pruned_dict[layer][str(i)] and not pruned_dict[layer][str(j)]:
-                    x = kernel[:, :, :, i]
-                    y = kernel[:, :, :, j]
-                    x = np.reshape(x, [np.size(x)])
-                    y = np.reshape(y, [np.size(y)])
-                    
-                    if sum(x*x) == 0 or sum(y*y) == 0:
-                        anchor = 90.0
-                    else:
-                        anchor = compute_anchor(x, y)
-                        anchor = abs(anchor - 90)
-                    
-                    if bool(dict.get(str(anchor))):
-                        number = len(dict[str(anchor)])
-                        dict[str(anchor)].update({str(number): {'past_layer': past_layer, 'layer': layer, 'i': i, 'j': j, 'pruned': False}})
-                    else:
-                        dict.update({str(anchor): {'0': {'past_layer': past_layer, 'layer': layer, 'i': i, 'j': j, 'pruned': False}}})
-                    
-                    if iter == 0:
-                        total_anchor = np.array([anchor])
-                    else:
-                        total_anchor = np.concatenate([total_anchor, np.array([anchor])])
-                    iter = iter + 1    
-                
-    # Sort the anchor
-    sorted_anchor = np.sort(total_anchor)[::-1]
-    
-    # Calculate the total parameters number
-    total_num = 0
-    for layer_iter in range(len(sorted_layer)):
-        layer = sorted_layer[layer_iter]
-        mask_tensor = tf.get_collection("float32_weights_mask", scope = 'Model/' + layer + '/')[0]
-        total_num += reduce(lambda x, y: x*y, mask_tensor.get_shape().as_list())
-
-    # Prune the corresponding channel
-    pruned_num = 0
-    for _, anchor in enumerate(sorted_anchor):
-        for _, index in enumerate(dict[str(anchor)].keys()):
-            #if dict[str(anchor)][index]['pruned']:
-            #    continue
-            past_layer = int(dict[str(anchor)][index]['past_layer'].split('layer')[-1])
-            layer = int(dict[str(anchor)][index]['layer'].split('layer')[-1])
-            depth_i = dict[str(anchor)][index]['i']
-            depth_j = dict[str(anchor)][index]['j']
-            is_depth_i_pruned = pruned_dict['layer%d'%layer][str(depth_i)]
-            is_depth_j_pruned = pruned_dict['layer%d'%layer][str(depth_j)]
-            past_layer_float32_weights_mask_collection = tf.get_collection("float32_weights_mask", scope = 'Model/layer' + str(past_layer) + '/')[0]
-            past_layer_float32_weights_collection = tf.get_collection("float32_weights", scope = 'Model/layer' + str(past_layer) + '/')[0]
-            current_layer_float32_weights_mask_collection = tf.get_collection("float32_weights_mask", scope = 'Model/layer' + str(layer) + '/')[0]
-            current_layer_float32_weights_collection = tf.get_collection("float32_weights", scope = 'Model/layer' + str(layer) + '/')[0]
-            if not is_depth_i_pruned and not is_depth_j_pruned:
-                #dict[str(anchor)][index].update({'pruned': True})
-                # Sum of past layer i-th kernel weights
-                sum_of_past_layer_kernal_i = np.sum(np.abs(sess.run(past_layer_float32_weights_collection)[:, :, :, depth_i]))
-                # Sum of past layer j-th kernel weights
-                sum_of_past_layer_kernel_j = np.sum(np.abs(sess.run(past_layer_float32_weights_collection)[:, :, :, depth_j]))
-                # Sum of current layer i-th depth weights
-                sum_of_current_layer_depth_i = np.sum(np.abs(sess.run(current_layer_float32_weights_collection)[:, :, depth_i, :]))
-                # Sum of current layer j-th depth weights
-                sum_of_current_layer_depth_j = np.sum(np.abs(sess.run(current_layer_float32_weights_collection)[:, :, depth_j, :]))
-                # Sum of weights if pruned depth i
-                sum_of_pruned_depth_i = sum_of_past_layer_kernal_i + sum_of_current_layer_depth_i
-                # Sum of weights if pruned depth j
-                sum_of_pruned_depth_j = sum_of_past_layer_kernel_j + sum_of_current_layer_depth_j
-                # Compare the sum of weights if pruned i or j
-                if sum_of_pruned_depth_i <= sum_of_pruned_depth_j:
-                    pruned_depth = depth_i
-                    # Set past layer kernel to zero
-                    past_layer_kernel_set_to_zero = past_layer_float32_weights_mask_collection[:, :, :, depth_i]
-                    # Set current layer depth to zero
-                    current_layer_depth_set_to_zero = current_layer_float32_weights_mask_collection[:, :, depth_i, :]
-                    # update pruned_dict
-                    pruned_dict['layer%d'%layer].update({str(depth_i): True})
-                else:
-                    pruned_depth = depth_j
-                    # Set past layer kernel to zero
-                    past_layer_kernel_set_to_zero = past_layer_float32_weights_mask_collection[:, :, :, depth_j]
-                    # Set current layer depth to zero
-                    current_layer_depth_set_to_zero = current_layer_float32_weights_mask_collection[:, :, depth_j, :]
-                    # update pruned_dict
-                    pruned_dict['layer%d'%layer].update({str(depth_j): True})
-                # Assign Zero to mask
-                sess.run(tf.assign(past_layer_kernel_set_to_zero, np.zeros(past_layer_float32_weights_mask_collection[:, :, :, depth_i].get_shape().as_list())))
-                pruned_num = pruned_num + reduce(lambda x, y: x*y, past_layer_float32_weights_mask_collection[:, :, :, depth_i].get_shape().as_list())
-                sess.run(tf.assign(current_layer_depth_set_to_zero, np.zeros(current_layer_float32_weights_mask_collection[:, :, depth_i, :].get_shape().as_list())))
-                pruned_num = pruned_num + reduce(lambda x, y: x*y, current_layer_float32_weights_mask_collection[:, :, depth_i, :].get_shape().as_list())
-                print("\r{} / {}	" .format(pruned_num, total_num), end = "")
-                print("{}	{}	{}" .format(anchor, 'layer' + str(layer), 'depth' + str(pruned_depth)))
-                #break
-            elif not is_depth_i_pruned and is_depth_j_pruned:
-                # Set past layer kernel to zero
-                past_layer_kernel_set_to_zero = past_layer_float32_weights_mask_collection[:, :, :, depth_i]
-                # Set current layer depth to zero
-                current_layer_depth_set_to_zero = current_layer_float32_weights_mask_collection[:, :, depth_i, :]
-                # update pruned_dict
-                pruned_dict['layer%d'%layer].update({str(depth_i): True})
-                # Assign Zero to mask
-                sess.run(tf.assign(past_layer_kernel_set_to_zero, np.zeros(past_layer_float32_weights_mask_collection[:, :, :, depth_i].get_shape().as_list())))
-                pruned_num = pruned_num + reduce(lambda x, y: x*y, past_layer_float32_weights_mask_collection[:, :, :, depth_i].get_shape().as_list())
-                sess.run(tf.assign(current_layer_depth_set_to_zero, np.zeros(current_layer_float32_weights_mask_collection[:, :, depth_i, :].get_shape().as_list())))
-                pruned_num = pruned_num + reduce(lambda x, y: x*y, current_layer_float32_weights_mask_collection[:, :, depth_i, :].get_shape().as_list())
-                #break
-            elif is_depth_i_pruned and not is_depth_j_pruned:
-                # Set past layer kernel to zero
-                past_layer_kernel_set_to_zero = past_layer_float32_weights_mask_collection[:, :, :, depth_j]
-                # Set current layer depth to zero
-                current_layer_depth_set_to_zero = current_layer_float32_weights_mask_collection[:, :, depth_j, :] 
-                # update pruned_dict
-                pruned_dict['layer%d'%layer].update({str(depth_j): True})
-                # Assign Zero to mask
-                sess.run(tf.assign(past_layer_kernel_set_to_zero, np.zeros(past_layer_float32_weights_mask_collection[:, :, :, depth_i].get_shape().as_list())))
-                pruned_num = pruned_num + reduce(lambda x, y: x*y, past_layer_float32_weights_mask_collection[:, :, :, depth_i].get_shape().as_list())
-                sess.run(tf.assign(current_layer_depth_set_to_zero, np.zeros(current_layer_float32_weights_mask_collection[:, :, depth_i, :].get_shape().as_list())))
-                pruned_num = pruned_num + reduce(lambda x, y: x*y, current_layer_float32_weights_mask_collection[:, :, depth_i, :].get_shape().as_list())
-                #break            
-        if pruned_num >= total_num * pruning_propotion:
-            print("Prune Over!")
-            break
-    
-def compute_anchor(
+# Pruning     
+def compute_angle(
     x, 
     y
     ):
@@ -3260,117 +3694,7 @@ def sparse_prune_by_magnitude( # Not Finished
         print(np.sum(mask_value==0))
     print('Prune over!')
 
-def filter_prune_by_anchor_v2(
-    kernel_values_per_layer,
-    pruning_propotion,
-    sess
-    ):
-    print("pruning ...")
-    key = kernel_values_per_layer.keys()
-    sorted_layer = np.sort(np.array([int(key[i].split('layer')[-1]) for i in range(len(key))]))
-    sorted_layer = ['layer' + str(sorted_layer[i]) for i in range(len(key))]
-
-    # Build Pruned dict
-    pruned_dict = {}
-    for layer_iter in range(len(sorted_layer)):
-        layer = sorted_layer[layer_iter]
-        mask = sess.run(tf.get_collection("float32_weights_mask", scope = 'Model/' + layer + '/')[0])
-        channel_num = tf.get_collection("float32_weights_mask", scope = 'Model/' + layer + '/')[0].get_shape().as_list()[3]
-        tmp_dict = {}
-        for i in range(channel_num):
-            tmp_dict.update({str(i): np.mean(mask[:,:,:,i]) == 0})
-        pruned_dict.update({layer: tmp_dict})
-        #print(layer, pruned_dict[layer])
-
-    # Build the dictionary for anchor
-    dict = {}
-    iter = 0
-    for layer_iter in range(1, len(sorted_layer)):
-        layer = sorted_layer[layer_iter]
-        kernel = kernel_values_per_layer[layer]
-
-        # remove the pruned kernel
-        kernel_num = np.shape(kernel)[2]
-        pruned_channels = []
-        for i in range(kernel_num):
-            if pruned_dict[layer][str(i)]:
-                pruned_channels = np.append(pruned_channels, [i])
-        kernel = np.delete(kernel, pruned_channels, axis = 2)
-
-        # calculate anchor
-        past_layer = sorted_layer[layer_iter-1]
-        depth = np.shape(kernel)[-1]
-        for i in range(depth):
-            for j in range(depth):
-                # If the depth i or j has been pruned, we don't calculate its anchor to others
-                # By doing so, we will not prune the same kernel which has been pruned before.
-                if not pruned_dict[past_layer][str(i)] and not pruned_dict[past_layer][str(j)]:
-                    x = kernel[:, :, :, i]
-                    y = kernel[:, :, :, j]
-                    x = np.reshape(x, [np.size(x)])
-                    y = np.reshape(y, [np.size(y)])
-                    
-                    if sum(x*x) == 0 or sum(y*y) == 0:
-                        anchor_tmp = 90.0
-                    else:
-                        anchor_tmp = compute_anchor(x, y)
-                        anchor_tmp = abs(anchor_tmp - 90)
-                    if j == 0:
-                        anchor = np.array([anchor_tmp])
-                    else:
-                        anchor = np.concatenate([anchor, np.array([anchor_tmp])])
-            
-            anchor = np.mean(anchor)
-            
-            if bool(dict.get(str(anchor))):
-                number = len(dict[str(anchor)])
-                dict[str(anchor)].update({str(number): {'past_layer': past_layer, 'layer': layer, 'i': i, 'pruned': False}})
-            else:
-                dict.update({str(anchor): {'0': {'past_layer': past_layer, 'layer': layer, 'i': i, 'pruned': False}}})
-            
-            if iter == 0:
-                total_anchor = np.array([anchor])
-            else:
-                total_anchor = np.concatenate([total_anchor, np.array([anchor])], axis = 0)
-            iter = iter + 1    
-    # Sort the anchor
-    sorted_anchor = np.sort(total_anchor)[::-1]
-
-    # Calculate the total parameters number
-    total_num = 0
-    for layer_iter in range(len(sorted_layer)):
-        layer = sorted_layer[layer_iter]
-        mask_tensor = tf.get_collection("float32_weights_mask", scope = 'Model/' + layer + '/')[0]
-        total_num += reduce(lambda x, y: x*y, mask_tensor.get_shape().as_list())
-
-    # Prune the corresponding channel
-    pruned_num = 0
-    for _, anchor in enumerate(sorted_anchor):
-        for _, index in enumerate(dict[str(anchor)].keys()):
-            if dict[str(anchor)][index]['pruned']:
-                continue
-            past_layer = int(dict[str(anchor)][index]['past_layer'].split('layer')[-1])
-            layer = int(dict[str(anchor)][index]['layer'].split('layer')[-1])
-            depth_i = dict[str(anchor)][index]['i']
-            is_depth_i_pruned = pruned_dict['layer%d'%past_layer][str(depth_i)]
-            past_mask_collection = tf.get_collection("float32_weights_mask", scope = 'Model/layer' + str(past_layer) + '/')[0]
-            if not is_depth_i_pruned:
-                dict[str(anchor)][index].update({'pruned': True})
-                # Set past layer kernel to zero
-                past_layer_kernel_set_to_zero = past_mask_collection[:, :, :, depth_i]
-                # update pruned_dict
-                pruned_dict['layer%d'%past_layer].update({str(depth_i): True})
-                # Assign Zero to mask
-                sess.run(tf.assign(past_layer_kernel_set_to_zero, np.zeros(past_mask_collection[:, :, :, depth_i].get_shape().as_list())))
-                pruned_num = pruned_num + reduce(lambda x, y: x*y, past_mask_collection[:, :, :, depth_i].get_shape().as_list())
-                print("\r{} / {}	" .format(pruned_num, total_num), end = "")
-                print("{}	{}	{}" .format(anchor, 'layer' + str(layer), 'depth' + str(depth_i)))
-                break
-        if pruned_num >= total_num * pruning_propotion:
-            print("Prune Over!")
-            break    
-
-def filter_prune_by_anchor_v3(
+def filter_prune_by_angle(
     prune_info_dict,
     pruning_propotion,
     sess
@@ -3380,206 +3704,38 @@ def filter_prune_by_anchor_v3(
     sorted_layer = np.sort(np.array([int(key[i].split('layer')[-1]) for i in range(len(key))]))
     sorted_layer = ['layer' + str(sorted_layer[i]) for i in range(len(key))]
     
-    # Build Pruned dict
-    pruned_dict = {}
+    # Load all wegihts and masks
+    all_weights = {}
+    all_mask = {}
     for layer_iter in range(len(sorted_layer)):
         layer = sorted_layer[layer_iter]
-        mask = sess.run(prune_info_dict[layer]['mask'])
-        channel_num = np.shape(mask)[3]
-        tmp_dict = {}
-        for i in range(channel_num):
-            tmp_dict.update({str(i): np.mean(mask[:,:,:,i]) == 0})
-        pruned_dict.update({layer: tmp_dict})
-
-    # Build the dictionary for anchor
-    dict = {}
-    iter = 0
+        all_weights.update({layer: sess.run(prune_info_dict[layer]['weights'])})
+        all_mask.update({layer: sess.run(prune_info_dict[layer]['mask'])})
+    
+    # Record the original weights parameter size
+    original_weights_size = {}
     for layer_iter in range(1, len(sorted_layer)):
         layer = sorted_layer[layer_iter]
-        weights = sess.run(prune_info_dict[layer]['weights'])
-        weights = np.transpose(weights, (0,1,3,2))
-        # remove the pruned kernel
-        channel_num = np.shape(weights)[2]
-        pruned_channels = []
-        for i in range(channel_num):
-            if pruned_dict[layer][str(i)]:
-                pruned_channels = np.append(pruned_channels, [i])
-        weights = np.delete(weights, pruned_channels, axis = 2)
-        # calculate anchor
-        past_layer = sorted_layer[layer_iter-1]
-        depth = np.shape(weights)[-1]
-        for i in range(depth):
-            for j in range(i+1, depth):
-                # If the depth i or j has been pruned, we don't calculate its anchor to others
-                # By doing so, we will not prune the same kernel which has been pruned before.
-                if not pruned_dict[past_layer][str(i)] and not pruned_dict[past_layer][str(j)]:
-                    x = weights[:, :, :, i]
-                    y = weights[:, :, :, j]
-                    x = np.reshape(x, [np.size(x)])
-                    y = np.reshape(y, [np.size(y)])
-                    
-                    if sum(x*x) == 0 or sum(y*y) == 0:
-                        anchor = 90.0
-                    else:
-                        anchor = compute_anchor(x, y)
-                        anchor = abs(anchor - 90)
-                    
-                    if bool(dict.get(str(anchor))):
-                        number = len(dict[str(anchor)])
-                        dict[str(anchor)].update({str(number): {'past_layer': past_layer, 'layer': layer, 'i': i, 'j': j, 'pruned': False}})
-                    else:
-                        dict.update({str(anchor): {'0': {'past_layer': past_layer, 'layer': layer, 'i': i, 'j': j, 'pruned': False}}})
-                    
-                    if iter == 0:
-                        total_anchor = np.array([anchor])
-                    else:
-                        total_anchor = np.concatenate([total_anchor, np.array([anchor])])
-                    iter = iter + 1    
-                
-    # Sort the anchor
-    sorted_anchor = np.sort(total_anchor)[::-1]
-    
-    # Calculate the total parameters number
-    total_num = 0
-    for layer_iter in range(len(sorted_layer)):
-        layer = sorted_layer[layer_iter]
-        mask_tensor = prune_info_dict[layer]['mask']
-        total_num += reduce(lambda x, y: x*y, mask_tensor.get_shape().as_list())
-    
-    # Prune the corresponding channel
-    pruned_num = 0
-    for _, anchor in enumerate(sorted_anchor):
-        #if anchor <= 30.0:
-        #    print("Prune Over!")
-        #    break
-        for _, index in enumerate(dict[str(anchor)].keys()):
-            print(dict[str(anchor)].keys())
-            if dict[str(anchor)][index]['pruned']:
-                continue
-            past_layer = dict[str(anchor)][index]['past_layer']
-            layer = dict[str(anchor)][index]['layer']
-            #past_layer = int(dict[str(anchor)][index]['past_layer'].split('layer')[-1])
-            #layer = int(dict[str(anchor)][index]['layer'].split('layer')[-1])
-            depth_i = dict[str(anchor)][index]['i']
-            depth_j = dict[str(anchor)][index]['j']
-            is_depth_i_pruned = pruned_dict[past_layer][str(depth_i)]
-            is_depth_j_pruned = pruned_dict[past_layer][str(depth_j)]
-            past_weights_mask    = prune_info_dict[past_layer]['mask']
-            past_weights         = prune_info_dict[past_layer]['weights']
-            current_weights_mask = prune_info_dict[layer]['mask']
-            current_weights      = prune_info_dict[layer]['weights']
-            if not is_depth_i_pruned and not is_depth_j_pruned:
-                #dict[str(anchor)][index].update({'pruned': True})
-                # Sum of past layer i-th kernel weights
-                sum_of_past_layer_kernal_i = np.sum(np.abs(sess.run(past_weights)[:, :, :, depth_i]))
-                # Sum of past layer j-th kernel weights
-                sum_of_past_layer_kernel_j = np.sum(np.abs(sess.run(past_weights)[:, :, :, depth_j]))
-                #if not prune_info_dict[layer]['is_shortcut']:
-                # Sum of current layer i-th depth weights
-                sum_of_current_layer_depth_i = np.sum(np.abs(sess.run(current_weights)[:, :, depth_i, :]))
-                # Sum of current layer j-th depth weights
-                sum_of_current_layer_depth_j = np.sum(np.abs(sess.run(current_weights)[:, :, depth_j, :]))
-                # Sum of weights if pruned depth i
-                sum_of_pruned_depth_i = sum_of_past_layer_kernal_i + sum_of_current_layer_depth_i
-                # Sum of weights if pruned depth j
-                sum_of_pruned_depth_j = sum_of_past_layer_kernel_j + sum_of_current_layer_depth_j
-                #else:
-                #    sum_of_pruned_depth_i = sum_of_past_layer_kernal_i
-                #    sum_of_pruned_depth_j = sum_of_past_layer_kernel_j 
-                # Compare the sum of weights if pruned i or j
-                if sum_of_pruned_depth_i <= sum_of_pruned_depth_j:
-                    pruned_depth = depth_i
-                    # Set past layer kernel to zero
-                    past_layer_kernel_set_to_zero = past_weights_mask[:, :, :, depth_i]
-                    # Set current layer depth to zero
-                    current_layer_depth_set_to_zero = current_weights_mask[:, :, depth_i, :]
-                    # update pruned_dict
-                    pruned_dict[past_layer].update({str(depth_i): True})
-                else:
-                    pruned_depth = depth_j
-                    # Set past layer kernel to zero
-                    past_layer_kernel_set_to_zero = past_weights_mask[:, :, :, depth_j]
-                    # Set current layer depth to zero
-                    current_layer_depth_set_to_zero = current_weights_mask[:, :, depth_j, :]
-                    # update pruned_dict
-                    pruned_dict[past_layer].update({str(depth_j): True})
-                # Assign Zero to mask
-                sess.run(tf.assign(past_layer_kernel_set_to_zero, np.zeros(past_weights_mask[:, :, :, depth_i].get_shape().as_list())))
-                pruned_num = pruned_num + reduce(lambda x, y: x*y, past_weights_mask[:, :, :, depth_i].get_shape().as_list())
-                #if not prune_info_dict[layer]['is_shortcut']:
-                sess.run(tf.assign(current_layer_depth_set_to_zero, np.zeros(current_weights_mask[:, :, depth_i, :].get_shape().as_list())))
-                pruned_num = pruned_num + reduce(lambda x, y: x*y, current_weights_mask[:, :, depth_i, :].get_shape().as_list())
-                print("\r{} / {}	" .format(pruned_num, total_num), end = "")
-                print("{}	{}	{}" .format(anchor, layer, 'depth' + str(pruned_depth)))
-                break
-            elif not is_depth_i_pruned and is_depth_j_pruned:
-                #dict[str(anchor)][index].update({'pruned': True})
-                pruned_depth = depth_i
-                # Set past layer kernel to zero
-                past_layer_kernel_set_to_zero = past_weights_mask[:, :, :, depth_i]
-                # Set current layer depth to zero
-                current_layer_depth_set_to_zero = current_weights_mask[:, :, depth_i, :]
-                # update pruned_dict
-                pruned_dict[past_layer].update({str(depth_i): True})
-                # Assign Zero to mask
-                sess.run(tf.assign(past_layer_kernel_set_to_zero, np.zeros(past_weights_mask[:, :, :, depth_i].get_shape().as_list())))
-                pruned_num = pruned_num + reduce(lambda x, y: x*y, past_weights_mask[:, :, :, depth_i].get_shape().as_list())
-                #if not prune_info_dict[layer]['is_shortcut']:
-                sess.run(tf.assign(current_layer_depth_set_to_zero, np.zeros(current_weights_mask[:, :, depth_i, :].get_shape().as_list())))
-                pruned_num = pruned_num + reduce(lambda x, y: x*y, current_weights_mask[:, :, depth_i, :].get_shape().as_list())
-                print("\r{} / {}	" .format(pruned_num, total_num), end = "")
-                print("{}	{}	{}" .format(anchor, layer, 'depth' + str(pruned_depth)))
-                break
-            elif is_depth_i_pruned and not is_depth_j_pruned:
-                #dict[str(anchor)][index].update({'pruned': True})
-                pruned_depth = depth_j
-                # Set past layer kernel to zero
-                past_layer_kernel_set_to_zero = past_weights_mask[:, :, :, depth_j]
-                # Set current layer depth to zero
-                current_layer_depth_set_to_zero = current_weights_mask[:, :, depth_j, :] 
-                # update pruned_dict
-                pruned_dict[past_layer].update({str(depth_j): True})
-                # Assign Zero to mask
-                sess.run(tf.assign(past_layer_kernel_set_to_zero, np.zeros(past_weights_mask[:, :, :, depth_i].get_shape().as_list())))
-                pruned_num = pruned_num + reduce(lambda x, y: x*y, past_weights_mask[:, :, :, depth_i].get_shape().as_list())
-                #if not prune_info_dict[layer]['is_shortcut']:
-                sess.run(tf.assign(current_layer_depth_set_to_zero, np.zeros(current_weights_mask[:, :, depth_i, :].get_shape().as_list())))
-                pruned_num = pruned_num + reduce(lambda x, y: x*y, current_weights_mask[:, :, depth_i, :].get_shape().as_list())
-                print("\r{} / {}	" .format(pruned_num, total_num), end = "")
-                print("{}	{}	{}" .format(anchor, layer, 'depth' + str(pruned_depth)))
-                break            
-        if pruned_num >= total_num * pruning_propotion:
-            print("Prune Over!")
-            break
-            
-def filter_prune_by_anchor_v4(
-    prune_info_dict,
-    pruning_propotion,
-    sess
-    ):
-    print("pruning ...")
-    key = prune_info_dict.keys()
-    sorted_layer = np.sort(np.array([int(key[i].split('layer')[-1]) for i in range(len(key))]))
-    sorted_layer = ['layer' + str(sorted_layer[i]) for i in range(len(key))]
+        original_weights_size.update({layer: np.sum(all_mask[layer])})
     
     # Build Pruned dict
     pruned_dict = {}
     for layer_iter in range(len(sorted_layer)):
         layer = sorted_layer[layer_iter]
-        mask = sess.run(prune_info_dict[layer]['mask'])
+        mask = all_mask[layer]
         channel_num = np.shape(mask)[3]
         tmp_dict = {}
         for i in range(channel_num):
             tmp_dict.update({str(i): np.mean(mask[:,:,:,i]) == 0})
         pruned_dict.update({layer: tmp_dict})
 
-    # Build the dictionary for anchor
+    # Build the dictionary for angle
     dict = {}
     iter = 0
     tmp = 0
     for layer_iter in range(1, len(sorted_layer)):
         layer = sorted_layer[layer_iter]
-        weights = sess.run(prune_info_dict[layer]['weights'])
+        weights = all_weights[layer]
         weights = np.transpose(weights, (0,1,3,2))
         # remove the pruned kernel
         channel_num = np.shape(weights)[2]
@@ -3588,15 +3744,14 @@ def filter_prune_by_anchor_v4(
             if pruned_dict[layer][str(i)]:
                 pruned_channels = np.append(pruned_channels, [i])
         weights = np.delete(weights, pruned_channels, axis = 2)
-        #print(layer)
-        #print(weights.size)
+
         if weights.size != 0:
-            # calculate anchor
+            # calculate angle
             past_layer = sorted_layer[layer_iter-1]
             depth = np.shape(weights)[-1]
             for i in range(depth):
                 for j in range(i+1, depth):
-                    # If the depth i or j has been pruned, we don't calculate its anchor to others
+                    # If the depth i or j has been pruned, we don't calculate its angle to others
                     # By doing so, we will not prune the same kernel which has been pruned before.
                     if not pruned_dict[past_layer][str(i)] and not pruned_dict[past_layer][str(j)]:
                         x = weights[:, :, :, i]
@@ -3605,52 +3760,51 @@ def filter_prune_by_anchor_v4(
                         y = np.reshape(y, [np.size(y)])
                         
                         if sum(x*x) == 0 or sum(y*y) == 0:
-                            anchor = 90.0
+                            angle = 90.0
                             tmp = tmp + 1
                             print('{}, {}, {}' .format(layer, i, j))
                         else:
-                            anchor = compute_anchor(x, y)
-                            anchor = abs(anchor - 90)
+                            angle = compute_angle(x, y)
+                            angle = abs(angle - 90)
                         
-                        if bool(dict.get(str(anchor))):
-                            number = len(dict[str(anchor)])
-                            dict[str(anchor)].update({str(number): {'past_layer': past_layer, 'layer': layer, 'i': i, 'j': j, 'pruned': False}})
+                        if bool(dict.get(str(angle))):
+                            number = len(dict[str(angle)])
+                            dict[str(angle)].update({str(number): {'past_layer': past_layer, 'layer': layer, 'i': i, 'j': j, 'pruned': False}})
                         else:
-                            dict.update({str(anchor): {'0': {'past_layer': past_layer, 'layer': layer, 'i': i, 'j': j, 'pruned': False}}})
+                            dict.update({str(angle): {'0': {'past_layer': past_layer, 'layer': layer, 'i': i, 'j': j, 'pruned': False}}})
                         
                         if iter == 0:
-                            total_anchor = np.array([anchor])
+                            total_angle = np.array([angle])
                         else:
-                            total_anchor = np.concatenate([total_anchor, np.array([anchor])])
+                            total_angle = np.concatenate([total_angle, np.array([angle])])
                         iter = iter + 1    
                     
-    # Sort the anchor
-    sorted_anchor = np.sort(total_anchor)[::-1]
+    # Sort the angle
+    sorted_angle = np.sort(total_angle)[::-1]
 
     # Calculate the total parameters number
     total_num = 0
     for layer_iter in range(len(sorted_layer)):
         layer = sorted_layer[layer_iter]
-        mask_tensor = prune_info_dict[layer]['mask']
-        total_num += reduce(lambda x, y: x*y, mask_tensor.get_shape().as_list())
+        total_num += reduce(lambda x, y: x*y, np.shape(all_mask[layer]))
     
     # Get the weights to be pruned
     dict_ = copy.deepcopy(dict)
     weights_to_be_pruned = {}
     pruned_num = 0
-    pruned_anchor_num = 0
-    for _, anchor in enumerate(sorted_anchor):
-        pruned_anchor_num = pruned_anchor_num + 1
-        for _, index in enumerate(dict_[str(anchor)].keys()):
-            if dict_[str(anchor)][index]['pruned']:
+    pruned_angle_num = 0
+    for _, angle in enumerate(sorted_angle):
+        pruned_angle_num = pruned_angle_num + 1
+        for _, index in enumerate(dict_[str(angle)].keys()):
+            if dict_[str(angle)][index]['pruned']:
                 continue
-            dict_[str(anchor)][index].update({'pruned': True})
-            past_layer = dict_[str(anchor)][index]['past_layer']
-            layer = dict_[str(anchor)][index]['layer']
-            depth_i = dict_[str(anchor)][index]['i']
-            depth_j = dict_[str(anchor)][index]['j']
-            past_weights_mask = prune_info_dict[past_layer]['mask']
-            current_weights_mask = prune_info_dict[layer]['mask']
+            dict_[str(angle)][index].update({'pruned': True})
+            past_layer = dict_[str(angle)][index]['past_layer']
+            layer = dict_[str(angle)][index]['layer']
+            depth_i = dict_[str(angle)][index]['i']
+            depth_j = dict_[str(angle)][index]['j']
+            past_weights_mask = all_mask[past_layer]
+            current_weights_mask = all_mask[layer]
             
             if not bool(weights_to_be_pruned.get(layer)):
                 is_depth_i_appear = False
@@ -3668,341 +3822,75 @@ def filter_prune_by_anchor_v4(
                 else:
                     weights_to_be_pruned[layer].update({str(depth_j): weights_to_be_pruned[layer][str(depth_j)]+1})
             if not is_depth_i_appear or not is_depth_j_appear:    
-                pruned_num = pruned_num + reduce(lambda x, y: x*y, past_weights_mask[:, :, :, depth_i].get_shape().as_list())
+                pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(past_weights_mask[:, :, :, depth_i]))
                 #if not prune_info_dict[layer]['is_shortcut']:
-                pruned_num = pruned_num + reduce(lambda x, y: x*y, current_weights_mask[:, :, depth_i, :].get_shape().as_list())
+                pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(current_weights_mask[:, :, depth_i, :]))
             #print(pruned_num)
         if pruned_num >= total_num * pruning_propotion:
-            break     
+            break    
+            
     # Prune the corresponding weights
     pruned_num = 0
-    for iter in range(pruned_anchor_num):
-        anchor = sorted_anchor[iter]
-        for _, index in enumerate(dict[str(anchor)].keys()):
-            #print(dict[str(anchor)].keys())
-            if dict[str(anchor)][index]['pruned']:
+    for iter in range(pruned_angle_num):
+        angle = sorted_angle[iter]
+        for _, index in enumerate(dict[str(angle)].keys()):
+            #print(dict[str(angle)].keys())
+            if dict[str(angle)][index]['pruned']:
                 continue
-            past_layer = dict[str(anchor)][index]['past_layer']
-            layer = dict[str(anchor)][index]['layer']
-            depth_i = dict[str(anchor)][index]['i']
-            depth_j = dict[str(anchor)][index]['j']
+            past_layer = dict[str(angle)][index]['past_layer']
+            layer = dict[str(angle)][index]['layer']
+            depth_i = dict[str(angle)][index]['i']
+            depth_j = dict[str(angle)][index]['j']
             is_depth_i_pruned = pruned_dict[past_layer][str(depth_i)]
             is_depth_j_pruned = pruned_dict[past_layer][str(depth_j)]
-            past_weights_mask    = prune_info_dict[past_layer]['mask']
-            past_weights         = prune_info_dict[past_layer]['weights']
-            current_weights_mask = prune_info_dict[layer]['mask']
-            current_weights      = prune_info_dict[layer]['weights']
+            past_weights_mask    = all_mask[past_layer]    #prune_info_dict[past_layer]['mask']
+            past_weights         = all_weights[past_layer] #prune_info_dict[past_layer]['weights']
+            current_weights_mask = all_mask[layer]         #prune_info_dict[layer]['mask']
+            current_weights      = all_weights[layer]      #prune_info_dict[layer]['weights']
             if not is_depth_i_pruned and not is_depth_j_pruned:
-                dict[str(anchor)][index].update({'pruned': True})
+                dict[str(angle)][index].update({'pruned': True})
                 if weights_to_be_pruned[layer][str(depth_i)] < weights_to_be_pruned[layer][str(depth_j)]:
                     pruned_depth = depth_i
-                    # Set past layer kernel to zero
-                    past_layer_kernel_set_to_zero = past_weights_mask[:, :, :, depth_i]
-                    # Set current layer depth to zero
-                    current_layer_depth_set_to_zero = current_weights_mask[:, :, depth_i, :]
-                    # update pruned_dict
-                    pruned_dict[past_layer].update({str(depth_i): True})
                 elif weights_to_be_pruned[layer][str(depth_i)] > weights_to_be_pruned[layer][str(depth_j)]:
                     pruned_depth = depth_j
-                    # Set past layer kernel to zero
-                    past_layer_kernel_set_to_zero = past_weights_mask[:, :, :, depth_j]
-                    # Set current layer depth to zero
-                    current_layer_depth_set_to_zero = current_weights_mask[:, :, depth_j, :]
-                    # update pruned_dict
-                    pruned_dict[past_layer].update({str(depth_j): True})
                 else:
                     # Magnitude
-                    sum_of_past_layer_kernal_i = np.sum(np.abs(sess.run(past_weights)[:, :, :, depth_i] * sess.run(past_weights_mask)[:, :, :, depth_i]))
-                    sum_of_past_layer_kernel_j = np.sum(np.abs(sess.run(past_weights)[:, :, :, depth_j] * sess.run(past_weights_mask)[:, :, :, depth_j]))
-                    #if not prune_info_dict[layer]['is_shortcut']:
-                    sum_of_current_layer_depth_i = np.sum(np.abs(sess.run(current_weights)[:, :, depth_i, :] * sess.run(current_weights_mask)[:, :, depth_i, :]))
-                    sum_of_current_layer_depth_j = np.sum(np.abs(sess.run(current_weights)[:, :, depth_j, :] * sess.run(current_weights_mask)[:, :, depth_j, :]))
+                    sum_of_past_layer_kernal_i = np.sum(np.abs(past_weights[:, :, :, depth_i] * past_weights_mask[:, :, :, depth_i]))
+                    sum_of_past_layer_kernel_j = np.sum(np.abs(past_weights[:, :, :, depth_j] * past_weights_mask[:, :, :, depth_j]))
+                    sum_of_current_layer_depth_i = np.sum(np.abs(current_weights[:, :, depth_i, :] * current_weights_mask[:, :, depth_i, :]))
+                    sum_of_current_layer_depth_j = np.sum(np.abs(current_weights[:, :, depth_j, :] * current_weights_mask[:, :, depth_j, :]))
                     sum_of_pruned_depth_i = sum_of_past_layer_kernal_i + sum_of_current_layer_depth_i
                     sum_of_pruned_depth_j = sum_of_past_layer_kernel_j + sum_of_current_layer_depth_j
-                    #else:
-                    #    sum_of_pruned_depth_i = sum_of_past_layer_kernal_i
-                    #    sum_of_pruned_depth_j = sum_of_past_layer_kernel_j 
                     # Compare
                     if sum_of_pruned_depth_i <= sum_of_pruned_depth_j:
                         pruned_depth = depth_i
-                        # Set past layer kernel to zero
-                        past_layer_kernel_set_to_zero = past_weights_mask[:, :, :, depth_i]
-                        # Set current layer depth to zero
-                        current_layer_depth_set_to_zero = current_weights_mask[:, :, depth_i, :]
-                        # update pruned_dict
-                        pruned_dict[past_layer].update({str(depth_i): True})
                     else:
                         pruned_depth = depth_j
-                        # Set past layer kernel to zero
-                        past_layer_kernel_set_to_zero = past_weights_mask[:, :, :, depth_j]
-                        # Set current layer depth to zero
-                        current_layer_depth_set_to_zero = current_weights_mask[:, :, depth_j, :]
-                        # update pruned_dict
-                        pruned_dict[past_layer].update({str(depth_j): True})
+
                 # Assign Zero to mask
-                sess.run(tf.assign(past_layer_kernel_set_to_zero, np.zeros(past_weights_mask[:, :, :, depth_i].get_shape().as_list())))
-                pruned_num = pruned_num + reduce(lambda x, y: x*y, past_weights_mask[:, :, :, depth_i].get_shape().as_list())
-                #if not prune_info_dict[layer]['is_shortcut']:
-                sess.run(tf.assign(current_layer_depth_set_to_zero, np.zeros(current_weights_mask[:, :, depth_i, :].get_shape().as_list())))
-                pruned_num = pruned_num + reduce(lambda x, y: x*y, current_weights_mask[:, :, depth_i, :].get_shape().as_list())
+                pruned_dict[past_layer].update({str(pruned_depth): True})
+                past_weights_mask[:, :, :, pruned_depth] = 0
+                pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(past_weights_mask[:, :, :, depth_i]))
+                current_weights_mask[:, :, pruned_depth, :] = 0
+                pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(current_weights_mask[:, :, depth_i, :]))
                 print("\r{} / {}	" .format(pruned_num, total_num), end = "")
-                print("{}	{}	{}" .format(anchor, layer, 'depth' + str(pruned_depth)))
-                break
-            #elif not is_depth_i_pruned and is_depth_j_pruned:
-            #    dict[str(anchor)][index].update({'pruned': True})
-            #    pruned_depth = depth_i
-            #    # Set past layer kernel to zero
-            #    past_layer_kernel_set_to_zero = past_weights_mask[:, :, :, depth_i]
-            #    # Set current layer depth to zero
-            #    current_layer_depth_set_to_zero = current_weights_mask[:, :, depth_i, :]
-            #    # update pruned_dict
-            #    pruned_dict[past_layer].update({str(depth_i): True})
-            #    # Assign Zero to mask
-            #    sess.run(tf.assign(past_layer_kernel_set_to_zero, np.zeros(past_weights_mask[:, :, :, depth_i].get_shape().as_list())))
-            #    pruned_num = pruned_num + reduce(lambda x, y: x*y, past_weights_mask[:, :, :, depth_i].get_shape().as_list())
-            #    if not prune_info_dict[layer]['is_shortcut']:
-            #        sess.run(tf.assign(current_layer_depth_set_to_zero, np.zeros(current_weights_mask[:, :, depth_i, :].get_shape().as_list())))
-            #        pruned_num = pruned_num + reduce(lambda x, y: x*y, current_weights_mask[:, :, depth_i, :].get_shape().as_list())
-            #    print("\r{} / {}	" .format(pruned_num, total_num), end = "")
-            #    print("{}	{}	{}" .format(anchor, layer, 'depth' + str(pruned_depth)))
-            #    break
-            #elif is_depth_i_pruned and not is_depth_j_pruned:
-            #    dict[str(anchor)][index].update({'pruned': True})
-            #    pruned_depth = depth_j
-            #    # Set past layer kernel to zero
-            #    past_layer_kernel_set_to_zero = past_weights_mask[:, :, :, depth_j]
-            #    # Set current layer depth to zero
-            #    current_layer_depth_set_to_zero = current_weights_mask[:, :, depth_j, :] 
-            #    # update pruned_dict
-            #    pruned_dict[past_layer].update({str(depth_j): True})
-            #    # Assign Zero to mask
-            #    sess.run(tf.assign(past_layer_kernel_set_to_zero, np.zeros(past_weights_mask[:, :, :, depth_i].get_shape().as_list())))
-            #    pruned_num = pruned_num + reduce(lambda x, y: x*y, past_weights_mask[:, :, :, depth_i].get_shape().as_list())
-            #    if not prune_info_dict[layer]['is_shortcut']:
-            #        sess.run(tf.assign(current_layer_depth_set_to_zero, np.zeros(current_weights_mask[:, :, depth_i, :].get_shape().as_list())))
-            #        pruned_num = pruned_num + reduce(lambda x, y: x*y, current_weights_mask[:, :, depth_i, :].get_shape().as_list())
-            #    print("\r{} / {}	" .format(pruned_num, total_num), end = "")
-            #    print("{}	{}	{}" .format(anchor, layer, 'depth' + str(pruned_depth)))
-            #    break            
+                print("{}	{}	{}" .format(angle, layer, 'depth' + str(pruned_depth)))
+                break          
     print("Prune Over!")
     
-    for layer_iter in range(1, len(sorted_layer)):
-        layer = sorted_layer[layer_iter]
-        weights = sess.run(prune_info_dict[layer]['weights'])
-        weights = np.transpose(weights, (0,1,3,2))
-        original_weights_size = weights.size
-        # remove the pruned kernel
-        channel_num = np.shape(weights)[2]
-        pruned_channels = []
-        for i in range(channel_num):
-            if pruned_dict[layer][str(i)]:
-                pruned_channels = np.append(pruned_channels, [i])
-        weights = np.delete(weights, pruned_channels, axis = 2)
-        pruned_weights_size = weights.size
-        print('{} : {} -> {}' .format(layer, original_weights_size, pruned_weights_size))
- 
-""" 
-def plane_prune_by_anchor(
-    prune_info_dict,
-    pruning_propotion,
-    sess
-    ):
-    print("pruning ...")
-    key = prune_info_dict.keys()
-    sorted_layer = np.sort(np.array([int(key[i].split('layer')[-1]) for i in range(len(key))]))
-    sorted_layer = ['layer' + str(sorted_layer[i]) for i in range(len(key))]
-    
-    # Record the original weights parameter size
-    original_weights_size = {}
-    for layer_iter in range(1, len(sorted_layer)):
-        layer = sorted_layer[layer_iter]
-        mask_tensor = prune_info_dict[layer]['mask']
-        original_weights_size.update({layer: np.sum(sess.run(mask_tensor))})
-    
-    # Build Pruned dict
-    pruned_dict = {}
+    # Store all masks
     for layer_iter in range(len(sorted_layer)):
         layer = sorted_layer[layer_iter]
-        mask = sess.run(prune_info_dict[layer]['mask'])
-        channel_num = np.shape(mask)[3]
-        depth = np.shape(mask)[2]
-        tmp_dict = {}
-        for i in range(channel_num):
-            for j in range(depth):
-                if j == 0:
-                    tmp_dict.update({str(i): {str(j): np.mean(mask[:, :, j, i] == 0)}})
-                else:
-                    tmp_dict[str(i)].update({str(j): np.mean(mask[:, :, j, i] == 0)})
-        pruned_dict.update({layer: tmp_dict})
-
-    # Build the dictionary for anchor
-    dict = {}
-    iter = 0
-    tmp = 0
-    for layer_iter in range(1, len(sorted_layer)):
-        layer = sorted_layer[layer_iter]
-        weights = sess.run(prune_info_dict[layer]['weights'])
-        weights = np.transpose(weights, (0,1,3,2))
-        # calculate anchor
-        past_layer = sorted_layer[layer_iter-1]
-        channel_num = np.shape(weights)[2]
-        depth = np.shape(weights)[-1]
-        
-        weights_distance = np.sum((weights * weights), axis = (0,1))
-        weights_distance = np.expand_dims(weights_distance, axis = 0)
-        weights_distance = np.expand_dims(weights_distance, axis = 0)
-        normalized_weights = weights / weights_distance
-        
-        for channel in range(channel_num):            
-            for i in range(depth):
-                for j in range(i+1, depth):
-                    # If the depth i or j has been pruned, we don't calculate its anchor to others
-                    # By doing so, we will not prune the same kernel which has been pruned before.
-                    if not pruned_dict[layer][str(channel)][str(i)] and not pruned_dict[layer][str(channel)][str(j)]:
-                        x = weights[:, :, channel, i]
-                        y = weights[:, :, channel, j]
-                        x = np.reshape(x, [np.size(x)])
-                        y = np.reshape(y, [np.size(y)])
-                        
-                        if sum(x*x) == 0 or sum(y*y) == 0:
-                            anchor = 90.0
-                            tmp = tmp + 1
-                            print('{}, {}, {}' .format(layer, i, j))
-                        else:
-                            anchor = compute_anchor(x, y)
-                            anchor = abs(anchor - 90)
-                        
-                        if bool(dict.get(str(anchor))):
-                            number = len(dict[str(anchor)])
-                            dict[str(anchor)].update({str(number): {'past_layer': past_layer, 'layer': layer, 'channel': channel, 'i': i, 'j': j, 'pruned': False}})
-                        else:
-                            dict.update({str(anchor): {'0': {'past_layer': past_layer, 'layer': layer,  'channel': channel, 'i': i, 'j': j, 'pruned': False}}})
-                        
-                        if iter == 0:
-                            total_anchor = np.array([anchor])
-                        else:
-                            total_anchor = np.concatenate([total_anchor, np.array([anchor])])
-                        iter = iter + 1    
-                
-    # Sort the anchor
-    sorted_anchor = np.sort(total_anchor)[::-1]
-
-    # Calculate the total parameters number
-    total_num = 0
-    for layer_iter in range(len(sorted_layer)):
-        layer = sorted_layer[layer_iter]
-        mask_tensor = prune_info_dict[layer]['mask']
-        total_num += reduce(lambda x, y: x*y, mask_tensor.get_shape().as_list())
-    
-    # Get the weights to be pruned
-    dict_ = copy.deepcopy(dict)
-    weights_to_be_pruned = {}
-    pruned_num = 0
-    pruned_anchor_num = 0
-    for _, anchor in enumerate(sorted_anchor):
-        pruned_anchor_num = pruned_anchor_num + 1
-        for _, index in enumerate(dict_[str(anchor)].keys()):
-            if dict_[str(anchor)][index]['pruned']:
-                continue
-            dict_[str(anchor)][index].update({'pruned': True})
-            past_layer = dict_[str(anchor)][index]['past_layer']
-            layer = dict_[str(anchor)][index]['layer']
-            channel = dict_[str(anchor)][index]['channel']
-            depth_i = dict_[str(anchor)][index]['i']
-            depth_j = dict_[str(anchor)][index]['j']
-            past_weights_mask = prune_info_dict[past_layer]['mask']
-            current_weights_mask = prune_info_dict[layer]['mask']
-            
-            if not bool(weights_to_be_pruned.get(layer)):
-                is_depth_i_appear = False
-                is_depth_j_appear = False
-                weights_to_be_pruned.update({layer: {str(channel): {str(depth_i): 1, str(depth_j): 1}}})
-            else:
-                if not bool(weights_to_be_pruned[layer].get(str(channel))):
-                    weights_to_be_pruned[layer].update({str(channel): {str(depth_i): 1, str(depth_j): 1}})
-                else:
-                    is_depth_i_appear = bool(weights_to_be_pruned[layer][str(channel)].get(str(depth_i)))
-                    is_depth_j_appear = bool(weights_to_be_pruned[layer][str(channel)].get(str(depth_j)))
-                    if not is_depth_i_appear:
-                        weights_to_be_pruned[layer][str(channel)].update({str(depth_i): 1})
-                    else:
-                        weights_to_be_pruned[layer][str(channel)].update({str(depth_i): weights_to_be_pruned[layer][str(channel)][str(depth_i)]+1})
-                    if not is_depth_j_appear:
-                        weights_to_be_pruned[layer][str(channel)].update({str(depth_j): 1})
-                    else:
-                        weights_to_be_pruned[layer][str(channel)].update({str(depth_j): weights_to_be_pruned[layer][str(channel)][str(depth_j)]+1})
-            # Estimate the pruned parameter number            
-            if not is_depth_i_appear or not is_depth_j_appear:    
-                pruned_num = pruned_num + reduce(lambda x, y: x*y, current_weights_mask[:, :, depth_i, channel].get_shape().as_list())
-                
-        if pruned_num >= total_num * pruning_propotion:
-            break 
-
-    # Prune the corresponding weights
-    pruned_num = 0
-    for iter in range(pruned_anchor_num):
-        anchor = sorted_anchor[iter]
-        for _, index in enumerate(dict[str(anchor)].keys()):
-            #print(dict[str(anchor)].keys())
-            if dict[str(anchor)][index]['pruned']:
-                continue
-            past_layer = dict[str(anchor)][index]['past_layer']
-            layer = dict[str(anchor)][index]['layer']
-            channel = dict[str(anchor)][index]['channel']
-            depth_i = dict[str(anchor)][index]['i']
-            depth_j = dict[str(anchor)][index]['j']
-            is_depth_i_pruned = pruned_dict[layer][str(channel)][str(depth_i)]
-            is_depth_j_pruned = pruned_dict[layer][str(channel)][str(depth_j)]
-            past_weights_mask    = prune_info_dict[past_layer]['mask']
-            past_weights         = prune_info_dict[past_layer]['weights']
-            current_weights_mask = prune_info_dict[layer]['mask']
-            current_weights      = prune_info_dict[layer]['weights']
-            if not is_depth_i_pruned and not is_depth_j_pruned:
-                dict[str(anchor)][index].update({'pruned': True})
-                if weights_to_be_pruned[layer][str(channel)][str(depth_i)] < weights_to_be_pruned[layer][str(channel)][str(depth_j)]:
-                    pruned_depth = depth_i
-                elif weights_to_be_pruned[layer][str(channel)][str(depth_i)] > weights_to_be_pruned[layer][str(channel)][str(depth_j)]:
-                    pruned_depth = depth_j
-                else:
-                    # Magnitude
-                    sum_of_current_layer_depth_i = np.sum(np.abs(sess.run(current_weights)[:, :, depth_i, channel] * sess.run(current_weights_mask)[:, :, depth_i, channel]))
-                    sum_of_current_layer_depth_j = np.sum(np.abs(sess.run(current_weights)[:, :, depth_j, channel] * sess.run(current_weights_mask)[:, :, depth_j, channel]))
-                    sum_of_pruned_depth_i = sum_of_current_layer_depth_i
-                    sum_of_pruned_depth_j = sum_of_current_layer_depth_j
-                    if sum_of_pruned_depth_i <= sum_of_pruned_depth_j:
-                        pruned_depth = depth_i
-                    else:
-                        pruned_depth = depth_j
-                        
-                # Set current layer depth to zero
-                current_layer_depth_set_to_zero = current_weights_mask[:, :, pruned_depth, channel]
-                # update pruned_dict
-                pruned_dict[layer][str(channel)].update({str(pruned_depth): True})
-                # Assign Zero to mask
-                sess.run(tf.assign(current_layer_depth_set_to_zero, tf.zeros_like(current_layer_depth_set_to_zero)))
-                pruned_num = pruned_num + reduce(lambda x, y: x*y, current_layer_depth_set_to_zero.get_shape().as_list())
-                
-                # Check if there is all weights are pruned in pruned depth
-                mask = sess.run(current_weights_mask)
-                if np.mean(mask[:, :, pruned_depth, :]) == 0:
-                    past_layer_depth_set_to_zero = past_weights_mask[:, :, :, pruned_depth]
-                    kernel = sess.run(past_weights_mask)[:, :, :, pruned_depth]
-                    if np.mean(kernel) != 0:
-                        sess.run(tf.assign(past_layer_depth_set_to_zero, tf.zeros_like(past_layer_depth_set_to_zero)))
-                        pruned_num = pruned_num + reduce(lambda x, y: x*y, past_layer_depth_set_to_zero.get_shape().as_list())
-                    
-                print("\r{} / {}	{}	{}	{}" .format(pruned_num, total_num, anchor, layer, 'depth' + str(pruned_depth)), end = "")
-                break
-    print("Prune Over!")
+        sess.run(tf.assign(prune_info_dict[layer]['weights'], all_weights[layer]))
+        sess.run(tf.assign(prune_info_dict[layer]['mask'], all_mask[layer]))
     
     for layer_iter in range(1, len(sorted_layer)):
         layer = sorted_layer[layer_iter]
         mask_tensor = prune_info_dict[layer]['mask']
         after_pruned_weights_size = np.sum(sess.run(mask_tensor))
-        print('{} : {} -> {}' .format(layer, original_weights_size[layer], after_pruned_weights_size))
-"""
-        
-def plane_prune_by_anchor(
+        print('{} : \033[0;32m{}\033[0m -> \033[0;32m{}\033[0m' .format(layer, int(original_weights_size[layer]), int(after_pruned_weights_size)))
+
+def plane_prune_by_angle(
     prune_info_dict,
     pruning_propotion,
     sess
@@ -4011,19 +3899,26 @@ def plane_prune_by_anchor(
     key = prune_info_dict.keys()
     sorted_layer = np.sort(np.array([int(key[i].split('layer')[-1]) for i in range(len(key))]))
     sorted_layer = ['layer' + str(sorted_layer[i]) for i in range(len(key))]
+
+    # Load all wegihts and masks
+    all_weights = {}
+    all_mask = {}
+    for layer_iter in range(len(sorted_layer)):
+        layer = sorted_layer[layer_iter]
+        all_weights.update({layer: sess.run(prune_info_dict[layer]['weights'])})
+        all_mask.update({layer: sess.run(prune_info_dict[layer]['mask'])})
     
     # Record the original weights parameter size
     original_weights_size = {}
     for layer_iter in range(1, len(sorted_layer)):
         layer = sorted_layer[layer_iter]
-        mask_tensor = prune_info_dict[layer]['mask']
-        original_weights_size.update({layer: np.sum(sess.run(mask_tensor))})
+        original_weights_size.update({layer: np.sum(all_mask[layer])})
     
     # Build Pruned dict
     pruned_dict = {}
     for layer_iter in range(len(sorted_layer)):
         layer = sorted_layer[layer_iter]
-        mask = sess.run(prune_info_dict[layer]['mask'])
+        mask = all_mask[layer]
         channel_num = np.shape(mask)[3]
         depth = np.shape(mask)[2]
         tmp_dict = {}
@@ -4035,79 +3930,81 @@ def plane_prune_by_anchor(
                     tmp_dict[str(i)].update({str(j): np.mean(mask[:, :, j, i] == 0)})
         pruned_dict.update({layer: tmp_dict})
 
-    # Build the dictionary for anchor
+    # Build the dictionary for angle
     dict = {}
     iter = 0
     tmp = 0
     for layer_iter in range(1, len(sorted_layer)):
         layer = sorted_layer[layer_iter]
-        weights = sess.run(prune_info_dict[layer]['weights'])
+        weights = all_weights[layer]
         weights = np.transpose(weights, (0,1,3,2))
-        # calculate anchor
+        # calculate angle
         past_layer = sorted_layer[layer_iter-1]
         channel_num = np.shape(weights)[2]
         depth = np.shape(weights)[-1]
         
-        weights_distance = np.sum((weights * weights), axis = (0,1))
+        weights_distance = np.sqrt(np.sum((weights * weights), axis = (0,1)))
         weights_distance = np.expand_dims(weights_distance, axis = 0)
         weights_distance = np.expand_dims(weights_distance, axis = 0)
-        normalized_weights = weights / weights_distance          
+        normalized_weights = weights / weights_distance   
+        max_angle = 0
         for i in range(depth):
             for j in range(i+1, depth):
-                # If the depth i or j has been pruned, we don't calculate its anchor to others
-                # By doing so, we will not prune the same kernel which has been pruned before.
-                
                 channel_x = normalized_weights[:, :, :, i]
                 channel_y = normalized_weights[:, :, :, j]
                 channel_cos_theta = np.sum(channel_x * channel_y, axis = (0,1))
-                channel_theta = np.arccos(channel_cos_theta)
-                channel_anchor = 90.0 - channel_theta
-                
-                
+                channel_theta = (np.arccos(channel_cos_theta) / np.pi) * 180.
+                channel_angle = np.abs(90.0 - channel_theta)
+                unpruned_angle_iter = 0
                 for channel in range(channel_num):
                     if not pruned_dict[layer][str(channel)][str(i)] and not pruned_dict[layer][str(channel)][str(j)]:
-                        anchor = channel_anchor[channel]
-                        if bool(dict.get(str(anchor))):
-                            number = len(dict[str(anchor)])
-                            dict[str(anchor)].update({str(number): {'past_layer': past_layer, 'layer': layer, 'channel': channel, 'i': i, 'j': j, 'pruned': False}})
+                        angle = channel_angle[channel]
+                        if max_angle < angle:
+                            max_angle = angle
+                        if bool(dict.get(str(angle))):
+                            number = len(dict[str(angle)])
+                            dict[str(angle)].update({str(number): {'past_layer': past_layer, 'layer': layer, 'channel': channel, 'i': i, 'j': j, 'pruned': False}})
                         else:
-                            dict.update({str(anchor): {'0': {'past_layer': past_layer, 'layer': layer,  'channel': channel, 'i': i, 'j': j, 'pruned': False}}})
-                        np.concatenate()
-                        
-                if iter == 0:
-                    total_anchor = np.squeeze(channel_anchor)
-                else:
-                    total_anchor = np.concatenate([total_anchor, np.squeeze(channel_anchor)])
-                iter = iter + 1    
-    pdb.set_trace()            
-    # Sort the anchor
-    sorted_anchor = np.sort(total_anchor)[::-1]
+                            dict.update({str(angle): {'0': {'past_layer': past_layer, 'layer': layer,  'channel': channel, 'i': i, 'j': j, 'pruned': False}}})
+                        if unpruned_angle_iter == 0:
+                            unpruned_angle = np.array([angle])
+                        else:
+                            unpruned_angle = np.concatenate([unpruned_angle, np.array([angle])], axis = 0)
+                        unpruned_angle_iter = unpruned_angle_iter + 1
+                if unpruned_angle_iter != 0:
+                    if iter == 0:
+                        total_angle = unpruned_angle
+                    else:
+                        total_angle = np.concatenate([total_angle, unpruned_angle], axis = 0)
+                    iter = iter + 1
+                
+    # Sort the angle
+    sorted_angle = np.sort(total_angle)[::-1]
 
     # Calculate the total parameters number
     total_num = 0
     for layer_iter in range(len(sorted_layer)):
         layer = sorted_layer[layer_iter]
-        mask_tensor = prune_info_dict[layer]['mask']
-        total_num += reduce(lambda x, y: x*y, mask_tensor.get_shape().as_list())
-    
+        mask = all_mask[layer]
+        total_num += reduce(lambda x, y: x*y, np.shape(mask))
+
     # Get the weights to be pruned
     dict_ = copy.deepcopy(dict)
     weights_to_be_pruned = {}
     pruned_num = 0
-    pruned_anchor_num = 0
-    for _, anchor in enumerate(sorted_anchor):
-        pruned_anchor_num = pruned_anchor_num + 1
-        for _, index in enumerate(dict_[str(anchor)].keys()):
-            if dict_[str(anchor)][index]['pruned']:
+    pruned_angle_num = 0
+    for _, angle in enumerate(sorted_angle):
+        pruned_angle_num = pruned_angle_num + 1
+        for _, index in enumerate(dict_[str(angle)].keys()):
+            if dict_[str(angle)][index]['pruned']:
                 continue
-            dict_[str(anchor)][index].update({'pruned': True})
-            past_layer = dict_[str(anchor)][index]['past_layer']
-            layer = dict_[str(anchor)][index]['layer']
-            channel = dict_[str(anchor)][index]['channel']
-            depth_i = dict_[str(anchor)][index]['i']
-            depth_j = dict_[str(anchor)][index]['j']
-            past_weights_mask = prune_info_dict[past_layer]['mask']
-            current_weights_mask = prune_info_dict[layer]['mask']
+            dict_[str(angle)][index].update({'pruned': True})
+            past_layer = dict_[str(angle)][index]['past_layer']
+            layer = dict_[str(angle)][index]['layer']
+            channel = dict_[str(angle)][index]['channel']
+            depth_i = dict_[str(angle)][index]['i']
+            depth_j = dict_[str(angle)][index]['j']
+            current_weights_mask = all_mask[layer]
             
             if not bool(weights_to_be_pruned.get(layer)):
                 is_depth_i_appear = False
@@ -4129,74 +4026,284 @@ def plane_prune_by_anchor(
                         weights_to_be_pruned[layer][str(channel)].update({str(depth_j): weights_to_be_pruned[layer][str(channel)][str(depth_j)]+1})
             # Estimate the pruned parameter number            
             if not is_depth_i_appear or not is_depth_j_appear:    
-                pruned_num = pruned_num + reduce(lambda x, y: x*y, current_weights_mask[:, :, depth_i, channel].get_shape().as_list())
+                pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(current_weights_mask[:, :, depth_i, channel]))
                 
         if pruned_num >= total_num * pruning_propotion:
             break 
 
     # Prune the corresponding weights
     pruned_num = 0
-    for iter in range(pruned_anchor_num):
-        anchor = sorted_anchor[iter]
-        for _, index in enumerate(dict[str(anchor)].keys()):
-            #print(dict[str(anchor)].keys())
-            if dict[str(anchor)][index]['pruned']:
+    for iter in range(pruned_angle_num):
+        angle = sorted_angle[iter]
+        for _, index in enumerate(dict[str(angle)].keys()):
+            #print(dict[str(angle)].keys())        
+            if dict[str(angle)][index]['pruned']:
                 continue
-            past_layer = dict[str(anchor)][index]['past_layer']
-            layer = dict[str(anchor)][index]['layer']
-            channel = dict[str(anchor)][index]['channel']
-            depth_i = dict[str(anchor)][index]['i']
-            depth_j = dict[str(anchor)][index]['j']
+            past_layer = dict[str(angle)][index]['past_layer']
+            layer = dict[str(angle)][index]['layer']
+            channel = dict[str(angle)][index]['channel']
+            depth_i = dict[str(angle)][index]['i']
+            depth_j = dict[str(angle)][index]['j']
             is_depth_i_pruned = pruned_dict[layer][str(channel)][str(depth_i)]
             is_depth_j_pruned = pruned_dict[layer][str(channel)][str(depth_j)]
-            past_weights_mask    = prune_info_dict[past_layer]['mask']
-            past_weights         = prune_info_dict[past_layer]['weights']
-            current_weights_mask = prune_info_dict[layer]['mask']
-            current_weights      = prune_info_dict[layer]['weights']
+            past_weights_mask    = all_mask[past_layer]    #prune_info_dict[past_layer]['mask']
+            past_weights         = all_weights[past_layer] #prune_info_dict[past_layer]['weights']
+            current_weights_mask = all_mask[layer]         #prune_info_dict[layer]['mask']
+            current_weights      = all_weights[layer]      #prune_info_dict[layer]['weights']
+
             if not is_depth_i_pruned and not is_depth_j_pruned:
-                dict[str(anchor)][index].update({'pruned': True})
+                dict[str(angle)][index].update({'pruned': True})
+                # Choose which depth to be pruned
                 if weights_to_be_pruned[layer][str(channel)][str(depth_i)] < weights_to_be_pruned[layer][str(channel)][str(depth_j)]:
                     pruned_depth = depth_i
                 elif weights_to_be_pruned[layer][str(channel)][str(depth_i)] > weights_to_be_pruned[layer][str(channel)][str(depth_j)]:
                     pruned_depth = depth_j
                 else:
                     # Magnitude
-                    sum_of_current_layer_depth_i = np.sum(np.abs(sess.run(current_weights)[:, :, depth_i, channel] * sess.run(current_weights_mask)[:, :, depth_i, channel]))
-                    sum_of_current_layer_depth_j = np.sum(np.abs(sess.run(current_weights)[:, :, depth_j, channel] * sess.run(current_weights_mask)[:, :, depth_j, channel]))
+                    sum_of_current_layer_depth_i = np.sum(np.abs(current_weights[:, :, depth_i, channel] * current_weights_mask[:, :, depth_i, channel]))
+                    sum_of_current_layer_depth_j = np.sum(np.abs(current_weights[:, :, depth_j, channel] * current_weights_mask[:, :, depth_j, channel]))
                     sum_of_pruned_depth_i = sum_of_current_layer_depth_i
                     sum_of_pruned_depth_j = sum_of_current_layer_depth_j
                     if sum_of_pruned_depth_i <= sum_of_pruned_depth_j:
                         pruned_depth = depth_i
                     else:
                         pruned_depth = depth_j
-                        
+                
                 # Set current layer depth to zero
-                current_layer_depth_set_to_zero = current_weights_mask[:, :, pruned_depth, channel]
+                current_weights_mask[:, :, pruned_depth, channel] = 0.
+                pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(current_weights_mask[:, :, pruned_depth, channel]))
                 # update pruned_dict
                 pruned_dict[layer][str(channel)].update({str(pruned_depth): True})
-                # Assign Zero to mask
-                sess.run(tf.assign(current_layer_depth_set_to_zero, tf.zeros_like(current_layer_depth_set_to_zero)))
-                pruned_num = pruned_num + reduce(lambda x, y: x*y, current_layer_depth_set_to_zero.get_shape().as_list())
-                
                 # Check if there is all weights are pruned in pruned depth
-                mask = sess.run(current_weights_mask)
-                if np.mean(mask[:, :, pruned_depth, :]) == 0:
-                    past_layer_depth_set_to_zero = past_weights_mask[:, :, :, pruned_depth]
-                    kernel = sess.run(past_weights_mask)[:, :, :, pruned_depth]
-                    if np.mean(kernel) != 0:
-                        sess.run(tf.assign(past_layer_depth_set_to_zero, tf.zeros_like(past_layer_depth_set_to_zero)))
-                        pruned_num = pruned_num + reduce(lambda x, y: x*y, past_layer_depth_set_to_zero.get_shape().as_list())
+                if np.mean(current_weights_mask[:, :, pruned_depth, :]) == 0:
+                    if np.mean(past_weights_mask[:, :, :, pruned_depth]) != 0:
+                        past_weights_mask[:, :, :, pruned_depth] = 0
+                        pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(past_weights_mask[:, :, :, pruned_depth]))
                     
-                print("\r{} / {}	{}	{}	{}" .format(pruned_num, total_num, anchor, layer, 'depth' + str(pruned_depth)), end = "")
+                print("\r{} / {}	{}	{}	{} " .format(pruned_num, total_num, angle, layer, 'depth' + str(pruned_depth)), end = "")
+                #print("{} / {}	{}	{}	{} " .format(pruned_num, total_num, angle, layer, 'depth' + str(pruned_depth)))
                 break
+    
+    # Store all masks
+    for layer_iter in range(len(sorted_layer)):
+        layer = sorted_layer[layer_iter]
+        sess.run(tf.assign(prune_info_dict[layer]['weights'], all_weights[layer]))
+        sess.run(tf.assign(prune_info_dict[layer]['mask'], all_mask[layer]))
+        
     print("Prune Over!")
     
     for layer_iter in range(1, len(sorted_layer)):
         layer = sorted_layer[layer_iter]
         mask_tensor = prune_info_dict[layer]['mask']
         after_pruned_weights_size = np.sum(sess.run(mask_tensor))
-        print('{} : {} -> {}' .format(layer, original_weights_size[layer], after_pruned_weights_size))
+        print('{} : \033[0;32m{}\033[0m -> \033[0;32m{}\033[0m' .format(layer, int(original_weights_size[layer]), int(after_pruned_weights_size)))
 
+# Rebuilding
+def get_mask(
+    model_path,
+    model,
+    H_Resize,
+    W_Resize,
+    class_num
+    ):
+    # Model Dictionary
+    Model_dict = Model_dict_Generator(model_path + 'model.csv', class_num)
+    # is_training
+    is_training = tf.placeholder(tf.bool)
+    # is_quantized_activation
+    is_quantized_activation = {}
+    for layer in range(len(Model_dict)):
+        is_quantized_activation.update({'layer%d'%layer : tf.placeholder(tf.bool)}) 
+    # is_ternary
+    is_ternary = {}
+    for layer in range(len(Model_dict)):
+        is_ternary.update({'layer%d'%layer : tf.placeholder(tf.bool)})  
+    # net
+    net = tf.ones([1, H_Resize, W_Resize, 3])
+    # model
+    prediction, Analysis, max_parameter, inputs_and_kernels, prune_info_dict = Model_dict_Decoder(
+        net                     = net, 
+        Model_dict              = Model_dict, 
+        is_training             = is_training,
+        is_ternary              = is_ternary,
+        is_quantized_activation = is_quantized_activation,
+        DROPOUT_RATE            = 0.0,
+        data_format             = "NCHW",
+        reuse                   = None)
+    # mask tensor
+    weights_mask_collection = tf.get_collection("float32_weights_mask", scope=None)
+    # saver
+    saver = tf.train.Saver()
+    # Session
+    with tf.Session() as sess:
+        save_path = saver.restore(sess, model_path + model)
+        mask = sess.run(weights_mask_collection)
+    # reset graph    
+    tf.reset_default_graph()
+    
+    return mask
+
+def get_weights(
+    model_path,
+    model,
+    H_Resize,
+    W_Resize,
+    class_num
+    ):
+    # Model Dictionary
+    Model_dict = Model_dict_Generator(model_path + 'model.csv', class_num)
+    # is_training
+    is_training = tf.placeholder(tf.bool)
+    # is_quantized_activation
+    is_quantized_activation = {}
+    for layer in range(len(Model_dict)):
+        is_quantized_activation.update({'layer%d'%layer : tf.placeholder(tf.bool)}) 
+    # is_ternary
+    is_ternary = {}
+    for layer in range(len(Model_dict)):
+        is_ternary.update({'layer%d'%layer : tf.placeholder(tf.bool)})  
+    # net
+    net = tf.ones([1, H_Resize, W_Resize, 3])
+    # model
+    prediction, Analysis, max_parameter, inputs_and_kernels, prune_info_dict = Model_dict_Decoder(
+        net                     = net, 
+        Model_dict              = Model_dict, 
+        is_training             = is_training,
+        is_ternary              = is_ternary,
+        is_quantized_activation = is_quantized_activation,
+        DROPOUT_RATE            = 0.0,
+        data_format             = "NCHW",
+        reuse                   = None)
+    # mask tensor
+    weights_collection = tf.get_collection("float32_weights", scope=None)
+    # saver
+    saver = tf.train.Saver()
+    # Session
+    with tf.Session() as sess:
+        save_path = saver.restore(sess, model_path + model)
+        weights = sess.run(weights_collection)
+    # reset graph    
+    tf.reset_default_graph()
+    
+    return weights
+    
+def update_var_list( # Garbage
+    var_list,
+    base_mask
+    ):
+    iter = 0
+    var_list_new = []
+    for _, var in enumerate(var_list):
+        if var.name.split('_')[-1].split(':')[0] == 'weights' and iter == 0:  
+            base_mask_now = base_mask[iter]
+            [H, W, input_channel, output_channel] = np.shape(base_mask_now)
+            #------------------#
+            #   Channel Part   #
+            #------------------#
+            remove_channel = []
+            # Get the channel to be removed
+            for channel in range(output_channel):
+                if np.mean(base_mask_now[:, :, :, channel]) != 0:
+                    remove_channel.append(channel)
+            base_mask_now = np.delete(base_mask_now, remove_channel, axis = 3)
+            
+            # Remove the channel
+            start = 0
+            end = output_channel
+            channel_iter = 0
+            if len(remove_channel) != 0:
+                for _, channel in enumerate(remove_channel):
+                    if start != channel:
+                        interval = channel - start
+                        slice = tf.slice(var, [0, 0, 0, start], [H, W, input_channel, interval])
+                        if channel_iter == 0:
+                            var_tmp = slice
+                            channel_iter = channel_iter + 1
+                        else:
+                            var_tmp = tf.concat([var_tmp, slice], axis = 3)
+                            channel_iter = channel_iter + 1
+                    start = channel + 1
+                if start < end:
+                    interval = end - start
+                    slice = tf.slice(var, [0, 0, 0, start], [H, W, input_channel, interval])
+                    if channel_iter == 0:
+                        var_tmp = slice
+                        channel_iter = channel_iter + 1
+                    else:
+                        var_tmp = tf.concat([var_tmp, slice], axis = 3)
+                        channel_iter = channel_iter + 1
+            else:
+                var_tmp = var
+                
+            assert output_channel - len(remove_channel) == var_tmp.get_shape().as_list()[-1], "Channel number is incorrect after remove!"
+
+            #----------------#
+            #   Depth Part   #
+            #----------------#
+            var_ = var_tmp
+            [H, W, input_channel, output_channel] = var_tmp.get_shape().as_list()
+            remove_depth = []
+            # Get the depth to be removed
+            for depth in range(input_channel):
+                if np.mean(base_mask_now[:, :, depth, :]) != 0:
+                    remove_depth.append(depth)
+            # Remove the depth
+            start = 0
+            end = input_channel
+            depth_iter = 0
+            if len(remove_depth) != 0:
+                for _, depth in enumerate(remove_depth):
+                    print(depth)
+                    if start != depth:
+                        interval = depth - start
+                        slice = tf.slice(var_, [0, 0, start, 0], [H, W, interval, output_channel])
+                        if depth_iter == 0:
+                            var_tmp = slice
+                            depth_iter = depth_iter + 1
+                        else:
+                            var_tmp = tf.concat([var_tmp, slice], axis = 2)
+                            depth_iter = depth_iter + 1
+                    start = depth + 1
+                if start < end:
+                    interval = end - start
+                    slice = tf.slice(var_, [0, 0, start, 0], [H, W, interval, output_channel])
+                    if depth_iter == 0:
+                        var_tmp = slice
+                        depth_iter = depth_iter + 1
+                    else:
+                        var_tmp = tf.concat([var_tmp, slice], axis = 2)
+                        depth_iter = depth_iter + 1
+            else:
+                var_tmp = var_
+
+            iter = iter + 1
+            var_list_new.append(var_tmp)
+        #else:
+            #var_list_new.append(var)
+    return var_list_new
+
+def update_gra_and_var( # Something Wrong 
+    gra_and_var,
+    base_mask
+    ):
+    mask_iter = 0
+    gra_and_var_new = []
+    for iter in range(len(gra_and_var)):
+        gra = gra_and_var[iter][0]
+        var = gra_and_var[iter][1]
+        
+        if var.name.split('_')[-1].split(':')[0] == 'weights':
+            mask = base_mask[mask_iter]
+            mask = 1. - mask
+            mask_tensor = tf.constant(mask)
+            mask_iter = mask_iter + 1
+            gra_new = tf.multiply(gra, tf.zeros_like(gra))
+            gra_and_var_new.append([gra_new, var])
+        else:
+            gra_and_var_new.append(gra_and_var[iter])
+            
+    return gra_and_var_new
+    
 #========================#
 #   Testing Components   #
 #========================#
@@ -4310,8 +4417,7 @@ def compute_accuracy(
         #else:
         #    result = np.concatenate([result, np.multiply(~correct_prediction_top3, top1) + np.multiply(correct_prediction_top3, np.argmax(v_ys_part, -1))], axis=0)
         
-        print("\r{} / {} -> Accuracy:{}" .format(i*test_batch_size, 10000, accuracy_top1), end = "") 
-        i = i + 1
+        print("\r{} / {} -> Accuracy:{}" .format((i+1)*test_batch_size, 10000, accuracy_top1), end = "") 
         
     print("")    
     return result, accuracy_top1, accuracy_top2, accuracy_top3, Y_pre_total
