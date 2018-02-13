@@ -76,24 +76,23 @@ else:
     # For Loading Trained Model
     ## ResNet-110
     if FLAGs.Model_2nd == '110_cifar10_0':
-        Model_Path = 'Model/ResNet_Model/ResNet_110_cifar10_0_99_cifar10_2018.02.02_Filter_AngleV443/'
+        Model_Path = 'Model/ResNet_Model/ResNet_110_cifar10_0_99_cifar10_2018.02.08_Filter_Angle64/'
     ## ResNet-56
     if FLAGs.Model_2nd == '56_cifar10_0':
-        Model_Path = 'Model/ResNet_Model/ResNet_56_cifar10_0_99_cifar10_2018.02.02_Filter_AngleV430/'
+        Model_Path = 'Model/ResNet_Model/ResNet_56_cifar10_0_99_cifar10_2018.02.09_Filter_Angle_with_Skip10_10/'
     ## ResNet-32
     if FLAGs.Model_2nd == '32_cifar10_0':
-        Model_Path = 'Model/ResNet_Model/ResNet_32_cifar10_0_99_cifar10_2018.02.01_Filter_AngleV437/' 
+        Model_Path = 'Model/ResNet_Model/ResNet_32_cifar10_0_99_cifar10_2018.02.09_Filter_Angle65_Rebuild60_54_48_41_36_30_25_19_9_0/' 
     ## ResNet-20
     if FLAGs.Model_2nd == '20_cifar10_2':
-        Model_Path = 'Model/ResNet_Model/ResNet_20_cifar10_2_99_cifar10_2018.02.06_Filter_Angle39_Rebuild33/'
+        Model_Path = 'Model/ResNet_Model/ResNet_20_cifar10_2_99_cifar10_2018.02.06_Filter_Angle68_Rebuild63_58_52_46_39_33_27_19_9_0/'
     
-    Model = '10.ckpt'
+    Model = '100.ckpt'
 
 #==============# 
 #    Define    #
 #==============#
 def main(argv):
-    print("start!")
     # -- Testing --
     test_accuracy = utils.run_testing( 
         Hyperparameter        = None                 ,               

@@ -24,8 +24,11 @@ from sys import platform
 from sklearn import linear_model
 from sklearn.preprocessing import PolynomialFeatures
 from functools import reduce
+from prettytable import PrettyTable
 
 import Model
+
+IS_IN_IPYTHON = False
 
 #=========#
 #   Run   #
@@ -44,11 +47,19 @@ def run_training(
     trained_model        
     ):
     
-    Dataset           = FLAGs.Dataset
-    Model_first_name  = FLAGs.Model_1st
-    Model_second_name = FLAGs.Model_2nd
-    EPOCH             = Epoch
-    BATCH_SIZE        = FLAGs.BatchSize
+    
+    if IS_IN_IPYTHON:
+        Dataset           = FLAGs['Dataset']
+        Model_first_name  = FLAGs['Model_1st']
+        Model_second_name = FLAGs['Model_2nd']
+        EPOCH             = Epoch
+        BATCH_SIZE        = FLAGs['BatchSize']
+    else:
+        Dataset           = FLAGs.Dataset
+        Model_first_name  = FLAGs.Model_1st
+        Model_second_name = FLAGs.Model_2nd
+        EPOCH             = Epoch
+        BATCH_SIZE        = FLAGs.BatchSize
     
     Model_Name = Model_first_name + '_' + Model_second_name
     
@@ -129,7 +140,7 @@ def run_training(
         HP.update({'Quantized_Activation_Epoch': int(HP_dict['Quantized_Activation_Epoch'])})
         HP.update({'Dropout_Rate'              : float(HP_dict['Dropout_Rate'])            })
     
-    print("\033[1;32;40mBATCH SIZE\033[0m : \033[1;37;40m{}\033[0m" .format(HP['Batch_Size']))
+    print("\033[1;32mBATCH SIZE\033[0m : \033[1;30m{}\033[0m" .format(HP['Batch_Size']))
     
     #---------------------------#
     #    Hyperparameter Save    #
@@ -206,10 +217,17 @@ def run_testing(
     test_Y_pre_path         
     ):
     
-    Dataset           = FLAGs.Dataset
-    Model_first_name  = FLAGs.Model_1st
-    Model_second_name = FLAGs.Model_2nd
-    BATCH_SIZE        = FLAGs.BatchSize
+    
+    if IS_IN_IPYTHON:
+        Dataset           = FLAGs['Dataset']
+        Model_first_name  = FLAGs['Model_1st']
+        Model_second_name = FLAGs['Model_2nd']
+        BATCH_SIZE        = FLAGs['BatchSize']
+    else:
+        Dataset           = FLAGs.Dataset
+        Model_first_name  = FLAGs.Model_1st
+        Model_second_name = FLAGs.Model_2nd
+        BATCH_SIZE        = FLAGs.BatchSize
     
     #---------------#
     #   Data Info   #
@@ -287,12 +305,20 @@ def run_pruning(
     pruning_model        
     ):
     
-    Dataset           = FLAGs.Dataset
-    Model_first_name  = FLAGs.Model_1st
-    Model_second_name = FLAGs.Model_2nd
-    EPOCH             = Epoch
-    BATCH_SIZE        = FLAGs.BatchSize
-    Pruning_Strategy  = FLAGs.Pruning_Strategy
+    if IS_IN_IPYTHON:
+        Dataset           = FLAGs['Dataset']
+        Model_first_name  = FLAGs['Model_1st']
+        Model_second_name = FLAGs['Model_2nd']
+        EPOCH             = Epoch
+        BATCH_SIZE        = FLAGs['BatchSize']
+        Pruning_Strategy  = FLAGs['Pruning_Strategy']
+    else:
+        Dataset           = FLAGs.Dataset
+        Model_first_name  = FLAGs.Model_1st
+        Model_second_name = FLAGs.Model_2nd
+        EPOCH             = Epoch
+        BATCH_SIZE        = FLAGs.BatchSize
+        Pruning_Strategy  = FLAGs.Pruning_Strategy
     
     Model_Name = Model_first_name + '_' + Model_second_name
     
@@ -347,7 +373,7 @@ def run_pruning(
     HP.update({'Pruning_Retrain_Epoch'     : 100             })
     HP.update({'Pruning_Strategy'          : Pruning_Strategy})
     
-    print("\033[1;32;40mBATCH SIZE\033[0m : \033[1;37;40m{}\033[0m" .format(HP['Batch_Size']))
+    print("\033[1;32mBATCH SIZE\033[0m : \033[1;30m{}\033[0m" .format(HP['Batch_Size']))
     
     #---------------------------#
     #    Hyperparameter Save    #
@@ -412,15 +438,23 @@ def run_rebuilding(
     Dataset_Path              ,
     Y_pre_Path                ,
     rebuilding_model_path_base,
+    rebuilding_model_base     ,
     rebuilding_model_path     ,
     rebuilding_model
     ):
     
-    Dataset           = FLAGs.Dataset
-    Model_first_name  = FLAGs.Model_1st
-    Model_second_name = FLAGs.Model_2nd
-    EPOCH             = Epoch
-    BATCH_SIZE        = FLAGs.BatchSize
+    if IS_IN_IPYTHON:
+        Dataset           = FLAGs['Dataset']
+        Model_first_name  = FLAGs['Model_1st']
+        Model_second_name = FLAGs['Model_2nd']
+        EPOCH             = Epoch
+        BATCH_SIZE        = FLAGs['BatchSize']
+    else:
+        Dataset           = FLAGs.Dataset
+        Model_first_name  = FLAGs.Model_1st
+        Model_second_name = FLAGs.Model_2nd
+        EPOCH             = Epoch
+        BATCH_SIZE        = FLAGs.BatchSize
     
     Model_Name = Model_first_name + '_' + Model_second_name
     
@@ -472,7 +506,7 @@ def run_rebuilding(
     HP.update({'Quantized_Activation_Epoch': 100             })
     HP.update({'Dropout_Rate'              : 0.0             })
     
-    print("\033[1;32;40mBATCH SIZE\033[0m : \033[1;37;40m{}\033[0m" .format(HP['Batch_Size']))
+    print("\033[1;32mBATCH SIZE\033[0m : \033[1;30m{}\033[0m" .format(HP['Batch_Size']))
     
     #---------------------------#
     #    Hyperparameter Save    #
@@ -508,14 +542,14 @@ def run_rebuilding(
     
     base_mask = get_mask(
         model_path = rebuilding_model_path_base,
-        model      = rebuilding_model,
+        model      = rebuilding_model_base,
         H_Resize   = H_Resize,
         W_Resize   = W_Resize,
         class_num  = class_num)
     
     base_weights = get_weights(
         model_path = rebuilding_model_path_base,
-        model      = rebuilding_model,
+        model      = rebuilding_model_base,
         H_Resize   = H_Resize,
         W_Resize   = W_Resize,
         class_num  = class_num)
@@ -635,113 +669,84 @@ def Training(
     #    Building Model    #
     #----------------------# 
     print("Building Model ...")
-    device = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
-    device_num = len(os.environ['CUDA_VISIBLE_DEVICES'].split(','))
-    device_batch = int(HP['Batch_Size'] / device_num)
-    prediction_list = []
-    # Assign Usage of CPU and GPU
-    for d in range(device_num):
-        device_use = device[d]
-        with tf.device(tf.train.replica_device_setter(worker_device = '/device:GPU:%d' %int(device_use), ps_device = '/device:CPU:0', ps_tasks=1)):
-            ## -- Build Model --
-            net = xs[ d*device_batch : (d+1)*device_batch ]
-            Model_dict_ = copy.deepcopy(Model_dict)
-            if d == 0:      
-                prediction, Analysis, max_parameter, inputs_and_kernels, prune_info_dict = Model_dict_Decoder(
-                    net                     = net, 
-                    Model_dict              = Model_dict_, 
-                    is_training             = is_training,
-                    is_ternary              = is_ternary,
-                    is_quantized_activation = is_quantized_activation,
-                    DROPOUT_RATE            = HP['Dropout_Rate'],
-                    data_format             = "NCHW",
-                    reuse                   = None)
-                #Analysis = {}
-                #network = resnet_model.cifar10_resnet_v2_generator(20, class_num, "channels_first")
-                #prediction = network(net, is_training)
-            else:
-                prediction, Analysis, max_parameter, inputs_and_kernels, prune_info_dict = Model_dict_Decoder(
-                    net                     = net, 
-                    Model_dict              = Model_dict_, 
-                    is_training             = is_training,
-                    is_ternary              = is_ternary,
-                    is_quantized_activation = is_quantized_activation,
-                    DROPOUT_RATE            = HP['Dropout_Rate'],
-                    data_format             = "NCHW",
-                    reuse                   = True)
+    ## -- Build Model --
+    net = xs[0 : HP['Batch_Size']]
+    Model_dict_ = copy.deepcopy(Model_dict)     
+    prediction, Analysis, max_parameter, inputs_and_kernels, prune_info_dict = Model_dict_Decoder(
+        net                     = net, 
+        Model_dict              = Model_dict_, 
+        is_training             = is_training,
+        is_ternary              = is_ternary,
+        is_quantized_activation = is_quantized_activation,
+        DROPOUT_RATE            = HP['Dropout_Rate'],
+        data_format             = "NCHW",
+        reuse                   = None)
+    
+    ## -- Model Size --
+    # Your grade will depend on this value.
+    all_variables = tf.trainable_variables() #tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope="Model")
+    # Model Size
+    Model_Size = 0
+    for iter, variable in enumerate(all_variables):
+        Model_Size += reduce(lambda x, y: x*y, variable.get_shape().as_list())
+        # See all your variables in termainl	
+        #print("{}, {}" .format(iter, variable))
+        
+    print("\033[0;36m=======================\033[0m")
+    print("\033[0;36m Model Size\033[0m = {}" .format(Model_Size))
+    print("\033[0;36m=======================\033[0m")
+    #pdb.set_trace()
+    
+    ## -- Collection --
+    ## Ternary
+    float32_weights_collection          = tf.get_collection("float32_weights"        , scope=None)
+    float32_biases_collection           = tf.get_collection("float32_biases"         , scope=None)
+    ternary_weights_bd_collection       = tf.get_collection("ternary_weights_bd"     , scope=None)
+    ternary_biases_bd_collection        = tf.get_collection("ternary_biases_bd"      , scope=None)  
+    ## assign ternary or float32 weights/biases to final weights/biases  
+    assign_var_list_collection          = tf.get_collection("assign_var_list"        , scope=None)  
+    ## Actvation Quantization    
+    float32_net_collection              = tf.get_collection("float32_net"            , scope=None)
+    is_quantized_activation_collection  = tf.get_collection("is_quantized_activation", scope=None)
+    mantissa_collection                 = tf.get_collection("mantissa"               , scope=None)
+    fraction_collection                 = tf.get_collection("fraction"               , scope=None)
+    ## Gradient Update
+    var_list_collection                 = tf.get_collection("var_list"               , scope=None)
+    float32_params                      = tf.get_collection("float32_params"         , scope=None) 
+        
+    ## -- Loss --
+    labels = ys[0 : HP['Batch_Size']]
+    
+    # L2 Regularization
+    l2_norm   = tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()])
+    l2_lambda = tf.constant(HP['L2_Lambda'])
+    l2_norm   = tf.multiply(l2_lambda, l2_norm)
+    
+    # Cross Entropy
+    cross_entropy = tf.losses.softmax_cross_entropy(
+        onehot_labels = labels,
+        logits        = prediction)
+    
+    # Loss
+    loss = cross_entropy + HP['L2_Lambda'] * tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()])
+    
+    ## -- Optimizer --
+    if HP['Opt_Method']=='Adam':
+        opt = tf.train.AdamOptimizer(learning_rate, HP['Momentum_Rate'])
+    elif HP['Opt_Method']=='Momentum':
+        opt = tf.train.MomentumOptimizer(
+            learning_rate = learning_rate, 
+            momentum      = HP['Momentum_Rate'])
+        
+    # Batch norm requires update ops to be added as a dependency to the train_op
+    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+    with tf.control_dependencies(update_ops):
+        ## Compute Gradients
+        var_list = tf.trainable_variables()
+        gra_and_var = opt.compute_gradients(loss, var_list = var_list)
             
-            prediction_list.append(prediction)
-            
-            ## -- Model Size --
-            if d == 0:
-                # Your grade will depend on this value.
-                all_variables = tf.trainable_variables() #tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope="Model")
-                # Model Size
-                Model_Size = 0
-                for iter, variable in enumerate(all_variables):
-                    Model_Size += reduce(lambda x, y: x*y, variable.get_shape().as_list())
-                    # See all your variables in termainl	
-                    #print("{}, {}" .format(iter, variable))
-                    
-                print("\033[0;36m=======================\033[0m")
-                print("\033[0;36m Model Size\033[0m = {}" .format(Model_Size))
-                print("\033[0;36m=======================\033[0m")
-                #pdb.set_trace()
-            
-            ## -- Collection --
-            if d == 0:
-                ## Ternary
-                float32_weights_collection          = tf.get_collection("float32_weights"        , scope=None)
-                float32_biases_collection           = tf.get_collection("float32_biases"         , scope=None)
-                ternary_weights_bd_collection       = tf.get_collection("ternary_weights_bd"     , scope=None)
-                ternary_biases_bd_collection        = tf.get_collection("ternary_biases_bd"      , scope=None)  
-                ## assign ternary or float32 weights/biases to final weights/biases  
-                assign_var_list_collection          = tf.get_collection("assign_var_list"        , scope=None)  
-                ## Actvation Quantization    
-                float32_net_collection              = tf.get_collection("float32_net"            , scope=None)
-                is_quantized_activation_collection  = tf.get_collection("is_quantized_activation", scope=None)
-                mantissa_collection                 = tf.get_collection("mantissa"               , scope=None)
-                fraction_collection                 = tf.get_collection("fraction"               , scope=None)
-                ## Gradient Update
-                var_list_collection                 = tf.get_collection("var_list"               , scope=None)
-                float32_params                      = tf.get_collection("float32_params"         , scope=None) 
-                
-            ## -- Loss --
-            labels = ys[ d*device_batch : (d+1)*device_batch ]
-            
-            # L2 Regularization
-            l2_norm   = tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()])
-            l2_lambda = tf.constant(HP['L2_Lambda'])
-            l2_norm   = tf.multiply(l2_lambda, l2_norm)
-            
-            # Cross Entropy
-            cross_entropy = tf.losses.softmax_cross_entropy(
-                onehot_labels = labels,
-                logits        = prediction_list[d])
-            
-            # Loss
-            loss = cross_entropy + HP['L2_Lambda'] * tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()])
-            
-            ## -- Optimizer --
-            if HP['Opt_Method']=='Adam':
-                opt = tf.train.AdamOptimizer(learning_rate, HP['Momentum_Rate'])
-            elif HP['Opt_Method']=='Momentum':
-                opt = tf.train.MomentumOptimizer(
-                    learning_rate = learning_rate, 
-                    momentum      = HP['Momentum_Rate'])
-                
-            # Batch norm requires update ops to be added as a dependency to the train_op
-            update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-            with tf.control_dependencies(update_ops):
-                #train_step = opt.minimize(loss)
-                
-                ## Compute Gradients
-                var_list = tf.trainable_variables()
-                gra_and_var = opt.compute_gradients(loss, var_list = var_list)
-                
     ## Apply Gradients
-    with tf.device(tf.train.replica_device_setter(worker_device = '/device:GPU:%d' %int(device[0]), ps_device = '/device:CPU:0', ps_tasks=1)):
-        train_step  = opt.apply_gradients(gra_and_var, global_step)
+    train_step  = opt.apply_gradients(gra_and_var, global_step)
     
     #-----------------------------#
     #   Some Control Parameters   #
@@ -853,16 +858,10 @@ def Training(
 
                 # Run Training Step
                 feed_dict_train.update({is_training: True}) # xs: batch_xs, ys: batch_ys, learning_rate: lr, 
-                _, Loss, Prediction_list, L2_norm, batch_ys = sess.run(
-                    [train_step, loss, prediction_list, l2_norm, ys], 
+                _, Loss, Prediction, L2_norm, batch_ys = sess.run(
+                    [train_step, loss, prediction, l2_norm, ys], 
                     feed_dict = feed_dict_train)
 
-                # Combine Different Device Prediction
-                for d in range(len(Prediction_list)):
-                    if d == 0:
-                        Prediction = Prediction_list[d]
-                    else:
-                        Prediction = np.concatenate([Prediction, Prediction_list[d]], axis = 0)
                 # Assign float32 or ternary weight and biases to final weights
                 # This may can be placed into GraphKeys.UPDATE_OPS, but i am not sure.
                 for assign_var_list_iter, assign_var_list in enumerate(assign_var_list_collection):
@@ -943,7 +942,7 @@ def Training(
             #----------------------------#
             if (not IS_HYPERPARAMETER_OPT) and (epoch+1)==HP['Epoch']:
                 print("Saving Trained Weights ...")
-                save_path = saver.save(sess, Dir + str(epoch+1) + ".ckpt")
+                save_path = saver.save(sess, Dir + str(Global_Epoch+epoch+1) + ".ckpt")
                 print("\033[0;35m{}\033[0m" .format(save_path))
         
         tEnd_All = time.time()
@@ -961,7 +960,7 @@ def Training(
     tf.reset_default_graph()
         
     Model_Path = Dir
-    Model = str(HP['Epoch']) + '.ckpt'
+    Model = str(HP['Epoch']+Global_Epoch) + '.ckpt'
     
     return Model_Path, Model
 
@@ -1029,60 +1028,32 @@ def Testing(
     test_target_index = np.array(open(Dataset_Path + '/testannot.txt', 'r').read().splitlines())
     test_data_num = len(test_data_index)
     
-    #---------------------#
-    #    Loading Model    #
-    #---------------------#
+    #----------------------#
+    #    Building Model    #
+    #----------------------# 
     print("Building Model ...")
-    device = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
-    device_num = len(os.environ['CUDA_VISIBLE_DEVICES'].split(','))
-    device_batch = int(BATCH_SIZE / device_num)
-    prediction_list = []
-    # Assign Usage of CPU and GPU
-    for d in range(device_num):
-        device_use = device[d]
-        with tf.device(tf.train.replica_device_setter(worker_device = '/device:GPU:%d' %int(device_use), ps_device = '/device:CPU:0', ps_tasks=1)):
-            # -- Build Model --
-            net = xs[ d*device_batch : (d+1)*device_batch ]
-            Model_dict_ = copy.deepcopy(Model_dict)
-            if d == 0:
-                prediction, Analysis, max_parameter, inputs_and_kernels, prune_info_dict = Model_dict_Decoder(
-                    net                     = net, 
-                    Model_dict              = Model_dict_, 
-                    is_training             = is_training,
-                    is_ternary              = is_ternary,
-                    is_quantized_activation = is_quantized_activation,
-                    DROPOUT_RATE            = None,
-                    data_format             = "NHWC",
-                    reuse                   = None)
-                #Analysis = {}
-                #network = resnet_model.cifar10_resnet_v2_generator(20, class_num, "channels_first")
-                #prediction = network(net, is_training)
-            else:
-                prediction, Analysis, max_parameter, inputs_and_kernels, prune_info_dict = Model_dict_Decoder(
-                    net                     = net, 
-                    Model_dict              = Model_dict_, 
-                    is_training             = is_training,
-                    is_ternary              = is_ternary,
-                    is_quantized_activation = is_quantized_activation,
-                    DROPOUT_RATE            = None,
-                    data_format             = "NHWC",
-                    reuse                   = True)
-               
-            prediction_list.append(prediction)
-            
-            # -- Model Size --
-            if d == 0:
-                #--------------------------#
-                #    Compute Model Size    #
-                #--------------------------#
-                # Your grade will depend on this value.
-                all_variables = tf.trainable_variables() #tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope="Model")
-                # Model Size
-                Model_Size = 0
-                for iter, variable in enumerate(all_variables):
-                    Model_Size += reduce(lambda x, y: x*y, variable.get_shape().as_list())
-                    # See all your variables in termainl	
-                    #print(variable)
+    ## -- Build Model --
+    net = xs[0 : BATCH_SIZE]
+    Model_dict_ = copy.deepcopy(Model_dict)     
+    prediction, Analysis, max_parameter, inputs_and_kernels, prune_info_dict = Model_dict_Decoder(
+        net                     = net, 
+        Model_dict              = Model_dict_, 
+        is_training             = is_training,
+        is_ternary              = is_ternary,
+        is_quantized_activation = is_quantized_activation,
+        DROPOUT_RATE            = None,
+        data_format             = "NHWC",
+        reuse                   = None)
+    
+    ## -- Model Size --
+    # Your grade will depend on this value.
+    all_variables = tf.trainable_variables() #tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope="Model")
+    # Model Size
+    Model_Size = 0
+    for iter, variable in enumerate(all_variables):
+        Model_Size += reduce(lambda x, y: x*y, variable.get_shape().as_list())
+        # See all your variables in termainl	
+        #print("{}, {}" .format(iter, variable))
                      
     #-----------------------------#
     #   Some Control Parameters   #
@@ -1116,18 +1087,9 @@ def Testing(
         print("\033[0;35m{}\033[0m" .format(testing_model_path + testing_model))
         save_path = saver.restore(sess, testing_model_path + testing_model)
         
-        # Debug
-        """
-        constant = tf.get_collection('constant_float32_weights', scope = None)
-        is_train_mask = tf.get_collection('is_train_float32_weights_mask', scope = None)
-        weights = tf.get_collection('float32_weights', scope = None)
-        aa = sess.run(constant[0])
-        bb = sess.run(weights[0])
-        cc = sess.run(is_train_mask[0])
-        pdb.set_trace()
-        """
-        # End Debug
-        
+        #------------------#
+        #    Model Size    #
+        #------------------#
         Pruned_Size = 0
         for iter, mask in enumerate(tf.get_collection('float32_weights_mask')):
             Pruned_Size = Pruned_Size + np.sum(sess.run(mask) == 0)
@@ -1135,8 +1097,7 @@ def Testing(
         print("\033[0;36m=======================\033[0m")
         print("\033[0;36m Model Size\033[0m = {}" .format(Model_Size-Pruned_Size))
         print("\033[0;36m=======================\033[0m")
-        
-        #pdb.set_trace()
+
         #similar_group(inputs_and_kernels, sess)
         print("Testing Data Result ... ")
         test_result, test_accuracy, test_accuracy_top2, test_accuracy_top3, test_Y_pre = compute_accuracy(
@@ -1146,7 +1107,7 @@ def Testing(
             is_quantized_activation = is_quantized_activation,
             Model_dict              = Model_dict,                
             QUANTIZED_NOW           = True, 
-            prediction_list         = prediction_list, 
+            prediction_list         = [prediction], 
             data_num                = test_data_num,
             BATCH_SIZE              = BATCH_SIZE, 
             sess                    = sess)
@@ -1258,109 +1219,79 @@ def Pruning(
     #    Building Model    #
     #----------------------# 
     print("Building Model ...")
-    device = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
-    device_num = len(os.environ['CUDA_VISIBLE_DEVICES'].split(','))
-    device_batch = int(HP['Batch_Size'] / device_num)
-    prediction_list = []
-    # Assign Usage of CPU and GPU
-    for d in range(device_num):
-        device_use = device[d]
-        with tf.device(tf.train.replica_device_setter(worker_device = '/device:GPU:%d' %int(device_use), ps_device = '/device:CPU:0', ps_tasks=1)):
-            # -- Build Model --
-            net = xs[ d*device_batch : (d+1)*device_batch ]
-            Model_dict_ = copy.deepcopy(Model_dict)
-            if d == 0:      
-                prediction, Analysis, max_parameter, inputs_and_kernels, prune_info_dict = Model_dict_Decoder(
-                    net                     = net, 
-                    Model_dict              = Model_dict_, 
-                    is_training             = is_training,
-                    is_ternary              = is_ternary,
-                    is_quantized_activation = is_quantized_activation,
-                    DROPOUT_RATE            = HP['Dropout_Rate'],
-                    data_format             = "NCHW",
-                    reuse                   = None)
-            else:
-                prediction, Analysis, max_parameter, inputs_and_kernels, prune_info_dict = Model_dict_Decoder(
-                    net                     = net, 
-                    Model_dict              = Model_dict_, 
-                    is_training             = is_training,
-                    is_ternary              = is_ternary,
-                    is_quantized_activation = is_quantized_activation,
-                    DROPOUT_RATE            = HP['Dropout_Rate'],
-                    data_format             = "NCHW",
-                    reuse                   = True)
+    ## -- Build Model --
+    net = xs[0 : HP['Batch_Size']]
+    Model_dict_ = copy.deepcopy(Model_dict)     
+    prediction, Analysis, max_parameter, inputs_and_kernels, prune_info_dict = Model_dict_Decoder(
+        net                     = net, 
+        Model_dict              = Model_dict_, 
+        is_training             = is_training,
+        is_ternary              = is_ternary,
+        is_quantized_activation = is_quantized_activation,
+        DROPOUT_RATE            = HP['Dropout_Rate'],
+        data_format             = "NCHW",
+        reuse                   = None)
+    
+    ## -- Model Size --
+    # Your grade will depend on this value.
+    all_variables = tf.trainable_variables() #tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope="Model")
+    # Model Size
+    Model_Size = 0
+    for iter, variable in enumerate(all_variables):
+        Model_Size += reduce(lambda x, y: x*y, variable.get_shape().as_list())
+        # See all your variables in termainl	
+        #print("{}, {}" .format(iter, variable))
+
+    ## -- Collection --
+    ## Ternary
+    float32_weights_collection          = tf.get_collection("float32_weights"        , scope=None)
+    float32_biases_collection           = tf.get_collection("float32_biases"         , scope=None)
+    ternary_weights_bd_collection       = tf.get_collection("ternary_weights_bd"     , scope=None)
+    ternary_biases_bd_collection        = tf.get_collection("ternary_biases_bd"      , scope=None)  
+    ## assign ternary or float32 weights/biases to final weights/biases  
+    assign_var_list_collection          = tf.get_collection("assign_var_list"        , scope=None)  
+    ## Actvation Quantization    
+    float32_net_collection              = tf.get_collection("float32_net"            , scope=None)
+    is_quantized_activation_collection  = tf.get_collection("is_quantized_activation", scope=None)
+    mantissa_collection                 = tf.get_collection("mantissa"               , scope=None)
+    fraction_collection                 = tf.get_collection("fraction"               , scope=None)
+    ## Gradient Update
+    var_list_collection                 = tf.get_collection("var_list"               , scope=None)
+    float32_params                      = tf.get_collection("float32_params"         , scope=None) 
+        
+    ## -- Loss --
+    labels = ys[0 : HP['Batch_Size']]
+    
+    # L2 Regularization
+    l2_norm   = tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()])
+    l2_lambda = tf.constant(HP['L2_Lambda'])
+    l2_norm   = tf.multiply(l2_lambda, l2_norm)
+    
+    # Cross Entropy
+    cross_entropy = tf.losses.softmax_cross_entropy(
+        onehot_labels = labels,
+        logits        = prediction)
+    
+    # Loss
+    loss = cross_entropy + HP['L2_Lambda'] * tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()])
+    
+    ## -- Optimizer --
+    if HP['Opt_Method']=='Adam':
+        opt = tf.train.AdamOptimizer(learning_rate, HP['Momentum_Rate'])
+    elif HP['Opt_Method']=='Momentum':
+        opt = tf.train.MomentumOptimizer(
+            learning_rate = learning_rate, 
+            momentum      = HP['Momentum_Rate'])
+        
+    # Batch norm requires update ops to be added as a dependency to the train_op
+    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+    with tf.control_dependencies(update_ops):
+        ## Compute Gradients
+        var_list = tf.trainable_variables()
+        gra_and_var = opt.compute_gradients(loss, var_list = var_list)
             
-            prediction_list.append(prediction)
-            
-            # -- Model Size --
-            if d == 0:
-                # Your grade will depend on this value.
-                all_variables = tf.trainable_variables() #tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope="Model")
-                # Model Size
-                Model_Size = 0
-                Pruned_Size = 0
-                for iter, variable in enumerate(all_variables):
-                    Model_Size += reduce(lambda x, y: x*y, variable.get_shape().as_list())
-                    #print(variable)
-                    
-            # -- Collection --
-            if d == 0:
-                ## Ternary
-                float32_weights_collection          = tf.get_collection("float32_weights"        , scope=None)
-                float32_biases_collection           = tf.get_collection("float32_biases"         , scope=None)
-                ternary_weights_bd_collection       = tf.get_collection("ternary_weights_bd"     , scope=None)
-                ternary_biases_bd_collection        = tf.get_collection("ternary_biases_bd"      , scope=None)  
-                ## assign ternary or float32 weights/biases to final weights/biases  
-                assign_var_list_collection          = tf.get_collection("assign_var_list"        , scope=None)  
-                ## Actvation Quantization    
-                float32_net_collection              = tf.get_collection("float32_net"            , scope=None)
-                is_quantized_activation_collection  = tf.get_collection("is_quantized_activation", scope=None)
-                mantissa_collection                 = tf.get_collection("mantissa"               , scope=None)
-                fraction_collection                 = tf.get_collection("fraction"               , scope=None)
-                ## Gradient Update
-                var_list_collection                 = tf.get_collection("var_list"               , scope=None)
-                float32_params                      = tf.get_collection("float32_params"         , scope=None) 
-                
-            # -- Loss --
-            labels = ys[ d*device_batch : (d+1)*device_batch ]
-            
-            # L2 Regularization
-            l2_norm   = tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()])
-            l2_lambda = tf.constant(HP['L2_Lambda'])
-            l2_norm   = tf.multiply(l2_lambda, l2_norm)
-            
-            # Loss
-            loss = tf.losses.softmax_cross_entropy(
-                onehot_labels = labels,
-                logits        = prediction_list[d])
-            loss = tf.add(loss, l2_norm)
-            
-            # -- Optimizer --
-            if HP['Opt_Method']=='Adam':
-                opt = tf.train.AdamOptimizer(learning_rate, HP['Momentum_Rate'])
-            elif HP['Opt_Method']=='Momentum':
-                opt = tf.train.MomentumOptimizer(
-                    learning_rate = learning_rate, 
-                    momentum      = HP['Momentum_Rate'])
-                
-            # Batch norm requires update ops to be added as a dependency to the train_op
-            update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-            with tf.control_dependencies(update_ops):
-                train_step = opt.minimize(loss)
-                """
-                # Compute Gradients
-                gradients = opt.compute_gradients(loss, var_list = var_list_collection)
-                if d == 0:
-                    gra_and_var = [(gradients[i][0], float32_params[i]) for i in range(np.shape(gradients)[0])]
-                else:
-                    for i in range(np.shape(gradients)[0]):
-                        gra_and_var.append((gradients[i][0], float32_params[i]))
-                """
-    # Apply Gradients
-    """
-    with tf.device(tf.train.replica_device_setter(worker_device = '/device:GPU:%d' %int(device[0]), ps_device = '/device:CPU:0', ps_tasks=1)):
-        train_step  = opt.apply_gradients(gra_and_var, global_step)
-    """
+    ## Apply Gradients
+    train_step  = opt.apply_gradients(gra_and_var, global_step)
     #-----------------------------#
     #   Some Control Parameters   #
     #-----------------------------#
@@ -1377,7 +1308,7 @@ def Pruning(
     
     #-----------#
     #   Saver   #
-    #-----------#	
+    #-----------#
     saver = tf.train.Saver()
     
     #---------------#
@@ -1407,16 +1338,21 @@ def Pruning(
         #   Pruning   #
         #-------------#
         if Global_Epoch%HP['Pruning_Retrain_Epoch'] == 0:
+            print("pruning ...")
             pruning_propotion = HP['Pruning_Propotion_Per']
             kernel_values_per_layer = similar_group(inputs_and_kernels, sess)
             if   HP['Pruning_Strategy'] == 'Filter_Angle':
                 filter_prune_by_angle(prune_info_dict, pruning_propotion, sess) 
             elif HP['Pruning_Strategy'] == 'Filter_Magnitude':
-                filter_prune_by_magnitude(kernel_values_per_layer, pruning_propotion, sess)
+                filter_prune_by_magnitude(prune_info_dict, pruning_propotion, sess)
             elif HP['Pruning_Strategy'] == 'Sparse_Magnitude':
                 sparse_prune_by_magnitude(0.05, sess)
             elif HP['Pruning_Strategy'] == 'Plane_Angle':
                 plane_prune_by_angle(prune_info_dict, pruning_propotion, sess)
+            elif HP['Pruning_Strategy'] == 'Filter_Angle_with_Skip':
+                if Model_second_name.split('_')[0] == '56':
+                    skip_layer = [22, 28, 55, 79] # conv 16, 20, 38, 54
+                filter_prune_by_angle_with_skip(prune_info_dict, pruning_propotion, skip_layer, sess)
         #------------------#
         #    Model Size    #
         #------------------#
@@ -1491,15 +1427,9 @@ def Pruning(
                 """
                 # Run Training Step
                 feed_dict_train.update({is_training: True}) # xs: batch_xs, ys: batch_ys, learning_rate: lr, 
-                _, Loss, Prediction_list, L2_norm, batch_ys = sess.run(
-                    [train_step, loss, prediction_list, l2_norm, ys], 
+                _, Loss, Prediction, L2_norm, batch_ys = sess.run(
+                    [train_step, loss, prediction, l2_norm, ys], 
                     feed_dict = feed_dict_train)
-                # Combine Different Device Prediction
-                for d in range(len(Prediction_list)):
-                    if d == 0:
-                        Prediction = Prediction_list[d]
-                    else:
-                        Prediction = np.concatenate([Prediction, Prediction_list[d]], axis = 0)
                 # Assign float32 or ternary weight and biases to final weights
                 for assign_var_list_iter, assign_var_list in enumerate(assign_var_list_collection):
                     sess.run(assign_var_list, feed_dict = feed_dict_assign)
@@ -1551,8 +1481,7 @@ def Pruning(
                 for iter, mask in enumerate(tf.get_collection('float32_weights_mask')):
                     Pruned_Size = Pruned_Size + np.sum(sess.run(mask) == 0)
                 Pruning_Propotion_Now = int(Pruned_Size / Model_Size * 100) #int(HP['Pruning_Propotion_Per']*100*(Pruned_time+1))
-                Dir = Dir.split('_' + HP['Pruning_Strategy'])[0] + '_' + HP['Pruning_Strategy'] + str(Pruning_Propotion_Now) + '/'
-                
+                Dir = Dir.split('_' + HP['Pruning_Strategy'])[0] + '_' + HP['Pruning_Strategy'] + str(int(HP['Pruning_Propotion_Per']*100)) + '_' + str(Pruning_Propotion_Now) + '/'
                 if (not os.path.exists(Dir)):
                     print("\033[0;35m%s\033[0m is not exist!" %Dir)
                     print("\033[0;35m%s\033[0m is created!" %Dir)
@@ -1573,7 +1502,7 @@ def Pruning(
             #----------------------------#
             if (epoch+1)==HP['Epoch']:
                 print("Saving Trained Weights ...")
-                save_path = saver.save(sess, Dir + str(epoch+1) + ".ckpt")
+                save_path = saver.save(sess, Dir + str(Global_Epoch+epoch+1) + ".ckpt")
                 print("\033[0;35m{}\033[0m" .format(save_path))
         
         tEnd_All = time.time()
@@ -1590,7 +1519,7 @@ def Pruning(
     tf.reset_default_graph()
         
     Model_Path = Dir
-    Model = str(HP['Epoch']) + '.ckpt'
+    Model = str(HP['Epoch']+Global_Epoch) + '.ckpt'
     
     return Model_Path, Model
 
@@ -1664,106 +1593,84 @@ def Rebuilding(
     for layer in range(len(Model_dict)):
         is_ternary.update({'layer%d'%layer : tf.placeholder(tf.bool)})  
     
-    #----------------------#
+     #----------------------#
     #    Building Model    #
     #----------------------# 
     print("Building Model ...")
-    device = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
-    device_num = len(os.environ['CUDA_VISIBLE_DEVICES'].split(','))
-    device_batch = int(HP['Batch_Size'] / device_num)
-    prediction_list = []
-    # Assign Usage of CPU and GPU
-    for d in range(device_num):
-        device_use = device[d]
-        with tf.device(tf.train.replica_device_setter(worker_device = '/device:GPU:%d' %int(device_use), ps_device = '/device:CPU:0', ps_tasks=1)):
-            # -- Build Model --
-            net = xs[ d*device_batch : (d+1)*device_batch ]
-            Model_dict_ = copy.deepcopy(Model_dict)
-            if d == 0:      
-                prediction, Analysis, max_parameter, inputs_and_kernels, prune_info_dict = Model_dict_Decoder(
-                    net                     = net, 
-                    Model_dict              = Model_dict_, 
-                    is_training             = is_training,
-                    is_ternary              = is_ternary,
-                    is_quantized_activation = is_quantized_activation,
-                    DROPOUT_RATE            = HP['Dropout_Rate'],
-                    data_format             = "NCHW",
-                    reuse                   = None)
-            else:
-                prediction, Analysis, max_parameter, inputs_and_kernels, prune_info_dict = Model_dict_Decoder(
-                    net                     = net, 
-                    Model_dict              = Model_dict_, 
-                    is_training             = is_training,
-                    is_ternary              = is_ternary,
-                    is_quantized_activation = is_quantized_activation,
-                    DROPOUT_RATE            = HP['Dropout_Rate'],
-                    data_format             = "NCHW",
-                    reuse                   = True)
-            
-            prediction_list.append(prediction)
-            
-            # -- Model Size --
-            if d == 0:
-                # Your grade will depend on this value.
-                all_variables = tf.trainable_variables() #tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope="Model")
-                # Model Size
-                Model_Size = 0
-                Pruned_Size = 0
-                for iter, variable in enumerate(all_variables):
-                    Model_Size += reduce(lambda x, y: x*y, variable.get_shape().as_list())
-                    #print(variable)
-                    
-            # -- Collection --
-            if d == 0:
-                ## Ternary
-                float32_weights_collection          = tf.get_collection("float32_weights"        , scope=None)
-                float32_biases_collection           = tf.get_collection("float32_biases"         , scope=None)
-                ternary_weights_bd_collection       = tf.get_collection("ternary_weights_bd"     , scope=None)
-                ternary_biases_bd_collection        = tf.get_collection("ternary_biases_bd"      , scope=None)  
-                ## assign ternary or float32 weights/biases to final weights/biases  
-                assign_var_list_collection          = tf.get_collection("assign_var_list"        , scope=None)  
-                ## Actvation Quantization    
-                float32_net_collection              = tf.get_collection("float32_net"            , scope=None)
-                is_quantized_activation_collection  = tf.get_collection("is_quantized_activation", scope=None)
-                mantissa_collection                 = tf.get_collection("mantissa"               , scope=None)
-                fraction_collection                 = tf.get_collection("fraction"               , scope=None)
-                ## Gradient Update
-                var_list_collection                 = tf.get_collection("var_list"               , scope=None)
-                float32_params                      = tf.get_collection("float32_params"         , scope=None) 
-                
-            # -- Loss --
-            labels = ys[ d*device_batch : (d+1)*device_batch ]
-            
-            # L2 Regularization
-            l2_norm   = tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()])
-            l2_lambda = tf.constant(HP['L2_Lambda'])
-            l2_norm   = tf.multiply(l2_lambda, l2_norm)
-            
-            # Loss
-            loss = tf.losses.softmax_cross_entropy(
-                onehot_labels = labels,
-                logits        = prediction_list[d])
-            loss = tf.add(loss, l2_norm)
-            
-            # -- Optimizer --
-            if HP['Opt_Method']=='Adam':
-                opt = tf.train.AdamOptimizer(learning_rate, HP['Momentum_Rate'])
-            elif HP['Opt_Method']=='Momentum':
-                opt = tf.train.MomentumOptimizer(
-                    learning_rate = learning_rate,
-                    momentum      = HP['Momentum_Rate'])
-                
-            # Batch norm requires update ops to be added as a dependency to the train_op
-            update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-            with tf.control_dependencies(update_ops):
-                ## var_list
-                var_list = tf.trainable_variables()
-                ## Compute Gradients
-                gra_and_var = opt.compute_gradients(loss, var_list = var_list)
+    ## -- Build Model --
+    net = xs[0 : HP['Batch_Size']]
+    Model_dict_ = copy.deepcopy(Model_dict)     
+    prediction, Analysis, max_parameter, inputs_and_kernels, prune_info_dict = Model_dict_Decoder(
+        net                     = net, 
+        Model_dict              = Model_dict_, 
+        is_training             = is_training,
+        is_ternary              = is_ternary,
+        is_quantized_activation = is_quantized_activation,
+        DROPOUT_RATE            = HP['Dropout_Rate'],
+        data_format             = "NCHW",
+        reuse                   = None)
+    
+    ## -- Model Size --
+    # Your grade will depend on this value.
+    all_variables = tf.trainable_variables() #tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope="Model")
+    # Model Size
+    Model_Size = 0
+    for iter, variable in enumerate(all_variables):
+        Model_Size += reduce(lambda x, y: x*y, variable.get_shape().as_list())
+        # See all your variables in termainl	
+        #print("{}, {}" .format(iter, variable))
 
+    ## -- Collection --
+    ## Ternary
+    float32_weights_collection          = tf.get_collection("float32_weights"        , scope=None)
+    float32_biases_collection           = tf.get_collection("float32_biases"         , scope=None)
+    ternary_weights_bd_collection       = tf.get_collection("ternary_weights_bd"     , scope=None)
+    ternary_biases_bd_collection        = tf.get_collection("ternary_biases_bd"      , scope=None)  
+    ## assign ternary or float32 weights/biases to final weights/biases  
+    assign_var_list_collection          = tf.get_collection("assign_var_list"        , scope=None)  
+    ## Actvation Quantization    
+    float32_net_collection              = tf.get_collection("float32_net"            , scope=None)
+    is_quantized_activation_collection  = tf.get_collection("is_quantized_activation", scope=None)
+    mantissa_collection                 = tf.get_collection("mantissa"               , scope=None)
+    fraction_collection                 = tf.get_collection("fraction"               , scope=None)
+    ## Gradient Update
+    var_list_collection                 = tf.get_collection("var_list"               , scope=None)
+    float32_params                      = tf.get_collection("float32_params"         , scope=None) 
+        
+    ## -- Loss --
+    labels = ys[0 : HP['Batch_Size']]
+    
+    # L2 Regularization
+    l2_norm   = tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()])
+    l2_lambda = tf.constant(HP['L2_Lambda'])
+    l2_norm   = tf.multiply(l2_lambda, l2_norm)
+    
+    # Cross Entropy
+    cross_entropy = tf.losses.softmax_cross_entropy(
+        onehot_labels = labels,
+        logits        = prediction)
+    
+    # Loss
+    loss = cross_entropy + HP['L2_Lambda'] * tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()])
+    
+    ## -- Optimizer --
+    if HP['Opt_Method']=='Adam':
+        opt = tf.train.AdamOptimizer(learning_rate, HP['Momentum_Rate'])
+    elif HP['Opt_Method']=='Momentum':
+        opt = tf.train.MomentumOptimizer(
+            learning_rate = learning_rate, 
+            momentum      = HP['Momentum_Rate'])
+        
+    # Batch norm requires update ops to be added as a dependency to the train_op
+    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+    with tf.control_dependencies(update_ops):
+        ## Compute Gradients
+        var_list = tf.trainable_variables()
+        gra_and_var = opt.compute_gradients(loss, var_list = var_list)
+            
     ## Apply Gradients
-    with tf.device(tf.train.replica_device_setter(worker_device = '/device:GPU:%d' %int(device[0]), ps_device = '/device:CPU:0', ps_tasks=1)):
-        train_step  = opt.apply_gradients(gra_and_var)
+    train_step  = opt.apply_gradients(gra_and_var, global_step)
+    
     #-----------------------------#
     #   Some Control Parameters   #
     #-----------------------------#
@@ -1890,15 +1797,9 @@ def Rebuilding(
                 """
                 ## Run Training Step ##
                 feed_dict_train.update({is_training: True}) # xs: batch_xs, ys: batch_ys, learning_rate: lr, 
-                _, Loss, Prediction_list, L2_norm, batch_ys, gradient = sess.run(
-                    [train_step, loss, prediction_list, l2_norm, ys, gra_and_var[0][0]], 
+                _, Loss, Prediction, L2_norm, batch_ys, gradient = sess.run(
+                    [train_step, loss, prediction, l2_norm, ys, gra_and_var[0][0]], 
                     feed_dict = feed_dict_train)
-                # Combine Different Device Prediction
-                for d in range(len(Prediction_list)):
-                    if d == 0:
-                        Prediction = Prediction_list[d]
-                    else:
-                        Prediction = np.concatenate([Prediction, Prediction_list[d]], axis = 0)
                 # Assign float32 or ternary weight and biases to final weights
                 for assign_var_list_iter, assign_var_list in enumerate(assign_var_list_collection):
                     sess.run(assign_var_list, feed_dict = feed_dict_assign)
@@ -1984,7 +1885,7 @@ def Rebuilding(
             #----------------------------#
             if (epoch+1)==HP['Epoch']:
                 print("Saving Trained Weights ...")
-                save_path = saver.save(sess, Dir + str(epoch+1) + ".ckpt")
+                save_path = saver.save(sess, Dir + str(Global_Epoch+epoch+1) + ".ckpt")
                 print("\033[0;35m{}\033[0m" .format(save_path))
         
         tEnd_All = time.time()
@@ -2015,7 +1916,7 @@ def Rebuilding(
     tf.reset_default_graph()
         
     Model_Path = Dir
-    Model = str(HP['Epoch']) + '.ckpt'
+    Model = str(HP['Epoch']+Global_Epoch) + '.ckpt'
     
     return Model_Path, Model
 
@@ -3532,135 +3433,132 @@ def compute_angle(
     
     return theta
     
-def filter_prune_by_magnitude(
-    kernel_values_per_layer,
+def filter_prune_by_magnitude( 
+    prune_info_dict,
     pruning_propotion,
     sess
     ):
-    print("pruning ...")
-    key = kernel_values_per_layer.keys()
+    key = prune_info_dict.keys()
     sorted_layer = np.sort(np.array([int(key[i].split('layer')[-1]) for i in range(len(key))]))
     sorted_layer = ['layer' + str(sorted_layer[i]) for i in range(len(key))]
     
+    # Load all wegihts and masks
+    all_weights = {}
+    all_mask = {}
+    for layer_iter in range(len(sorted_layer)):
+        layer = sorted_layer[layer_iter]
+        all_weights.update({layer: sess.run(prune_info_dict[layer]['weights'])})
+        all_mask.update({layer: sess.run(prune_info_dict[layer]['mask'])})
+    
+    # Record the original weights parameter size
+    original_weights_size = {}
+    for layer_iter in range(0, len(sorted_layer)):
+        layer = sorted_layer[layer_iter]
+        original_weights_size.update({layer: np.sum(all_mask[layer])})
+    
+    # Build Pruned dict
+    pruned_dict = {}
+    for layer_iter in range(len(sorted_layer)):
+        layer = sorted_layer[layer_iter]
+        mask = all_mask[layer]
+        channel_num = np.shape(mask)[3]
+        tmp_dict = {}
+        for i in range(channel_num):
+            tmp_dict.update({str(i): np.mean(mask[:,:,:,i]) == 0})
+        pruned_dict.update({layer: tmp_dict})
+
+    # Build the dictionary for magnitude
+    dict = {}
+    iter = 0
+    tmp = 0
+    for layer_iter in range(0, len(sorted_layer)):
+        # Current Layer
+        layer = sorted_layer[layer_iter]
+        weights = all_weights[layer] * all_mask[layer]
+        # Next Layer
+        if layer_iter != len(sorted_layer)-1:
+            next_layer = sorted_layer[layer_iter+1]
+            next_weights = all_weights[next_layer] * all_mask[next_layer]
+            
+        # Calculate magnitude
+        channel_num = np.shape(weights)[-1]
+        for i in range(channel_num):
+            if not pruned_dict[layer][str(i)]:
+                x = weights[:, :, :, i]
+                x = np.reshape(x, [np.size(x)])
+                y = next_weights[:, :, i, :]
+                y = np.reshape(y, [np.size(y)])
+                magnitude = np.mean(np.concatenate([x,y]))
+                # Build Dictionary
+                if bool(dict.get(str(magnitude))):
+                    number = len(dict[str(magnitude)])
+                    dict[str(magnitude)].update({str(number): {'next_layer': next_layer, 'layer': layer, 'i': i, 'pruned': False}})
+                else:
+                    dict.update({str(magnitude): {'0': {'next_layer': next_layer, 'layer': layer, 'i': i, 'pruned': False}}})
+                # Record Magnitude
+                if iter == 0:
+                    total_magnitude = np.array([magnitude])
+                else:
+                    total_magnitude = np.concatenate([total_magnitude, np.array([magnitude])])
+                iter = iter + 1    
+                    
+    # Sort the angle
+    sorted_magnitude = np.sort(total_magnitude)[::-1]
+
     # Calculate the total parameters number
     total_num = 0
     for layer_iter in range(len(sorted_layer)):
         layer = sorted_layer[layer_iter]
-        mask_tensor = tf.get_collection("float32_weights_mask", scope = 'Model/' + layer + '/')[0]
-        total_num += reduce(lambda x, y: x*y, mask_tensor.get_shape().as_list())
-
-    # Prune the corresponding channel
+        total_num += reduce(lambda x, y: x*y, np.shape(all_mask[layer]))
+        
+    # Prune the weights
+    t = PrettyTable(['Pruned Number', 'Magnitude', 'layer', 'channel'])
+    t.align = 'l'
     pruned_num = 0
-    #for _, magnitude in enumerate(sorted_magnitude):
-    while(True):
-        # Build Pruned dict
-        pruned_dict = {}
-        for layer_iter in range(len(sorted_layer)):
-            layer = sorted_layer[layer_iter]
-            mask = sess.run(tf.get_collection("float32_weights_mask", scope = 'Model/' + layer + '/')[0])
-            channel_num = tf.get_collection("float32_weights_mask", scope = 'Model/' + layer + '/')[0].get_shape().as_list()[-1]
-            tmp_dict = {}
-            for i in range(channel_num):
-                tmp_dict.update({str(i): np.mean(mask[:,:,:,i]) == 0})
-            pruned_dict.update({layer: tmp_dict})
-            #print(layer, pruned_dict[layer])
-        
-        # Build the dictionary for magnitude
-        dict = {}
-        iter = 0
-        for layer_iter in range(1, len(sorted_layer)):
-            layer = sorted_layer[layer_iter]
-            kernel = kernel_values_per_layer[layer]
-            
-            # remove the pruned part of kernel
-            if layer_iter != 0:
-                past_layer = sorted_layer[layer_iter-1]
-                depth = np.shape(kernel)[3]
-                pruned_depth = []
-                for i in range(depth):
-                    if pruned_dict[past_layer][str(i)]:
-                        pruned_depth = np.append(pruned_depth, [i])
-                kernel = np.delete(kernel, pruned_depth, axis = 3)
-    
-            # calculate magnitude
-            if layer_iter != len(sorted_layer)-1:
-                next_layer = sorted_layer[layer_iter+1]
-            depth = np.shape(kernel)[-1]
-            channel_num = np.shape(kernel)[2]
-            for i in range(channel_num):
-                if not pruned_dict[layer][str(i)]:
-                    magnitude = kernel[:, :, i, :]
-                    magnitude = np.reshape(magnitude, [np.size(magnitude)])
-                    if layer_iter != len(sorted_layer)-1:
-                        next_kernel = kernel_values_per_layer[next_layer]
-                        next_depth_magnitude = next_kernel[:, :, :, i]
-                        next_depth_magnitude = np.reshape(next_depth_magnitude, [np.size(next_depth_magnitude)])
-                        magnitude = np.mean(np.abs(np.concatenate([magnitude, next_depth_magnitude])))
-                        if bool(dict.get(str(magnitude))):
-                            number = len(dict[str(magnitude)])
-                            dict[str(magnitude)].update({str(number): {'next_layer': next_layer, 'layer': layer, 'channel': i}})
-                        else:
-                            dict.update({str(magnitude): {'0': {'next_layer': next_layer, 'layer': layer, 'channel': i}}})
-                    else:
-                        magnitude = np.mean(np.abs(magnitude))
-                        if bool(dict.get(str(magnitude))):
-                            number = len(dict[str(magnitude)])
-                            dict[str(magnitude)].update({str(number): {'layer': layer, 'channel': i}})
-                        else:
-                            dict.update({str(magnitude): {'0': {'layer': layer, 'channel': i}}})
-                    if iter == 0:
-                        total_magnitude = np.array([magnitude])
-                    else:
-                        total_magnitude = np.concatenate([total_magnitude, np.array([magnitude])])
-                    iter = iter + 1
-                    
-        # Sort the magnitude
-        sorted_magnitude = np.sort(total_magnitude)
-        magnitude = sorted_magnitude[0]
-        
-        # Start Pruning
-        #for _, index in enumerate(dict[str(magnitude)].keys()):
-        index = '0'
-        layer = int(dict[str(magnitude)][index]['layer'].split('layer')[-1])
-        
-        if 'layer' + str(layer) != sorted_layer[-1]:
-            next_layer = int(dict[str(magnitude)][index]['next_layer'].split('layer')[-1])
-        
-        channel = dict[str(magnitude)][index]['channel']
-        is_channel_pruned = pruned_dict['layer%d'%layer][str(channel)]
-        
-        if 'layer' + str(layer) != sorted_layer[-1]:
-            next_layer_float32_weights_mask_collection = tf.get_collection("float32_weights_mask", scope = 'Model/layer' + str(next_layer) + '/')[0]
-            next_layer_float32_weights_collection = tf.get_collection("float32_weights", scope = 'Model/layer' + str(next_layer) + '/')[0]
-            
-        current_layer_float32_weights_mask_collection = tf.get_collection("float32_weights_mask", scope = 'Model/layer' + str(layer) + '/')[0]
-        current_layer_float32_weights_collection = tf.get_collection("float32_weights", scope = 'Model/layer' + str(layer) + '/')[0]
-        
-        if not is_channel_pruned:
-            # Set next layer kernel to zero
-            if 'layer' + str(layer) != sorted_layer[-1]:
-                next_layer_kernel_set_to_zero = next_layer_float32_weights_mask_collection[:, :, channel, :]
-                pruned_dict['layer%d'%next_layer].update({str(channel): True})
-            # Set current layer depth to zero
-            current_layer_depth_set_to_zero = current_layer_float32_weights_mask_collection[:, :, :, channel]
+    for _, magnitude in enumerate(sorted_magnitude):
+        for _, index in enumerate(dict[str(magnitude)].keys()):
+            if dict[str(magnitude)][index]['pruned']:
+                continue
+            layer      = dict[str(magnitude)][index]['layer']
+            next_layer = dict[str(magnitude)][index]['next_layer']
+            channel_i  = dict[str(magnitude)][index]['i']
+            is_channel_i_pruned = pruned_dict[layer][str(channel_i)]
+            current_weights_mask = all_mask[layer]         
+            current_weights      = all_weights[layer]   
+            next_weights_mask    = all_mask[next_layer]    
+            next_weights         = all_weights[next_layer]
             # Assign Zero to mask
-            if 'layer' + str(layer) != sorted_layer[-1]:
-                sess.run(tf.assign(next_layer_kernel_set_to_zero, np.zeros(next_layer_float32_weights_mask_collection[:, :, channel, :].get_shape().as_list())))
-                pruned_num = pruned_num + reduce(lambda x, y: x*y, next_layer_float32_weights_mask_collection[:, :, channel, :].get_shape().as_list())
-            sess.run(tf.assign(current_layer_depth_set_to_zero, np.zeros(current_layer_float32_weights_mask_collection[:, :, :, channel].get_shape().as_list())))
-            pruned_num = pruned_num + reduce(lambda x, y: x*y, current_layer_float32_weights_mask_collection[:, :, :, channel].get_shape().as_list())
-        print("\r{} / {}	" .format(pruned_num, total_num), end = "")
-        print("{}	{}	{}" .format(magnitude, 'layer' + str(layer), 'channel' + str(channel)))
-        
+            if not is_channel_i_pruned:
+                pruned_dict[layer].update({str(channel_i): True})
+                current_weights_mask[:, :, :, channel_i] = 0
+                pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(current_weights_mask[:, :, :, channel_i]))
+                next_weights_mask[:, :, channel_i, :] = 0
+                pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(next_weights_mask[:, :, channel_i, :]))
+                t.add_row([str(pruned_num)+' / '+str(total_num), magnitude, layer, 'channel'+str(channel_i)])
+                #print("\r{} / {}	" .format(pruned_num, total_num), end = "")
+                #print("{}		{}	{}" .format(magnitude, layer, 'channel' + str(channel_i)))
+            break          
         if pruned_num >= total_num * pruning_propotion:
-            print("Prune Over!")
-            break
-
-def sparse_prune_by_magnitude( # Not Finished
+            print(t)
+            break  
+    # Update all masks
+    print('Updating Masks ... ')
+    for layer_iter in range(len(sorted_layer)):
+        layer = sorted_layer[layer_iter]
+        #sess.run(tf.assign(prune_info_dict[layer]['weights'], all_weights[layer]))
+        sess.run(tf.assign(prune_info_dict[layer]['mask'], all_mask[layer]))
+    # See the parameter change
+    for layer_iter in range(0, len(sorted_layer)):
+        layer = sorted_layer[layer_iter]
+        mask_tensor = prune_info_dict[layer]['mask']
+        after_pruned_weights_size = np.sum(sess.run(mask_tensor))
+        print('{} : \033[0;32m{}\033[0m -> \033[0;32m{}\033[0m' .format(layer, int(original_weights_size[layer]), int(after_pruned_weights_size)))
+    print("Prune Over!")
+            
+def sparse_prune_by_magnitude(
     threshold,
     sess
     ):
-    print('pruning ...')
     # Get the tensor
     weights_collection = tf.get_collection("float32_weights")
     mask_collection = tf.get_collection('float32_weights_mask')
@@ -3699,7 +3597,6 @@ def filter_prune_by_angle(
     pruning_propotion,
     sess
     ):
-    print("pruning ...")
     key = prune_info_dict.keys()
     sorted_layer = np.sort(np.array([int(key[i].split('layer')[-1]) for i in range(len(key))]))
     sorted_layer = ['layer' + str(sorted_layer[i]) for i in range(len(key))]
@@ -3830,6 +3727,8 @@ def filter_prune_by_angle(
             break    
             
     # Prune the corresponding weights
+    t = PrettyTable(['Pruned Number', 'Magnitude', 'layer', 'channel'])
+    t.align = 'l'
     pruned_num = 0
     for iter in range(pruned_angle_num):
         angle = sorted_angle[iter]
@@ -3873,29 +3772,237 @@ def filter_prune_by_angle(
                 pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(past_weights_mask[:, :, :, depth_i]))
                 current_weights_mask[:, :, pruned_depth, :] = 0
                 pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(current_weights_mask[:, :, depth_i, :]))
-                print("\r{} / {}	" .format(pruned_num, total_num), end = "")
-                print("{}	{}	{}" .format(angle, layer, 'depth' + str(pruned_depth)))
-                break          
-    print("Prune Over!")
+                t.add_row([str(pruned_num)+' / '+str(total_num), angle, layer, 'depth'+str(pruned_depth)])
+                #print("\r{} / {}	" .format(pruned_num, total_num), end = "")
+                #print("{}	{}	{}" .format(angle, layer, 'depth' + str(pruned_depth)))
+            break          
+    print(t)
     
-    # Store all masks
+    # Update all masks
+    print('Updating Masks ... ')
     for layer_iter in range(len(sorted_layer)):
         layer = sorted_layer[layer_iter]
-        sess.run(tf.assign(prune_info_dict[layer]['weights'], all_weights[layer]))
+        #sess.run(tf.assign(prune_info_dict[layer]['weights'], all_weights[layer]))
         sess.run(tf.assign(prune_info_dict[layer]['mask'], all_mask[layer]))
-    
+    # See the parameter change
     for layer_iter in range(1, len(sorted_layer)):
         layer = sorted_layer[layer_iter]
         mask_tensor = prune_info_dict[layer]['mask']
         after_pruned_weights_size = np.sum(sess.run(mask_tensor))
         print('{} : \033[0;32m{}\033[0m -> \033[0;32m{}\033[0m' .format(layer, int(original_weights_size[layer]), int(after_pruned_weights_size)))
+    print("Prune Over!")
 
+def filter_prune_by_angle_with_skip(
+    prune_info_dict,
+    pruning_propotion,
+    skip_layer,
+    sess
+    ):
+    key = prune_info_dict.keys()
+    sorted_layer = np.sort(np.array([int(key[i].split('layer')[-1]) for i in range(len(key))]))
+    sorted_layer = ['layer' + str(sorted_layer[i]) for i in range(len(key))]
+    
+    # Load all wegihts and masks
+    all_weights = {}
+    all_mask = {}
+    for layer_iter in range(len(sorted_layer)):
+        layer = sorted_layer[layer_iter]
+        all_weights.update({layer: sess.run(prune_info_dict[layer]['weights'])})
+        all_mask.update({layer: sess.run(prune_info_dict[layer]['mask'])})
+    
+    # Record the original weights parameter size
+    original_weights_size = {}
+    for layer_iter in range(1, len(sorted_layer)):
+        layer = sorted_layer[layer_iter]
+        original_weights_size.update({layer: np.sum(all_mask[layer])})
+    
+    # Build Pruned dict
+    pruned_dict = {}
+    for layer_iter in range(len(sorted_layer)):
+        layer = sorted_layer[layer_iter]
+        mask = all_mask[layer]
+        channel_num = np.shape(mask)[3]
+        tmp_dict = {}
+        for i in range(channel_num):
+            tmp_dict.update({str(i): np.mean(mask[:,:,:,i]) == 0})
+        pruned_dict.update({layer: tmp_dict})
+
+    # Build the dictionary for angle
+    dict = {}
+    iter = 0
+    tmp = 0
+    for layer_iter in range(1, len(sorted_layer)):
+        layer = sorted_layer[layer_iter]
+        weights = all_weights[layer]
+        weights = np.transpose(weights, (0,1,3,2))
+        # remove the pruned kernel
+        channel_num = np.shape(weights)[2]
+        pruned_channels = []
+        for i in range(channel_num):
+            if pruned_dict[layer][str(i)]:
+                pruned_channels = np.append(pruned_channels, [i])
+        weights = np.delete(weights, pruned_channels, axis = 2)
+
+        if weights.size != 0:
+            # calculate angle
+            past_layer = sorted_layer[layer_iter-1]
+            depth = np.shape(weights)[-1]
+            for i in range(depth):
+                for j in range(i+1, depth):
+                    # If the depth i or j has been pruned, we don't calculate its angle to others
+                    # By doing so, we will not prune the same kernel which has been pruned before.
+                    if not pruned_dict[past_layer][str(i)] and not pruned_dict[past_layer][str(j)]:
+                        x = weights[:, :, :, i]
+                        y = weights[:, :, :, j]
+                        x = np.reshape(x, [np.size(x)])
+                        y = np.reshape(y, [np.size(y)])
+                        
+                        if sum(x*x) == 0 or sum(y*y) == 0:
+                            angle = 90.0
+                            tmp = tmp + 1
+                            print('{}, {}, {}' .format(layer, i, j))
+                        else:
+                            angle = compute_angle(x, y)
+                            angle = abs(angle - 90)
+                        
+                        if bool(dict.get(str(angle))):
+                            number = len(dict[str(angle)])
+                            dict[str(angle)].update({str(number): {'past_layer': past_layer, 'layer': layer, 'i': i, 'j': j, 'pruned': False}})
+                        else:
+                            dict.update({str(angle): {'0': {'past_layer': past_layer, 'layer': layer, 'i': i, 'j': j, 'pruned': False}}})
+                        
+                        if iter == 0:
+                            total_angle = np.array([angle])
+                        else:
+                            total_angle = np.concatenate([total_angle, np.array([angle])])
+                        iter = iter + 1    
+                    
+    # Sort the angle
+    sorted_angle = np.sort(total_angle)[::-1]
+
+    # Calculate the total parameters number
+    total_num = 0
+    for layer_iter in range(len(sorted_layer)):
+        layer = sorted_layer[layer_iter]
+        total_num += reduce(lambda x, y: x*y, np.shape(all_mask[layer]))
+    
+    # Get the weights to be pruned
+    dict_ = copy.deepcopy(dict)
+    weights_to_be_pruned = {}
+    pruned_num = 0
+    pruned_angle_num = 0
+    for _, angle in enumerate(sorted_angle):
+        pruned_angle_num = pruned_angle_num + 1
+        for _, index in enumerate(dict_[str(angle)].keys()):
+            if dict_[str(angle)][index]['pruned']:
+                continue
+            dict_[str(angle)][index].update({'pruned': True})
+            past_layer = dict_[str(angle)][index]['past_layer']
+            layer = dict_[str(angle)][index]['layer']
+            depth_i = dict_[str(angle)][index]['i']
+            depth_j = dict_[str(angle)][index]['j']
+            past_weights_mask = all_mask[past_layer]
+            current_weights_mask = all_mask[layer]
+            
+            if not bool(weights_to_be_pruned.get(layer)):
+                is_depth_i_appear = False
+                is_depth_j_appear = False
+                weights_to_be_pruned.update({layer: {str(depth_i): 1, str(depth_j): 1}})
+            else:
+                is_depth_i_appear = bool(weights_to_be_pruned[layer].get(str(depth_i)))
+                is_depth_j_appear = bool(weights_to_be_pruned[layer].get(str(depth_j)))
+                if not is_depth_i_appear:
+                    weights_to_be_pruned[layer].update({str(depth_i): 1})
+                else:
+                    weights_to_be_pruned[layer].update({str(depth_i): weights_to_be_pruned[layer][str(depth_i)]+1})
+                if not is_depth_j_appear:
+                    weights_to_be_pruned[layer].update({str(depth_j): 1})
+                else:
+                    weights_to_be_pruned[layer].update({str(depth_j): weights_to_be_pruned[layer][str(depth_j)]+1})
+            if not is_depth_i_appear or not is_depth_j_appear:
+                is_past_layer_skip = any(past_layer == 'layer'+str(skip_layer_) for skip_layer_ in skip_layer)
+                is_layer_skip = any(layer == 'layer'+str(skip_layer_) for skip_layer_ in skip_layer)
+                if (not is_past_layer_skip) and (not is_layer_skip):
+                    pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(past_weights_mask[:, :, :, depth_i]))
+                    pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(current_weights_mask[:, :, depth_i, :]))
+            #print(pruned_num)
+        if pruned_num >= total_num * pruning_propotion:
+            break    
+
+    # Prune the corresponding weights
+    t = PrettyTable(['Pruned Number', 'Magnitude', 'layer', 'channel'])
+    t.align = 'l'
+    pruned_num = 0
+    for iter in range(pruned_angle_num):
+        angle = sorted_angle[iter]
+        for _, index in enumerate(dict[str(angle)].keys()):
+            #print(dict[str(angle)].keys())
+            if dict[str(angle)][index]['pruned']:
+                continue
+            past_layer = dict[str(angle)][index]['past_layer']
+            layer = dict[str(angle)][index]['layer']
+            depth_i = dict[str(angle)][index]['i']
+            depth_j = dict[str(angle)][index]['j']
+            is_depth_i_pruned = pruned_dict[past_layer][str(depth_i)]
+            is_depth_j_pruned = pruned_dict[past_layer][str(depth_j)]
+            past_weights_mask    = all_mask[past_layer]    #prune_info_dict[past_layer]['mask']
+            past_weights         = all_weights[past_layer] #prune_info_dict[past_layer]['weights']
+            current_weights_mask = all_mask[layer]         #prune_info_dict[layer]['mask']
+            current_weights      = all_weights[layer]      #prune_info_dict[layer]['weights']
+            if not is_depth_i_pruned and not is_depth_j_pruned:
+                dict[str(angle)][index].update({'pruned': True})
+                if weights_to_be_pruned[layer][str(depth_i)] < weights_to_be_pruned[layer][str(depth_j)]:
+                    pruned_depth = depth_i
+                elif weights_to_be_pruned[layer][str(depth_i)] > weights_to_be_pruned[layer][str(depth_j)]:
+                    pruned_depth = depth_j
+                else:
+                    # Magnitude
+                    sum_of_past_layer_kernal_i = np.sum(np.abs(past_weights[:, :, :, depth_i] * past_weights_mask[:, :, :, depth_i]))
+                    sum_of_past_layer_kernel_j = np.sum(np.abs(past_weights[:, :, :, depth_j] * past_weights_mask[:, :, :, depth_j]))
+                    sum_of_current_layer_depth_i = np.sum(np.abs(current_weights[:, :, depth_i, :] * current_weights_mask[:, :, depth_i, :]))
+                    sum_of_current_layer_depth_j = np.sum(np.abs(current_weights[:, :, depth_j, :] * current_weights_mask[:, :, depth_j, :]))
+                    sum_of_pruned_depth_i = sum_of_past_layer_kernal_i + sum_of_current_layer_depth_i
+                    sum_of_pruned_depth_j = sum_of_past_layer_kernel_j + sum_of_current_layer_depth_j
+                    # Compare
+                    if sum_of_pruned_depth_i <= sum_of_pruned_depth_j:
+                        pruned_depth = depth_i
+                    else:
+                        pruned_depth = depth_j
+
+                # Assign Zero to mask
+                pruned_dict[past_layer].update({str(pruned_depth): True})
+                is_past_layer_skip = any(past_layer == 'layer'+str(skip_layer_) for skip_layer_ in skip_layer)
+                is_layer_skip = any(layer == 'layer'+str(skip_layer_) for skip_layer_ in skip_layer)
+                if (not is_past_layer_skip) and (not is_layer_skip):
+                    past_weights_mask[:, :, :, pruned_depth] = 0
+                    pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(past_weights_mask[:, :, :, depth_i]))
+                    current_weights_mask[:, :, pruned_depth, :] = 0
+                    pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(current_weights_mask[:, :, depth_i, :]))
+                    t.add_row([str(pruned_num)+' / '+str(total_num), angle, layer, 'depth'+str(pruned_depth)])
+                    print("\r{} / {}	" .format(pruned_num, total_num), end = "")
+                    print("{}	{}	{}" .format(angle, layer, 'depth' + str(pruned_depth)))
+                break          
+    print(t)
+    
+    # Update all masks
+    print('Updating Masks ... ')
+    for layer_iter in range(len(sorted_layer)):
+        layer = sorted_layer[layer_iter]
+        #sess.run(tf.assign(prune_info_dict[layer]['weights'], all_weights[layer]))
+        sess.run(tf.assign(prune_info_dict[layer]['mask'], all_mask[layer]))
+    # See the parameter change
+    for layer_iter in range(1, len(sorted_layer)):
+        layer = sorted_layer[layer_iter]
+        mask_tensor = prune_info_dict[layer]['mask']
+        after_pruned_weights_size = np.sum(sess.run(mask_tensor))
+        print('{} : \033[0;32m{}\033[0m -> \033[0;32m{}\033[0m' .format(layer, int(original_weights_size[layer]), int(after_pruned_weights_size)))
+    print("Prune Over!")
+    
 def plane_prune_by_angle(
     prune_info_dict,
     pruning_propotion,
     sess
     ):
-    print("pruning ...")
     key = prune_info_dict.keys()
     sorted_layer = np.sort(np.array([int(key[i].split('layer')[-1]) for i in range(len(key))]))
     sorted_layer = ['layer' + str(sorted_layer[i]) for i in range(len(key))]
@@ -4085,18 +4192,18 @@ def plane_prune_by_angle(
                 break
     
     # Store all masks
+    print('Updating Masks ... ')
     for layer_iter in range(len(sorted_layer)):
         layer = sorted_layer[layer_iter]
         sess.run(tf.assign(prune_info_dict[layer]['weights'], all_weights[layer]))
         sess.run(tf.assign(prune_info_dict[layer]['mask'], all_mask[layer]))
-        
-    print("Prune Over!")
-    
+
     for layer_iter in range(1, len(sorted_layer)):
         layer = sorted_layer[layer_iter]
         mask_tensor = prune_info_dict[layer]['mask']
         after_pruned_weights_size = np.sum(sess.run(mask_tensor))
         print('{} : \033[0;32m{}\033[0m -> \033[0;32m{}\033[0m' .format(layer, int(original_weights_size[layer]), int(after_pruned_weights_size)))
+    print("Prune Over!")
 
 # Rebuilding
 def get_mask(
@@ -4339,18 +4446,10 @@ def compute_accuracy(
         dict_test.update({dict_index: dict_data})
     
     for i in range(batch_num): 
-    #i = 0
-    #while True:
-        #v_xs_part = v_xs[i*test_batch_size : (i+1)*test_batch_size]
-        #v_ys_part = v_ys[i*test_batch_size : (i+1)*test_batch_size]
         dict = dict_test
         dict_test.update({ is_training: False}) #xs: v_xs_part,
         Y_pre_list, v_ys_part = sess.run([prediction_list, ys], feed_dict = dict_test)	
-        #try:
-        #    Y_pre_list, v_ys_part = sess.run([prediction_list, ys], feed_dict = dict_test)				
-        #except tf.errors.OutOfRangeError:
-        #    break
-            
+        
         # Combine Different Device Prediction
         for d in range(len(Y_pre_list)):
             if d == 0:
@@ -4418,7 +4517,7 @@ def compute_accuracy(
         #    result = np.concatenate([result, np.multiply(~correct_prediction_top3, top1) + np.multiply(correct_prediction_top3, np.argmax(v_ys_part, -1))], axis=0)
         
         print("\r{} / {} -> Accuracy:{}" .format((i+1)*test_batch_size, 10000, accuracy_top1), end = "") 
-        
+
     print("")    
     return result, accuracy_top1, accuracy_top2, accuracy_top3, Y_pre_total
 

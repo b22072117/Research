@@ -22,7 +22,7 @@ parser.add_argument('--Model_1st'       , type = str, default = 'ResNet')
 parser.add_argument('--Model_2nd'       , type = str, default = '20_cifar10_2')
 parser.add_argument('--BatchSize'       , type = int, default = 128)
 parser.add_argument('--Epoch'           , type = int, default = 250)
-parser.add_argument('--epochs_per_eval' , type = int, default = 10)
+parser.add_argument('--epochs_per_eval' , type = int, default = 100)
 parser.add_argument('--Pruning_Strategy', type = str, default = 'Filter_Angle')
 
 FLAGs = parser.parse_args()
@@ -87,13 +87,13 @@ def main(argv):
         Model_Path = 'Model/ResNet_Model/ResNet_110_cifar10_0_99_cifar10_2018.02.02_Filter_AngleV418/'
     ## ResNet-56
     if FLAGs.Model_2nd == '56_cifar10_0':
-        Model_Path = 'Model/ResNet_Model/ResNet_56_cifar10_0_99_cifar10_2018.02.02/' 
+        Model_Path = 'Model/ResNet_Model/ResNet_56_cifar10_0_99_cifar10_2018.02.09/' 
     ## ResNet-32
     if FLAGs.Model_2nd == '32_cifar10_0':
-        Model_Path = 'Model/ResNet_Model/ResNet_32_cifar10_0_99_cifar10_2018.02.01/'  
+        Model_Path = 'Model/ResNet_Model/ResNet_32_cifar10_0_99_cifar10_2018.02.09/'  
     ## ResNet-20
     if FLAGs.Model_2nd == '20_cifar10_2':
-        Model_Path = 'Model/ResNet_Model/ResNet_20_cifar10_2_99_cifar10_2018.02.06/' 
+        Model_Path = 'Model/ResNet_Model/ResNet_20_cifar10_2_99_cifar10_2018.02.06_Filter_Angle39/' 
     
     Model = '10.ckpt'
     Global_Epoch = 0
@@ -123,6 +123,7 @@ def main(argv):
             test_Y_pre_path       = test_Y_pre_path      )
             
         Global_Epoch = Global_Epoch + FLAGs.epochs_per_eval
+        print("\033[0;33mGlobal Epoch{}\033[0m" .format(Global_Epoch))
     # -- Pruning --
     
         
