@@ -19,10 +19,10 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('--Dataset'        , type = str, default = 'cifar10')
 parser.add_argument('--Model_1st'      , type = str, default = 'ResNet')
-parser.add_argument('--Model_2nd'      , type = str, default = '20_cifar10_2')
+parser.add_argument('--Model_2nd'      , type = str, default = '20_cifar10_26')
 parser.add_argument('--BatchSize'      , type = int, default = 128)
 parser.add_argument('--Epoch'          , type = int, default = 250)
-parser.add_argument('--epochs_per_eval', type = int, default = 10)
+parser.add_argument('--epochs_per_eval', type = int, default = 1)
 
 
 FLAGs = parser.parse_args()
@@ -40,6 +40,8 @@ if platform == 'win32':
     
     if FLAGs.Dataset=='ade20k':
         Dataset_Path = Dataset_Path + '\\ADEChallengeData2016'
+    elif FLAGs.Dataset=='ILSVRC2012':
+        Dataset_Path = Dataset_Path + '\\imagenet-data'
     Y_pre_Path   = FLAGs.Model_1st + '_Y_pre\\' + FLAGs.Dataset
     
     # For Saving Result Picture of Testing
@@ -61,6 +63,8 @@ else:
     
     if FLAGs.Dataset=='ade20k':
         Dataset_Path = Dataset_Path + '/ADEChallengeData2016'
+    elif FLAGs.Dataset=='ILSVRC2012':
+        Dataset_Path = Dataset_Path + '/imagenet-data'
     Y_pre_Path   = FLAGs.Model_1st + '_Y_pre/' + FLAGs.Dataset
     
     # For Saving Result Picture of Testing
@@ -72,10 +76,7 @@ else:
     train_Y_pre_path  = 'Y_pre/' + FLAGs.Model_1st + '/' + FLAGs.Dataset + '/'
     valid_Y_pre_path  = 'Y_pre/' + FLAGs.Model_1st + '/' + FLAGs.Dataset + '/'
     test_Y_pre_path   = 'Y_pre/' + FLAGs.Model_1st + '/' + FLAGs.Dataset + '/'
-    
-    # For Loading Trained Model
-    Model_Path = None
-    Model = None
+
 
 #==============# 
 #    Define    #
@@ -83,8 +84,9 @@ else:
 def main(argv):
     print("start!")
     # -- Training --
-    Model_Path = None
-    Model = None
+    # For Loading Trained Weights
+    Model_Path = None #'Model/ResNet_Model/ResNet_50_78_cifar10_2018.03.27/'
+    Model = None #'1.ckpt'
     Global_Epoch = 0
     for _ in range(FLAGs.Epoch//FLAGs.epochs_per_eval):
         Model_Path, Model = utils.run_training( 

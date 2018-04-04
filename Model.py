@@ -11,6 +11,8 @@ import pdb
 
 import utils
 
+SHOW_MODEL = False
+
 #========================#
 #    Model Components    #
 #========================#
@@ -275,21 +277,25 @@ def combine_add(
         # Batch Normalization
         if is_batch_norm == True:
             ## Show the model
-            #print("-> Batch_Norm")
+            if SHOW_MODEL:
+                print("-> Batch_Norm")
             net = batch_norm(net, is_training, data_format)
         
         # Activation
         if Activation == 'ReLU':
             ## Show the model
-            #print("-> ReLU")
+            if SHOW_MODEL:
+                print("-> ReLU")
             net = tf.nn.relu(net)
         elif Activation == 'Sigmoid':
             ## Show the model
-            #print("-> Sigmoid")
+            if SHOW_MODEL:
+                print("-> Sigmoid")
             net = tf.nn.sigmoid(net)
         elif Activation == 'CReLU':
             ## Show the model
-            #print("-> CReLU")
+            if SHOW_MODEL:
+                print("-> CReLU")
             net = CReLU(net, initializer = initializer)
         else:
             net = net
@@ -358,21 +364,25 @@ def combine_conv(
         # Batch Normalization
         if is_batch_norm == True:
             ## Show the model
-            #print("-> Batch_Norm")
+            if SHOW_MODEL:
+                print("-> Batch_Norm")
             net = batch_norm(net, is_training, data_format)
         
         # Activation
         if Activation == 'ReLU':
             ## Show the model
-            #print("-> ReLU")
+            if SHOW_MODEL:
+                print("-> ReLU")
             net = tf.nn.relu(net)
         elif Activation == 'Sigmoid':
             ## Show the model
-            #print("-> Sigmoid")
+            if SHOW_MODEL:
+                print("-> Sigmoid")
             net = tf.nn.sigmoid(net)
         elif Activation == 'CReLU':
             ## Show the model
-            #print("-> CReLU")
+            if SHOW_MODEL:
+                print("-> CReLU")
             net = CReLU(net, initializer = initializer)
         else:
             net = net
@@ -613,19 +623,21 @@ def conv2D_Module(
         group_output_channel = int(output_channel / group)
         
         net_tmp_list = []
+        computation = 0
         #-------------------#
         #    Convolution    #
         #-------------------#
         for g in range(group):
             ## Show the model
-            #print("\033[0;36mgroup%d\033[0m"%(g))
+            if SHOW_MODEL:
+                print("\033[0;36mgroup%d\033[0m"%(g))
             with tf.variable_scope('group%d'%(g)):
                 # Inputs
                 if data_format == "NHWC":
                     net_tmp = net[:, :, :, g*group_input_channel : (g+1)*group_input_channel]
                 elif data_format == "NCHW":
                     net_tmp = net[:, g*group_input_channel : (g+1)*group_input_channel, :, :]
-                
+
                 # Variable define
                 weights, biases = conv2D_Variable(
                     kernel_size    = kernel_size,
@@ -642,7 +654,8 @@ def conv2D_Module(
                 if is_dilated:
                     if is_depthwise:
                         ## Show the model
-                        #print("-> Dilated-Depthwise Conv, Weights:{}, stride:{}" .format(weights.get_shape().as_list(), stride))
+                        if SHOW_MODEL:
+                            print("-> Dilated-Depthwise Conv, Weights:{}, stride:{}" .format(weights.get_shape().as_list(), stride))
                         net_tmp = tf.nn.depthwise_conv2d( 
                             input       = net_tmp, 
                             filter      = weights, 
@@ -652,7 +665,8 @@ def conv2D_Module(
                             data_format = data_format)	
                     else:
                         ## Show the model
-                        #print("-> Dilated Conv, Weights:{}, stride:{}" .format(weights.get_shape().as_list(), stride))
+                        if SHOW_MODEL:
+                            print("-> Dilated Conv, Weights:{}, stride:{}" .format(weights.get_shape().as_list(), stride))
                         net_tmp = tf.nn.atrous_conv2d( 
                             value       = net_tmp, 
                             filters     = weights, 
@@ -661,7 +675,8 @@ def conv2D_Module(
                 else:
                     if is_depthwise:
                         ## Show the model
-                        #print("-> Depthwise Conv, Weights:{}, stride:{}" .format(weights.get_shape().as_list(), stride))
+                        if SHOW_MODEL:
+                            print("-> Depthwise Conv, Weights:{}, stride:{}" .format(weights.get_shape().as_list(), stride))
                         net_tmp = tf.nn.depthwise_conv2d( 
                             input       = net_tmp, 
                             filter      = weights, 
@@ -670,23 +685,28 @@ def conv2D_Module(
                             data_format = data_format)	
                     else:
                         ## Show the model
-                        #print("-> Conv, Weights:{}, stride:{}" .format(weights.get_shape().as_list(), stride))
+                        if SHOW_MODEL:
+                            print("-> Conv, Weights:{}, stride:{}" .format(weights.get_shape().as_list(), stride))
                         net_tmp = conv2d_fixed_padding(
                             inputs      = net_tmp, 
-                            filters     = weights, 
+                            filters     = weights,  
                             kernel_size = kernel_size, 
                             stride      = stride, 
                             data_format = data_format)
+                       
+                tf.add_to_collection("conv_outputs", net_tmp)
+                
                 # Add bias
                 if is_add_biases:
                     ## Show the model
-                    #print("-> Add Biases, Biases:{}".format(biases.get_shape().as_list()))
+                    if SHOW_MODEL:
+                        print("-> Add Biases, Biases:{}".format(biases.get_shape().as_list()))
                     net_tmp = tf.nn.bias_add(net_tmp, biases, data_format)
                 
                 ## For checking the final weights/biases is ternary or not
-                tf.add_to_collection("final_weights", weights)
+                tf.add_to_collection("weights", weights)
                 if is_add_biases:
-                    tf.add_to_collection("final_biases", biases)
+                    tf.add_to_collection("biases", biases)
                 # List the net_tmp
                 """
                 net_tmp_list.append(net_tmp)
@@ -708,7 +728,8 @@ def conv2D_Module(
         # Ternary Scale
         if IS_TERNARY:
             ## Show the model
-            #print("-> Ternary")
+            if SHOW_MODEL:
+                print("-> Ternary")
             with tf.variable_scope('Ternary_Scalse'):
                 ternary_scale = tf.get_variable("ternary_scale", [1], tf.float32, initializer=initializer)
                 tf.add_to_collection("ternary_scale", ternary_scale)
@@ -717,21 +738,25 @@ def conv2D_Module(
         # Batch Normalization
         if is_batch_norm == True:
             ## Show the model
-            #print("-> Batch_Norm")
+            if SHOW_MODEL:
+                print("-> Batch_Norm")
             net = batch_norm(net, is_training, data_format)
         
         # Activation
         if Activation == 'ReLU':
             ## Show the model
-            #print("-> ReLU")
+            if SHOW_MODEL:
+                print("-> ReLU")
             net = tf.nn.relu(net)
         elif Activation == 'Sigmoid':
             ## Show the model
-            #print("-> Sigmoid")
+            if SHOW_MODEL:
+                print("-> Sigmoid")
             net = tf.nn.sigmoid(net)
         elif Activation == 'CReLU':
             ## Show the model
-            #print("-> CReLU")
+            if SHOW_MODEL:
+                print("-> CReLU")
             net = CReLU(net, initializer = initializer)
         else:
             net = net
@@ -739,7 +764,8 @@ def conv2D_Module(
         # Activation Quantization
         if IS_QUANTIZED_ACTIVATION:
             ## Show the model
-            #print("-> Activation Quantization")
+            if SHOW_MODEL:
+                print("-> Activation Quantization")
             net = quantize_Module(net, is_quantized_activation)
             
     return net
@@ -798,7 +824,6 @@ def shortcut_Module(
                     data_format             = data_format            ,
                     Analysis                = Analysis               ,
                     scope                   = "conv_1x1"             )
-                    
             elif shortcut_type == "AVG_POOL":
                 if data_format == "NHWC":
                     ksize   = [1, stride_height, stride_height, 1]
@@ -817,254 +842,6 @@ def shortcut_Module(
             
     return shortcut
 
-def inception_Module( # No use
-    net, kernel_size, stride, output_channel, rate, group,
-    initializer              ,
-    is_training              ,
-    is_add_biases            ,
-    is_batch_norm            ,
-    is_dilated               ,
-    is_depthwise             ,
-    is_ternary               ,
-    is_quantized_activation  ,
-    IS_TERNARY               ,
-    IS_QUANTIZED_ACTIVATION  ,
-    Activation               ,
-    padding                  ,
-    Analysis                 
-    ):
-    
-    with tf.variable_scope('inception'):
-        net_1x1 = conv2D_Module( net, kernel_size=1, stride=stride, output_channel=output_channel, rate=1, group=group,
-                                 initializer              = initializer              ,
-                                 is_training              = is_training              ,
-                                 is_add_biases            = is_add_biases            ,
-                                 is_batch_norm            = is_batch_norm            ,
-                                 is_dilated               = False                    ,
-                                 is_depthwise             = False                    ,
-                                 is_ternary               = is_ternary               ,
-                                 is_quantized_activation  = is_quantized_activation  ,
-                                 IS_TERNARY               = IS_TERNARY               ,
-                                 IS_QUANTIZED_ACTIVATION  = IS_QUANTIZED_ACTIVATION  ,
-                                 Activation               = Activation               ,
-                                 padding                  = padding                  ,
-                                 Analysis                 = Analysis                 ,
-                                 scope                    = "conv_1x1"               )
-        
-        net = conv2D_Module( net, kernel_size=kernel_size, stride=stride, output_channel=output_channel, rate=rate, group=group,
-                             initializer              = initializer              ,
-                             is_training              = is_training              ,
-                             is_add_biases            = is_add_biases            ,
-                             is_batch_norm            = is_batch_norm            ,
-                             is_dilated               = is_dilated               ,
-                             is_depthwise             = is_depthwise             ,
-                             is_ternary               = is_ternary               ,
-                             is_quantized_activation  = is_quantized_activation  ,
-                             IS_TERNARY               = IS_TERNARY               ,
-                             IS_QUANTIZED_ACTIVATION  = IS_QUANTIZED_ACTIVATION  ,
-                             Activation               = Activation               ,
-                             padding                  = padding                  ,
-                             Analysis                 = Analysis                 ,
-                             scope                    = "conv"                   )
-        if is_depthwise:
-            net = conv2D_Module( net, kernel_size=1, stride=1, output_channel=output_channel, rate=rate, group=group,
-                                 initializer              = initializer              ,
-                                 is_training              = is_training              ,
-                                 is_add_biases            = is_add_biases            ,
-                                 is_batch_norm            = is_batch_norm            ,
-                                 is_dilated               = False                    ,
-                                 is_depthwise             = False                    ,
-                                 is_ternary               = is_ternary               ,
-                                 is_quantized_activation  = is_quantized_activation  ,
-                                 IS_TERNARY               = IS_TERNARY               ,
-                                 IS_QUANTIZED_ACTIVATION  = IS_QUANTIZED_ACTIVATION  ,
-                                 Activation               = Activation               ,
-                                 padding                  = padding                  ,
-                                 Analysis                 = Analysis                 ,
-                                 scope                    = "depthwise_1x1"          )
-                                
-        net = tf.add(net, net_1x1)
-        
-        # -- Analyzer --
-        utils.Analyzer( Analysis, 
-                        net, 
-                        type                    = 'ADD', 
-                        IS_QUANTIZED_ACTIVATION = IS_QUANTIZED_ACTIVATION, 
-                        name                    = 'inception_ADD')
-        
-        # Activation Quantization
-        if IS_QUANTIZED_ACTIVATION:
-            quantize_Module(net, is_quantized_activation)
-            
-    return net
-   
-def bottleneck_Module( # No use
-    net, kernel_size, stride, internal_channel, output_channel, rate, group,
-    initializer             ,
-    is_training             ,
-    is_add_biases           ,
-    is_batch_norm           ,  
-    is_dilated              , 
-    is_depthwise            ,
-    is_inception            ,
-    is_ternary              , 
-    is_quantized_activation , 
-    IS_TERNARY              ,  	
-    IS_QUANTIZED_ACTIVATION ,  
-    Activation              ,
-    padding                 ,
-    Analysis                
-    ): 
-    
-    with tf.variable_scope("bottle_neck"):
-        net = conv2D_Module( net, kernel_size=1, stride=1, output_channel=internal_channel, rate=rate, group=group,
-                             initializer              = initializer              ,
-                             is_training              = is_training              ,
-                             is_add_biases            = is_add_biases            ,
-                             is_batch_norm            = is_batch_norm            ,
-                             is_dilated               = is_dilated               ,
-                             is_depthwise             = False                    ,
-                             is_ternary               = is_ternary               ,
-                             is_quantized_activation  = is_quantized_activation  ,
-                             IS_TERNARY               = IS_TERNARY               ,
-                             IS_QUANTIZED_ACTIVATION  = IS_QUANTIZED_ACTIVATION  ,
-                             Activation               = Activation               ,
-                             padding                  = padding                  ,
-                             Analysis                 = Analysis                 ,
-                             scope                    = "Reduction_1x1"          )
-        if is_inception:
-            net = inception_Module( net, kernel_size=kernel_size, stride=stride, output_channel=internal_channel, rate=rate, group=group,
-                                    initializer               = initializer              ,
-                                    is_training               = is_training              ,
-                                    is_batch_norm             = is_batch_norm            ,
-                                    is_dilated                = is_dilated               ,
-                                    is_depthwise              = is_depthwise             ,
-                                    is_ternary                = is_ternary               ,
-                                    is_quantized_activation   = is_quantized_activation  ,
-                                    IS_TERNARY                = IS_TERNARY               ,
-                                    IS_QUANTIZED_ACTIVATION   = IS_QUANTIZED_ACTIVATION  ,
-                                    Activation                = Activation               ,
-                                    padding                   = padding                  ,
-                                    Analysis                  = Analysis                 )
-        else :
-            net = conv2D_Module( net, kernel_size=kernel_size, stride=stride, output_channel=internal_channel, rate=rate, group=group,
-                                 initializer              = initializer              ,
-                                 is_training              = is_training              ,
-                                 is_add_biases            = is_add_biases            ,
-                                 is_batch_norm            = is_batch_norm            ,
-                                 is_dilated               = is_dilated               ,
-                                 is_depthwise             = is_depthwise             ,
-                                 is_ternary               = is_ternary               ,
-                                 is_quantized_activation  = is_quantized_activation  ,
-                                 IS_TERNARY               = IS_TERNARY               ,
-                                 IS_QUANTIZED_ACTIVATION  = IS_QUANTIZED_ACTIVATION  ,
-                                 Activation               = Activation               ,
-                                 padding                  = padding                  ,
-                                 Analysis                 = Analysis                 ,
-                                 scope                    = "conv"                   )
-        
-        net = conv2D_Module( net, kernel_size=1, stride=1, output_channel=output_channel, rate=rate, group=group,
-                             initializer              = initializer              ,
-                             is_training              = is_training              ,
-                             is_add_biases            = is_add_biases            ,
-                             is_batch_norm            = False                    ,
-                             is_dilated               = is_dilated               ,
-                             is_depthwise             = False                    ,
-                             is_ternary               = is_ternary               ,
-                             is_quantized_activation  = is_quantized_activation  ,
-                             IS_TERNARY               = IS_TERNARY               ,
-                             IS_QUANTIZED_ACTIVATION  = IS_QUANTIZED_ACTIVATION  ,
-                             Activation               = None                     ,
-                             padding                  = padding                  ,
-                             Analysis                 = Analysis                 ,
-                             scope                    = "Recovery_1x1"           )
-    return net
-        
-def shuffle_Module( # No use
-    net, kernel_size, stride, internal_channel, output_channel, rate, group,
-    initializer             ,
-    is_training             ,
-    is_add_biases           ,
-    is_batch_norm           ,  
-    is_dilated              , 
-    is_depthwise            ,
-    is_inception            ,
-    is_ternary              , 
-    is_quantized_activation , 
-    IS_TERNARY              ,  	
-    IS_QUANTIZED_ACTIVATION ,  
-    Activation              ,
-    padding                 ,
-    Analysis                
-    ): 
-    
-    with tf.variable_scope("shuffle_module"):
-        net = conv2D_Module( net, kernel_size=1, stride=1, output_channel=internal_channel, rate=rate, group=group,
-                             initializer              = initializer              ,
-                             is_training              = is_training              ,
-                             is_add_biases            = is_add_biases            ,
-                             is_batch_norm            = is_batch_norm            ,
-                             is_dilated               = is_dilated               ,
-                             is_depthwise             = False                    ,
-                             is_ternary               = is_ternary               ,
-                             is_quantized_activation  = is_quantized_activation  ,
-                             IS_TERNARY               = IS_TERNARY               ,
-                             IS_QUANTIZED_ACTIVATION  = IS_QUANTIZED_ACTIVATION  ,
-                             Activation               = Activation               ,
-                             padding                  = padding                  ,
-                             Analysis                 = Analysis                 ,
-                             scope                    = "Reduction_1x1"          )
-
-        net = shuffle_net(net, group = group)
-
-        if is_inception:
-            net = inception_Module( net, kernel_size=kernel_size, stride=stride, output_channel=internal_channel, rate=rate, group=group,
-                                    initializer               = initializer              ,
-                                    is_training              = is_training              ,
-                                    is_batch_norm             = is_batch_norm            ,
-                                    is_dilated                = is_dilated               ,
-                                    is_depthwise              = is_depthwise             ,
-                                    is_ternary                = is_ternary               ,
-                                    is_quantized_activation   = is_quantized_activation  ,
-                                    IS_TERNARY                = IS_TERNARY               ,
-                                    IS_QUANTIZED_ACTIVATION   = IS_QUANTIZED_ACTIVATION  ,
-                                    Activation                = Activation               ,
-                                    padding                   = padding                  ,
-                                    Analysis                  = Analysis                 )
-        else :
-            net = conv2D_Module( net, kernel_size=kernel_size, stride=stride, output_channel=internal_channel, rate=rate, group=group,
-                                 initializer              = initializer              ,
-                                 is_training              = is_training              ,
-                                 is_add_biases            = is_add_biases            ,
-                                 is_batch_norm            = is_batch_norm            ,
-                                 is_dilated               = is_dilated               ,
-                                 is_depthwise             = is_depthwise             ,
-                                 is_ternary               = is_ternary               ,
-                                 is_quantized_activation  = is_quantized_activation  ,
-                                 IS_TERNARY               = IS_TERNARY               ,
-                                 IS_QUANTIZED_ACTIVATION  = IS_QUANTIZED_ACTIVATION  ,
-                                 Activation               = Activation               ,
-                                 padding                  = padding                  ,
-                                 Analysis                 = Analysis                 ,
-                                 scope                    = "conv"                   )
-        
-        net = conv2D_Module( net, kernel_size=1, stride=1, output_channel=output_channel, rate=rate, group=group,
-                             initializer              = initializer              ,
-                             is_training              = is_training              ,
-                             is_add_biases            = is_add_biases            ,
-                             is_batch_norm            = is_batch_norm            ,
-                             is_dilated               = is_dilated               ,
-                             is_depthwise             = False                    ,
-                             is_ternary               = is_ternary               ,
-                             is_quantized_activation  = is_quantized_activation  ,
-                             IS_TERNARY               = IS_TERNARY               ,
-                             IS_QUANTIZED_ACTIVATION  = IS_QUANTIZED_ACTIVATION  ,
-                             Activation               = Activation               ,
-                             padding                  = padding                  ,
-                             Analysis                 = Analysis                 ,
-                             scope                    = "Recovery_1x1"           )
-    return net
-    
 def conv2D(	
     net, kernel_size=3, stride=1, internal_channel=64, output_channel=64, rate=1, group=1,
     initializer             = tf.contrib.layers.variance_scaling_initializer(),
@@ -1268,7 +1045,8 @@ def FC(
         # Convolution
         if is_dilated:
             ## Show the model
-            #print("-> Dilated Conv, Weights:{}, stride:{}" .format(weights.get_shape().as_list(), stride))
+            if SHOW_MODEL:
+                print("-> Dilated Conv, Weights:{}, stride:{}" .format(weights.get_shape().as_list(), stride))
             net = tf.nn.atrous_conv2d( 
                 value       = net, 
                 filters     = weights, 
@@ -1276,23 +1054,28 @@ def FC(
                 padding     = padding)
         else:
             ## Show the model
-            #print("-> Conv, Weights:{}, stride:{}" .format(weights.get_shape().as_list(), stride))
+            if SHOW_MODEL:
+                print("-> Conv, Weights:{}, stride:{}" .format(weights.get_shape().as_list(), stride))
             net = tf.nn.conv2d( 
                 input       = net, 
                 filter      = weights, 
                 strides     = [1, stride, stride, 1] if data_format == "NHWC" else [1, 1, stride, stride], 
                 padding     = padding,
                 data_format = data_format)
-
+        
+        tf.add_to_collection('conv_outputs', net)
+        
+        
         if is_add_biases:
             ## Show the model
-            #print("-> Add Biases, Biases:{}".format(biases.get_shape().as_list()))
+            if SHOW_MODEL:
+                print("-> Add Biases, Biases:{}".format(biases.get_shape().as_list()))
             net = tf.nn.bias_add(net, biases, data_format)
         
         ## For checking the final weights/biases is ternary or not
-        tf.add_to_collection("final_weights", weights)
-        if is_add_biases:
-            tf.add_to_collection("final_biases", biases)
+        #tf.add_to_collection("weights", weights)
+        #if is_add_biases:
+        #    tf.add_to_collection("biases", biases)
 
         #-----------------#
         #    Operation    #
@@ -1300,7 +1083,8 @@ def FC(
         # Ternary Scale
         if IS_TERNARY:
             ## Show the model
-            #print("-> Ternary")
+            if SHOW_MODEL:
+                print("-> Ternary")
             with tf.variable_scope('Ternary_Scalse'):
                 ternary_scale = tf.get_variable("ternary_scale", [1], tf.float32, initializer=initializer)
                 tf.add_to_collection("ternary_scale", ternary_scale)
@@ -1309,21 +1093,25 @@ def FC(
         # Batch Normalization
         if is_batch_norm == True:
             ## Show the model
-            #print("-> Batch_Norm")
+            if SHOW_MODEL:
+                print("-> Batch_Norm")
             net = batch_norm(net, is_training, data_format)
         
         # Activation
         if Activation == 'ReLU':
             ## Show the model
-            #print("-> ReLU")
+            if SHOW_MODEL:
+                print("-> ReLU")
             net = tf.nn.relu(net)
         elif Activation == 'Sigmoid':
             ## Show the model
-            #print("-> Sigmoid")
+            if SHOW_MODEL:
+                print("-> Sigmoid")
             net = tf.nn.sigmoid(net)
         elif Activation == 'CReLU':
             ## Show the model
-            #print("-> CReLU")
+            if SHOW_MODEL:
+                print("-> CReLU")
             net = CReLU(net, initializer = initializer)
         else:
             net = net
@@ -1331,7 +1119,8 @@ def FC(
         # Activation Quantization
         if IS_QUANTIZED_ACTIVATION:
             ## Show the model
-            #print("-> Activation Quantization")
+            if SHOW_MODEL:
+                print("-> Activation Quantization")
             net = quantize_Module(net, is_quantized_activation)
             
     return net

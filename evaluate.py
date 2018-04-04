@@ -61,6 +61,8 @@ else:
     
     if FLAGs.Dataset=='ade20k':
         Dataset_Path = Dataset_Path + '/ADEChallengeData2016'
+    elif FLAGs.Dataset=='ILSVRC2012':
+        Dataset_Path = Dataset_Path + '/imagenet-data'
     Y_pre_Path   = FLAGs.Model_1st + '_Y_pre/' + FLAGs.Dataset
     
     # For Saving Result Picture of Testing
@@ -74,22 +76,41 @@ else:
     test_Y_pre_path   = 'Y_pre/' + FLAGs.Model_1st + '/' + FLAGs.Dataset + '/'
     
     # For Loading Trained Model
-    ## ResNet-110
-    if FLAGs.Model_2nd == '110_cifar10_0':
-        Model_Path = 'Model/ResNet_Model/ResNet_110_cifar10_0_99_cifar10_2018.02.08_Filter_Angle64/'
-    ## ResNet-56
-    if FLAGs.Model_2nd == '56_cifar10_0':
-        Model_Path = 'Model/ResNet_Model/ResNet_56_cifar10_0_99_cifar10_2018.02.09_Filter_Angle_with_Skip10_10/'
-    ## ResNet-32
-    if FLAGs.Model_2nd == '32_cifar10_0':
-        Model_Path = 'Model/ResNet_Model/ResNet_32_cifar10_0_99_cifar10_2018.02.09_Filter_Angle65_Rebuild60_54_48_41_36_30_25_19_9_0/' 
-    ## ResNet-20
-    if FLAGs.Model_2nd == '20_cifar10_2':
-        Model_Path = 'Model/ResNet_Model/ResNet_20_cifar10_2_99_cifar10_2018.02.06_Filter_Angle68_Rebuild63_58_52_46_39_33_27_19_9_0/'
-    
-    Model = '100.ckpt'
-
-#==============# 
+    # ResNet
+    if FLAGs.Model_1st == 'ResNet':
+        ## ResNet-110
+        if FLAGs.Model_2nd == '110_cifar10_0':
+            Model_Path = 'Model/ResNet_Model/ResNet_110_cifar10_0_99_cifar10_2018.02.02_Filter_AngleV418/'
+            Model = '10.ckpt'
+        ## ResNet-56
+        if FLAGs.Model_2nd == '56_cifar10_0':
+            Model_Path = 'Model/ResNet_Model/ResNet_56_cifar10_0_99_cifar10_2018.02.09_Filter_Angle10_83/' 
+            Model = '10.ckpt'
+        ## ResNet-32
+        if FLAGs.Model_2nd == '32_cifar10_0':
+            Model_Path = 'Model/ResNet_Model/ResNet_32_cifar10_0_99_cifar10_2018.02.09_Filter_Angle10_41/'
+            Model = '10.ckpt'
+        ## ResNet-20
+        if FLAGs.Model_2nd == '20_cifar10_2':
+            Model_Path = 'Model/ResNet_Model/ResNet_20_cifar10_2_99_cifar10_2018.02.06/'
+            Model = '10.ckpt'
+        ## ResNet-50
+        if FLAGs.Model_2nd == '50':
+            Model_Path = 'Model/ResNet_Model/ResNet_50_74_cifar10_2018.03.27/'
+            Model = '1.ckpt'
+    # DenseNet
+    if FLAGs.Model_1st == 'DenseNet':
+        ## DenseNet_40_12
+        if FLAGs.Model_2nd == '40_12':
+            Model_Path = 'Model/DenseNet_Model/DenseNet_40_12_99_cifar10_2018.03.06_Filter_Angle10_73/'
+            Model = '200.ckpt'
+    # MobileNet
+    if FLAGs.Model_1st == 'MobileNet':
+        ## MobileNet_100_100
+        if FLAGs.Model_2nd == '100_100':
+            Model_Path = 'Model/DenseNet_Model/DenseNet_40_12_99_cifar10_2018.03.06_Filter_Angle10_73/'
+            Model = '200.ckpt'
+#==============#
 #    Define    #
 #==============#
 def main(argv):

@@ -22,7 +22,7 @@ parser.add_argument('--Model_1st'       , type = str, default = 'ResNet')
 parser.add_argument('--Model_2nd'       , type = str, default = '20_cifar10_2')
 parser.add_argument('--BatchSize'       , type = int, default = 128)
 parser.add_argument('--Epoch'           , type = int, default = 250)
-parser.add_argument('--epochs_per_eval' , type = int, default = 100)
+parser.add_argument('--epochs_per_eval' , type = int, default = 1)
 parser.add_argument('--Pruning_Strategy', type = str, default = 'Filter_Angle')
 
 FLAGs = parser.parse_args()
@@ -30,7 +30,7 @@ FLAGs = parser.parse_args()
 Model_Name = FLAGs.Model_1st + '_' + FLAGs.Model_2nd
 IS_HYPERPARAMETER_OPT = False
 
-print('\n\033[1;32;40mMODEL NAME\033[0m :\033[1;37;40m {MODEL_NAME}\033[0m' .format(MODEL_NAME = Model_Name))
+print('\n\033[1;32mMODEL NAME\033[0m :\033[1;37m {MODEL_NAME}\033[0m' .format(MODEL_NAME = Model_Name))
 #============#
 #    Path    #
 #============#
@@ -40,6 +40,8 @@ if platform == 'win32':
     
     if FLAGs.Dataset=='ade20k':
         Dataset_Path = Dataset_Path + '\\ADEChallengeData2016'
+    elif FLAGs.Dataset=='ILSVRC2012':
+        Dataset_Path = Dataset_Path + '/\\magenet-data'
     Y_pre_Path   = FLAGs.Model_1st + '_Y_pre\\' + FLAGs.Dataset
     
     # For Saving Result Picture of Testing
@@ -61,6 +63,8 @@ else:
     
     if FLAGs.Dataset=='ade20k':
         Dataset_Path = Dataset_Path + '/ADEChallengeData2016'
+    elif FLAGs.Dataset=='ILSVRC2012':
+        Dataset_Path = Dataset_Path + '/imagenet-data'
     Y_pre_Path   = FLAGs.Model_1st + '_Y_pre/' + FLAGs.Dataset
     
     # For Saving Result Picture of Testing
@@ -81,21 +85,41 @@ else:
 #==============#
 def main(argv):
     print("start!")
-    # -- Training --
-    ## ResNet-110
-    if FLAGs.Model_2nd == '110_cifar10_0':
-        Model_Path = 'Model/ResNet_Model/ResNet_110_cifar10_0_99_cifar10_2018.02.02_Filter_AngleV418/'
-    ## ResNet-56
-    if FLAGs.Model_2nd == '56_cifar10_0':
-        Model_Path = 'Model/ResNet_Model/ResNet_56_cifar10_0_99_cifar10_2018.02.09/' 
-    ## ResNet-32
-    if FLAGs.Model_2nd == '32_cifar10_0':
-        Model_Path = 'Model/ResNet_Model/ResNet_32_cifar10_0_99_cifar10_2018.02.09/'  
-    ## ResNet-20
-    if FLAGs.Model_2nd == '20_cifar10_2':
-        Model_Path = 'Model/ResNet_Model/ResNet_20_cifar10_2_99_cifar10_2018.02.06_Filter_Angle39/' 
-    
-    Model = '10.ckpt'
+    # ResNet
+    if FLAGs.Model_1st == 'ResNet':
+        ## ResNet-110
+        if FLAGs.Model_2nd == '110_cifar10_0':
+            Model_Path = 'Model/ResNet_Model/ResNet_110_cifar10_0_99_cifar10_2018.02.02_Filter_AngleV418/'
+            Model = '10.ckpt'
+        ## ResNet-56
+        if FLAGs.Model_2nd == '56_cifar10_0':
+            Model_Path = 'Model/ResNet_Model/ResNet_56_cifar10_0_99_cifar10_2018.02.09_Filter_Angle10_83/' 
+            Model = '10.ckpt'
+        ## ResNet-32
+        if FLAGs.Model_2nd == '32_cifar10_0':
+            Model_Path = 'Model/ResNet_Model/ResNet_32_cifar10_0_99_cifar10_2018.02.09_Filter_Angle10_41/'
+            Model = '10.ckpt'
+        ## ResNet-20
+        if FLAGs.Model_2nd == '20_cifar10_2':
+            Model_Path = 'Model/ResNet_Model/ResNet_20_cifar10_2_99_cifar10_2018.02.06/'
+            Model = '10.ckpt'
+        ## ResNet-50
+        if FLAGs.Model_2nd == '50':
+            Model_Path = 'Model/ResNet_Model/ResNet_50_74_cifar10_2018.03.27/'
+            Model = '1.ckpt'
+    # DenseNet
+    if FLAGs.Model_1st == 'DenseNet':
+        ## DenseNet_40_12
+        if FLAGs.Model_2nd == '40_12':
+            Model_Path = 'Model/DenseNet_Model/DenseNet_40_12_99_cifar10_2018.03.06/'
+            Model = '300.ckpt'
+    # MobileNet
+    if FLAGs.Model_1st == 'MobileNet':
+        ## MobileNet_100_100
+        if FLAGs.Model_2nd == '100_100':
+            Model_Path = 'Model/DenseNet_Model/DenseNet_40_12_99_cifar10_2018.03.06_Filter_Angle10_73/'
+            Model = '200.ckpt'
+            
     Global_Epoch = 0
     for _ in range(FLAGs.Epoch//FLAGs.epochs_per_eval):
         Model_Path, Model = utils.run_pruning(              
@@ -124,7 +148,6 @@ def main(argv):
             
         Global_Epoch = Global_Epoch + FLAGs.epochs_per_eval
         print("\033[0;33mGlobal Epoch{}\033[0m" .format(Global_Epoch))
-    # -- Pruning --
     
         
 if __name__ == "__main__":
