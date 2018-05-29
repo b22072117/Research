@@ -6,8 +6,8 @@ import math
 from PIL import Image
 from scipy import misc
 import argparse
-import utils
-import Model
+import utils_binary as utils
+import Model_binary as Model
 import sys
 from sys import platform
 import os
@@ -22,7 +22,7 @@ parser.add_argument('--Model_1st'      , type = str, default = 'ResNet')
 parser.add_argument('--Model_2nd'      , type = str, default = '20_cifar10_26')
 parser.add_argument('--BatchSize'      , type = int, default = 128)
 parser.add_argument('--Epoch'          , type = int, default = 250)
-parser.add_argument('--epochs_per_eval', type = int, default = 1)
+parser.add_argument('--epochs_per_eval', type = int, default = 10)
 
 
 FLAGs = parser.parse_args()
@@ -83,11 +83,22 @@ else:
 #==============#
 def main(argv):
     print("start!")
+    Global_Epoch = 0
+    Model_Path = None 
+    Model = None
     # -- Training --
     # For Loading Trained Weights
-    Model_Path = None #'Model/ResNet_Model/ResNet_50_78_cifar10_2018.03.27/'
-    Model = None #'1.ckpt'
-    Global_Epoch = 0
+    ## ResNet-20    
+    if FLAGs.Model_1st == 'ResNet':
+        if FLAGs.Model_2nd == '20_Ternary':
+            Model_Path = 'Model/ResNet_Model/ResNet_20_Ternary_99_cifar10_2018.04.13/'
+            Model = '160.ckpt'
+            Global_Epoch = 160
+        if FLAGs.Model_2nd == '20_Binary_1':
+            Model_Path = None #'Model/ResNet_Model/ResNet_20_Binary_1_91_cifar10_2018.04.22/'
+            Model = None #'200.ckpt'
+            Global_Epoch = 0
+            
     for _ in range(FLAGs.Epoch//FLAGs.epochs_per_eval):
         Model_Path, Model = utils.run_training( 
             Hyperparameter        = None                 ,               
@@ -113,9 +124,14 @@ def main(argv):
             test_target_path      = test_target_path     ,
             train_Y_pre_path      = train_Y_pre_path     ,
             valid_Y_pre_path      = valid_Y_pre_path     ,
-            test_Y_pre_path       = test_Y_pre_path      )
+            test_Y_pre_path       = test_Y_pre_path      ,
+            training_type         = 'train'              ,
+            is_find_best_model    = True                 )
             
         Global_Epoch = Global_Epoch + FLAGs.epochs_per_eval
+        
+        if Global_Epoch > FLAGs.Epoch:
+            break
     # -- Pruning --
     
         
