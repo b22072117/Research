@@ -86,6 +86,7 @@ def main(argv):
     Global_Epoch = 0
     Model_Path = None 
     Model = None
+    
     # -- Training --
     # For Loading Trained Weights
     ## ResNet-20    
@@ -94,45 +95,52 @@ def main(argv):
             Model_Path = 'Model/ResNet_Model/ResNet_20_Ternary_99_cifar10_2018.04.13/'
             Model = '160.ckpt'
             Global_Epoch = 160
-        if FLAGs.Model_2nd == '20_Binary_1':
-            Model_Path = None #'Model/ResNet_Model/ResNet_20_Binary_1_91_cifar10_2018.04.22/'
-            Model = None #'200.ckpt'
+        if FLAGs.Model_2nd == '20_Binary':
+            Model_Path = None
+            Model = None
             Global_Epoch = 0
-            
-    for _ in range(FLAGs.Epoch//FLAGs.epochs_per_eval):
-        Model_Path, Model = utils.run_training( 
-            Hyperparameter        = None                 ,               
-            FLAGs                 = FLAGs                ,
-            Epoch                 = FLAGs.epochs_per_eval,
-            Global_Epoch          = Global_Epoch         ,
-            IS_HYPERPARAMETER_OPT = IS_HYPERPARAMETER_OPT,
-            Dataset_Path          = Dataset_Path         ,
-            Y_pre_Path            = Y_pre_Path           ,
-            trained_model_path    = Model_Path           ,
-            trained_model         = Model                )
+    
+    while(1):
+        if Global_Epoch < FLAGs.Epoch * 0.9 and FLAGs.Epoch >= 10:
+            epochs_per_eval = 1
+        elif Global_Epoch < FLAGs.Epoch * 0.9 and FLAGs.Epoch < FLAGs.epochs_per_eval:
+            epochs_per_eval = FLAGs.Epoch
+        else:
+            epochs_per_eval = FLAGs.epochs_per_eval
+    
+        Model_Path, Model, Global_Epoch = utils.run_training( 
+            Hyperparameter        = None                    ,               
+            FLAGs                 = FLAGs                   ,
+            Epoch                 = epochs_per_eval         ,
+            Global_Epoch          = Global_Epoch            ,
+            IS_HYPERPARAMETER_OPT = IS_HYPERPARAMETER_OPT   ,
+            Dataset_Path          = Dataset_Path            ,
+            Y_pre_Path            = Y_pre_Path              ,
+            trained_model_path    = Model_Path              ,
+            trained_model         = Model                   )
     
         # -- Testing --
         test_accuracy = utils.run_testing( 
-            Hyperparameter        = None                 ,               
-            FLAGs                 = FLAGs                ,
-            IS_HYPERPARAMETER_OPT = IS_HYPERPARAMETER_OPT,  
-            Dataset_Path          = Dataset_Path         ,
-            testing_model_path    = Model_Path           ,
-            testing_model         = Model                ,
-            train_target_path     = train_target_path    ,
-            valid_target_path     = valid_target_path    ,
-            test_target_path      = test_target_path     ,
-            train_Y_pre_path      = train_Y_pre_path     ,
-            valid_Y_pre_path      = valid_Y_pre_path     ,
-            test_Y_pre_path       = test_Y_pre_path      ,
-            training_type         = 'train'              ,
-            is_find_best_model    = True                 )
-            
-        Global_Epoch = Global_Epoch + FLAGs.epochs_per_eval
-        
-        if Global_Epoch > FLAGs.Epoch:
+            Hyperparameter        = None                    ,               
+            FLAGs                 = FLAGs                   ,
+            IS_HYPERPARAMETER_OPT = IS_HYPERPARAMETER_OPT   ,  
+            Dataset_Path          = Dataset_Path            ,
+            testing_model_path    = Model_Path              ,
+            testing_model         = Model                   ,
+            train_target_path     = train_target_path       ,
+            valid_target_path     = valid_target_path       ,
+            test_target_path      = test_target_path        ,
+            train_Y_pre_path      = train_Y_pre_path        ,
+            valid_Y_pre_path      = valid_Y_pre_path        ,
+            test_Y_pre_path       = test_Y_pre_path         ,
+            training_type         = 'train'                 ,
+            diversify_layers      = None                    ,
+            is_find_best_model    = True                    )
+                    
+        print("\033[0;33mGlobal Epoch{}\033[0m" .format(Global_Epoch))
+        if Global_Epoch >= FLAGs.Epoch:
+            Global_Epoch = 0
             break
-    # -- Pruning --
     
         
 if __name__ == "__main__":

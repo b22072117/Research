@@ -28,6 +28,7 @@ parser.add_argument('--epochs_per_eval'     , type = int, default = 1)
 parser.add_argument('--Pruning_Strategy'    , type = str, default = 'Filter_Similar')
 parser.add_argument('--Pruning_Propotion'   , type = int, default = 10)
 parser.add_argument('--Pruning_Times'       , type = int, default = 6)
+parser.add_argument('--Iterative_Pruning'   , type = str, default = 'False')
 FLAGs = parser.parse_args()
 IS_HYPERPARAMETER_OPT = False
 
@@ -65,13 +66,13 @@ def main(argv):
     if FLAGs.Model_1st == 'ResNet':
         ## ResNet-110
         if FLAGs.Model_2nd == '110_cifar10_0':
-            Model_Path = 'Model/ResNet_Model/ResNet_110_cifar10_0_99_2018.02.08_Filter_Similar_C2B10_19/'
-            Model = 'best.ckpt'
+            Model_Path = 'Model/ResNet_Model/ResNet_110_cifar10_0_99_2018.02.08/'
+            Model = '10.ckpt'
             Global_Epoch = 0
         ## ResNet-56
         if FLAGs.Model_2nd == '56_cifar10_0':
-            Model_Path = 'Model/ResNet_Model/ResNet_56_cifar10_0_99_2018.02.09_Filter_Similar_WC2BD10_20/' 
-            Model = 'best.ckpt'
+            Model_Path = 'Model/ResNet_Model/ResNet_56_cifar10_0_99_2018.02.09/' 
+            Model = '10.ckpt'
             Global_Epoch = 0
         if FLAGs.Model_2nd == '56_Binary':
             Model_Path = 'Model/ResNet_Model/ResNet_56_Binary_98_cifar10_2018.04.25_Filter_Angle10_40/' 
@@ -85,9 +86,9 @@ def main(argv):
         if FLAGs.Model_2nd == '20_cifar10_2':
             Model_Path = 'Model/ResNet_Model/ResNet_20_cifar10_2_99_2018.02.06/'
             Model = '10.ckpt'
-        if FLAGs.Model_2nd == '20_Binary_1':
-            Model_Path = 'Model/ResNet_Model/ResNet_20_Binary_1_94_cifar10_2018.04.22/'
-            Model = '180.ckpt'
+        if FLAGs.Model_2nd == '20_Binary':
+            Model_Path = 'Model/ResNet_Model/ResNet_20_Binary_cifar10_2018.06.07/'
+            Model = '122.ckpt'
             Global_Epoch = 0
         ## ResNet-50
         if FLAGs.Model_2nd == '50':
@@ -107,23 +108,34 @@ def main(argv):
             Model_Path = 'Model/MobileNet_Model/MobileNet_100_100_65_cifar10_2018.04.07_Filter_Angle10_7/'
             Model = '27.ckpt'
             Global_Epoch = 27
-
+    
+    Model_Path_Ori = Model_Path
+    Model_Ori = Model
+    
     for pruning_iter in range(FLAGs.Pruning_Times):
+        if FLAGS.Iterative_Pruning == 'False':
+            Model_Path = Model_Path_Ori
+            Model = Model_Ori
         while(1):
-            if Global_Epoch < FLAGs.Epoch * 0.7 and FLAGs.Epoch >= 10:
+            if Global_Epoch < FLAGs.Epoch * 0.9 and FLAGs.Epoch >= 10:
                 epochs_per_eval = 10
             else:
                 epochs_per_eval = FLAGs.epochs_per_eval
                 
-            Model_Path, Model, Global_Epoch = utils.run_pruning(              
-                FLAGs                 = FLAGs           ,
-                Epoch                 = epochs_per_eval ,
-                Global_Epoch          = Global_Epoch    ,
-                Dataset_Path          = Dataset_Path    ,
-                Y_pre_Path            = Y_pre_Path      ,
-                pruning_model_path    = Model_Path      ,
-                pruning_model         = Model           )
-        
+            Model_Path, Model, Global_Epoch, is_skip = utils.run_pruning(              
+                FLAGs               = FLAGs             ,
+                Epoch               = epochs_per_eval   ,
+                Global_Epoch        = Global_Epoch      ,
+                Dataset_Path        = Dataset_Path      ,
+                Y_pre_Path          = Y_pre_Path        ,
+                pruning_model_path  = Model_Path        ,
+                pruning_model       = Model             ,
+                pruning_iter        = pruning_iter      )
+            
+            if is_skip:
+                Global_Epoch = 0
+                break
+                
             # -- Testing --
             test_accuracy = utils.run_testing( 
                 Hyperparameter        = None                    ,               
@@ -144,6 +156,7 @@ def main(argv):
                 
             print("\033[0;33mGlobal Epoch{}\033[0m" .format(Global_Epoch))
             if Global_Epoch >= FLAGs.Epoch:
+                Global_Epoch = 0
                 break
         
 if __name__ == "__main__":

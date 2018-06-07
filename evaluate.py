@@ -80,29 +80,29 @@ else:
     if FLAGs.Model_1st == 'ResNet':
         ## ResNet-110
         if FLAGs.Model_2nd == '110_cifar10_0':
-            Model_Path = 'Model/ResNet_Model/ResNet_110_cifar10_0_99_2018.02.08_Filter_Similar_C2B10_59/'
+            Model_Path = 'Model/ResNet_Model/ResNet_110_cifar10_0_99_2018.02.08_Filter_Magnitude29_47/'
             Model = 'best.ckpt'
         ## ResNet-56
         if FLAGs.Model_2nd == '56_cifar10_0':
-            Model_Path = 'Model/ResNet_Model/ResNet_56_cifar10_0_99_2018.02.09_Filter_Similar_WC2BD10_59/'
+            Model_Path = 'Model/ResNet_Model/ResNet_56_cifar10_0_99_2018.02.09_Filter_Similar_R60_59/'
             Model = 'best.ckpt'
         if FLAGs.Model_2nd == '56_Binary':
             Model_Path = 'Model/ResNet_Model/ResNet_56_Binary_98_cifar10_2018.04.25_Filter_Angle10_40/' 
             Model = 'best.ckpt'
         ## ResNet-32
         if FLAGs.Model_2nd == '32_cifar10_0':
-            Model_Path = 'Model/ResNet_Model/ResNet_32_cifar10_0_99_2018.02.09_Filter_Similar_CD10_59/'
+            Model_Path = 'Model/ResNet_Model/ResNet_32_cifar10_0_99_2018.02.09_Filter_Magnitude31_47/'
             Model = 'best.ckpt'
         ## ResNet-20
         if FLAGs.Model_2nd == '20_cifar10_2':
-            Model_Path = 'Model/ResNet_Model/ResNet_20_cifar10_2_layer1_to_layer9/'
-            Model = '1.ckpt'
+            Model_Path = 'Model/ResNet_Model/ResNet_20_cifar10_2_99_2018.02.06_Filter_Similar_K40_39/'
+            Model = 'best.ckpt'
             diversify_layers = ['layer14', 'layer16', 'layer17']
         if FLAGs.Model_2nd == '20_Ternary':
             Model_Path = 'Model/ResNet_Model/ResNet_20_Ternary_98_cifar10_2018.04.14/'
             Model = '400.ckpt'
-        if FLAGs.Model_2nd == '20_Binary_2':
-            Model_Path = 'Model/ResNet_Model/ResNet_20_Binary_2_best/'
+        if FLAGs.Model_2nd == '20_Binary':
+            Model_Path = 'Model/ResNet_Model/ResNet_20_Binary_best/'
             Model = 'best.ckpt'
         ## ResNet-50
         if FLAGs.Model_2nd == '50':
@@ -112,8 +112,8 @@ else:
     if FLAGs.Model_1st == 'DenseNet':
         ## DenseNet_40_12
         if FLAGs.Model_2nd == '40_12':
-            Model_Path = 'Model/DenseNet_Model/DenseNet_40_12_99_cifar10_2018.03.06_Filter_Angle10_73/'
-            Model = '200.ckpt'
+            Model_Path = 'Model/DenseNet_Model/DenseNet_40_12_99_cifar10_2018.03.06/'
+            Model = '300.ckpt'
     # MobileNet
     if FLAGs.Model_1st == 'MobileNet':
         ## MobileNet_100_100
@@ -132,21 +132,21 @@ else:
 def main(argv):
     # -- Testing --
     test_accuracy = utils.run_testing( 
-        Hyperparameter        = None                 ,               
-        FLAGs                 = FLAGs                ,
-        IS_HYPERPARAMETER_OPT = IS_HYPERPARAMETER_OPT,  
-        Dataset_Path          = Dataset_Path         ,
-        testing_model_path    = Model_Path           ,
-        testing_model         = Model                ,
-        train_target_path     = train_target_path    ,
-        valid_target_path     = valid_target_path    ,
-        test_target_path      = test_target_path     ,
-        train_Y_pre_path      = train_Y_pre_path     ,
-        valid_Y_pre_path      = valid_Y_pre_path     ,
-        test_Y_pre_path       = test_Y_pre_path      ,
-        training_type         = 'diversify'               ,
-        diversify_layers      = diversify_layers     ,
-        is_find_best_model    = False                )
+        Hyperparameter        = None                    ,               
+        FLAGs                 = FLAGs                   ,
+        IS_HYPERPARAMETER_OPT = IS_HYPERPARAMETER_OPT   ,  
+        Dataset_Path          = Dataset_Path            ,
+        testing_model_path    = Model_Path              ,
+        testing_model         = Model                   ,
+        train_target_path     = train_target_path       ,
+        valid_target_path     = valid_target_path       ,
+        test_target_path      = test_target_path        ,
+        train_Y_pre_path      = train_Y_pre_path        ,
+        valid_Y_pre_path      = valid_Y_pre_path        ,
+        test_Y_pre_path       = test_Y_pre_path         ,
+        training_type         = 'test'                  ,
+        diversify_layers      = diversify_layers        ,
+        is_find_best_model    = False                   )
         
 if __name__ == "__main__":
     FLAGS, unparsed = parser.parse_known_args()

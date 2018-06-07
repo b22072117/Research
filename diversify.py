@@ -54,29 +54,32 @@ valid_Y_pre_path  = 'Y_pre/' + FLAGs.Model_1st + '/' + FLAGs.Dataset + '/'
 test_Y_pre_path   = 'Y_pre/' + FLAGs.Model_1st + '/' + FLAGs.Dataset + '/'
 
 
-#==============# 
+#==============#
 #    Define    #
 #==============#
 def main(argv):
     Global_Epoch = 0
-    Model_Path = None 
+    Model_Path = None
     Model = None
     # -- Training --
     # For Loading Trained Weights
-    ## ResNet-20    
+    ## ResNet-20
     if FLAGs.Model_1st == 'ResNet':
         if FLAGs.Model_2nd == '20_cifar10_2':
             Model_Path = 'Model/ResNet_Model/ResNet_20_cifar10_2_99_2018.02.06/'
             Model = '10.ckpt'
-            Model_Path_s = 'Model/ResNet_Model/ResNet_20_cifar10_2_layer10_to_layer18_mode4_Filter_Similar_WC10_76/'
-            Model_s = '10.ckpt'
+            Model_Path_s = Model_Path #'Model/ResNet_Model/ResNet_20_cifar10_2_layer1_to_layer8_mode1_Filter_Similar60_59/'
+            Model_s = Model #'50.ckpt'
             diversify_layers = {}
             diversify_layers.update({
-                #'0': {'layer': ['layer1' , 'layer9' ], 'type': 'diversify', 'mode' : '4', 'prune_propotion': 0.1, 'times': 6},
-                #'0': {'layer': ['layer10', 'layer18'], 'type': 'diversify', 'mode' : '4', 'prune_propotion': 0.1, 'times': 6},
-                #'2': {'layer': ['layer19', 'layer27'], 'type': 'diversify', 'mode' : '4', 'prune_propotion': 0.1, 'times': 2},
+                #'0': {'layer': ['layer1' , 'layer8' ], 'type': 'diversify', 'mode' : '1', 'prune_propotion': 0.6, 'times': 1},
+                #'0': {'layer': ['layer10', 'layer17'], 'type': 'diversify', 'mode' : '1', 'prune_propotion': 0.1, 'times': 1},
+                '0': {'layer': ['layer19', 'layer26'], 'type': 'diversify', 'mode' : '1', 'prune_propotion': 0.4, 'times': 1},
+                
+                #'1': {'layer': ['layer10', 'layer18'], 'type': 'diversify', 'mode' : '4', 'prune_propotion': 0.1, 'times': 6},
+                #'2': {'layer': ['layer19', 'layer27'], 'type': 'diversify', 'mode' : '4', 'prune_propotion': 0.1, 'times': 6},
                 #'1': {'layer': ['layer1' , 'layer9' ], 'type': 'diversify', 'mode' : '7', 'prune_propotion': None, 'times': 6},
-                '0': {'layer': ['layer10', 'layer18'], 'type': 'diversify', 'mode' : '7', 'prune_propotion': None, 'times': 6},
+                #'0': {'layer': ['layer10', 'layer18'], 'type': 'diversify', 'mode' : '7', 'prune_propotion': None, 'times': 6},
                 #'5': {'layer': ['layer19', 'layer27'], 'type': 'diversify', 'mode' : '7', 'prune_propotion': None, 'times': 2}
             })
             pruned_model_path = None
@@ -117,7 +120,7 @@ def main(argv):
                 else:
                     epochs_per_eval = FLAGs.epochs_per_eval
                     
-                Model_Path_s, Model_s, error, Global_Epoch = utils.run_diversifying( 
+                Model_Path_s, Model_s, error, Global_Epoch = utils.run_diversifying(
                     Hyperparameter          = None                  ,               
                     FLAGs                   = FLAGs                 ,
                     Epoch                   = epochs_per_eval       ,
@@ -141,7 +144,7 @@ def main(argv):
                     continue
                     
                 # -- Testing --
-                test_accuracy = utils.run_testing( 
+                test_accuracy = utils.run_testing(
                     Hyperparameter        = None                 ,               
                     FLAGs                 = FLAGs                ,
                     IS_HYPERPARAMETER_OPT = IS_HYPERPARAMETER_OPT,  

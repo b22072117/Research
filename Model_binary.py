@@ -839,7 +839,7 @@ def conv2D_Variable(
         # Binary Weights
         graph = tf.get_default_graph()
         with graph.gradient_override_map({"Sign": "Identity"}):
-            weights_ = float32_weights #tf.clip_by_value(float32_weights, -1, 1)
+            weights_ = float32_weights
             weights_ = tf.sign(weights_)
         
         tf.add_to_collection('binary_weights', weights_)
@@ -1161,21 +1161,33 @@ def conv2D_Module(
                 net = batch_norm(net, is_training, data_format, trainable)
             """
             
-            net_ = batch_norm(net, is_training, data_format, fast_mode!='0' and trainable)
-            
-            
             cond0 = fast_mode == '4'
             cond1 = fast_mode == '5'
             cond2 = fast_mode == '6'
             cond3 = fast_mode == '7'
             cond4 = fast_mode == '8'
             cond5 = fast_mode == '9'
+            
+            # Normal
+            if cond0 or cond1 or cond2:
+                is_training_ = is_training #tf.logical_and(is_training, tf.equal(complexity_mode, tf.constant(0, tf.float32)))
+                trainable_ = fast_mode!='0' and trainable
+            elif (cond3 or cond4 or cond5) and rebuilding_now:
+                is_training_ = is_training
+                trainable_ = trainable and complexity_mode_now == 0
+            else:
+                is_training_ = is_training
+                trainable_ = fast_mode!='0' and trainable
+            
+            net_ = batch_norm(net, is_training_, data_format, trainable_)
+            """
+            # Pruning / Rebuilding
             if cond0 or cond1 or cond2 or cond3 or cond4 or cond5:
                 with tf.variable_scope('complexity_1'):
                     # is_training
                     if cond0 or cond1 or cond2:
-                        is_training_ = is_training #tf.logical_and(is_training, tf.equal(complexity_mode, tf.constant(0, tf.float32)))
-                        trainable_ = trainable
+                        is_training_ = tf.logical_and(is_training, tf.equal(complexity_mode, tf.constant(0, tf.float32)))
+                        trainable_ = trainable and complexity_mode_now == 1
                     elif (cond3 or cond4 or cond5) and rebuilding_now:
                         is_training_ = tf.logical_and(is_training, tf.equal(complexity_mode, tf.constant(2, tf.float32)))
                         trainable_ = trainable and complexity_mode_now == 1
@@ -1186,8 +1198,8 @@ def conv2D_Module(
                 with tf.variable_scope('complexity_2'):
                     # is_training
                     if cond0 or cond1 or cond2:
-                        is_training_ = is_training #tf.logical_and(is_training, tf.equal(complexity_mode, tf.constant(1, tf.float32)))
-                        trainable_ = trainable
+                        is_training_ = tf.logical_and(is_training, tf.equal(complexity_mode, tf.constant(1, tf.float32)))
+                        trainable_ = trainable and complexity_mode_now == 2
                     elif (cond3 or cond4 or cond5) and rebuilding_now:
                         is_training_ = tf.logical_and(is_training, tf.equal(complexity_mode, tf.constant(3, tf.float32)))
                         trainable_ = trainable and complexity_mode_now == 2
@@ -1198,8 +1210,8 @@ def conv2D_Module(
                 with tf.variable_scope('complexity_3'):
                     # is_training
                     if cond0 or cond1 or cond2:
-                        is_training_ = is_training #tf.logical_and(is_training, tf.equal(complexity_mode, tf.constant(2, tf.float32)))
-                        trainable_ = trainable
+                        is_training_ = tf.logical_and(is_training, tf.equal(complexity_mode, tf.constant(2, tf.float32)))
+                        trainable_ = trainable and complexity_mode_now == 3
                     elif (cond3 or cond4 or cond5) and rebuilding_now:
                         is_training_ = tf.logical_and(is_training, tf.equal(complexity_mode, tf.constant(4, tf.float32)))
                         trainable_ = trainable and complexity_mode_now == 3
@@ -1210,8 +1222,8 @@ def conv2D_Module(
                 with tf.variable_scope('complexity_4'):
                     # is_training
                     if cond0 or cond1 or cond2:
-                        is_training_ = is_training #tf.logical_and(is_training, tf.equal(complexity_mode, tf.constant(3, tf.float32)))
-                        trainable_ = trainable
+                        is_training_ = tf.logical_and(is_training, tf.equal(complexity_mode, tf.constant(3, tf.float32)))
+                        trainable_ = trainable and complexity_mode_now == 4
                     elif (cond3 or cond4 or cond5) and rebuilding_now:
                         is_training_ = tf.logical_and(is_training, tf.equal(complexity_mode, tf.constant(5, tf.float32)))
                         trainable_ = trainable and complexity_mode_now == 4
@@ -1222,8 +1234,8 @@ def conv2D_Module(
                 with tf.variable_scope('complexity_5'):
                     # is_training
                     if cond0 or cond1 or cond2:
-                        is_training_ = is_training #tf.logical_and(is_training, tf.equal(complexity_mode, tf.constant(4, tf.float32)))
-                        trainable_ = trainable
+                        is_training_ = tf.logical_and(is_training, tf.equal(complexity_mode, tf.constant(4, tf.float32)))
+                        trainable_ = trainable and complexity_mode_now == 5
                     elif (cond3 or cond4 or cond5) and rebuilding_now:
                         is_training_ = tf.logical_and(is_training, tf.equal(complexity_mode, tf.constant(6, tf.float32)))
                         trainable_ = trainable and complexity_mode_now == 5
@@ -1234,8 +1246,8 @@ def conv2D_Module(
                 with tf.variable_scope('complexity_6'):
                     # is_training
                     if cond0 or cond1 or cond2:
-                        is_training_ = is_training #tf.logical_and(is_training, tf.equal(complexity_mode, tf.constant(5, tf.float32)))
-                        trainable_ = trainable
+                        is_training_ = tf.logical_and(is_training, tf.equal(complexity_mode, tf.constant(5, tf.float32)))
+                        trainable_ = trainable and complexity_mode_now == 6
                     elif (cond3 or cond4 or cond5) and rebuilding_now:
                         is_training_ = tf.logical_and(is_training, tf.equal(complexity_mode, tf.constant(7, tf.float32)))
                         trainable_ = trainable and complexity_mode_now == 6
@@ -1279,7 +1291,8 @@ def conv2D_Module(
                             default = None, exclusive = True)
             else:
                 net = net_
-            
+            """
+            net = net_
         # Activation
         if Activation == 'ReLU':
             ## Show the model
