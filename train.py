@@ -102,7 +102,7 @@ def main(argv):
     
     while(1):
         if Global_Epoch < FLAGs.Epoch * 0.9 and FLAGs.Epoch >= 10:
-            epochs_per_eval = 1
+            epochs_per_eval = 10
         elif Global_Epoch < FLAGs.Epoch * 0.9 and FLAGs.Epoch < FLAGs.epochs_per_eval:
             epochs_per_eval = FLAGs.Epoch
         else:

@@ -19,16 +19,21 @@ import time
 #========================#
 parser = argparse.ArgumentParser()
 
-parser.add_argument('--Dataset'             , type = str, default = 'cifar10')
-parser.add_argument('--Model_1st'           , type = str, default = 'ResNet')
-parser.add_argument('--Model_2nd'           , type = str, default = '20_cifar10_2')
-parser.add_argument('--BatchSize'           , type = int, default = 128)
-parser.add_argument('--Epoch'               , type = int, default = 160)
-parser.add_argument('--epochs_per_eval'     , type = int, default = 1)
-parser.add_argument('--Pruning_Strategy'    , type = str, default = 'Filter_Similar')
-parser.add_argument('--Pruning_Propotion'   , type = int, default = 10)
-parser.add_argument('--Pruning_Times'       , type = int, default = 6)
-parser.add_argument('--Iterative_Pruning'   , type = str, default = 'False')
+parser.add_argument('--Dataset'                     , type = str, default = 'cifar10')
+parser.add_argument('--Model_1st'                   , type = str, default = 'ResNet')
+parser.add_argument('--Model_2nd'                   , type = str, default = '20_cifar10_2')
+parser.add_argument('--BatchSize'                   , type = int, default = 128)
+parser.add_argument('--Epoch'                       , type = int, default = 160)
+parser.add_argument('--epochs_per_eval'             , type = int, default = 1)
+parser.add_argument('--Pruning_Strategy'            , type = str, default = 'Filter_Similar')
+parser.add_argument('--Pruning_Propotion'           , type = int, default = 10)
+parser.add_argument('--Pruning_Propotion_2'         , type = int, default = 10)
+parser.add_argument('--Pruning_Threshold'           , type = int, default = 0)
+parser.add_argument('--Pruning_Threshold_2'         , type = int, default = 0)
+parser.add_argument('--Pruning_Times'               , type = int, default = 6)
+parser.add_argument('--Pruning_Propotion_Per_Time'  , type = int, default = 10)
+parser.add_argument('--Iterative_Pruning'           , type = str, default = 'False')
+
 FLAGs = parser.parse_args()
 IS_HYPERPARAMETER_OPT = False
 
@@ -68,12 +73,12 @@ def main(argv):
         if FLAGs.Model_2nd == '110_cifar10_0':
             Model_Path = 'Model/ResNet_Model/ResNet_110_cifar10_0_99_2018.02.08/'
             Model = '10.ckpt'
-            Global_Epoch = 0
+            #Global_Epoch = 0
         ## ResNet-56
         if FLAGs.Model_2nd == '56_cifar10_0':
-            Model_Path = 'Model/ResNet_Model/ResNet_56_cifar10_0_99_2018.02.09/' 
-            Model = '10.ckpt'
-            Global_Epoch = 0
+            Model_Path = 'Model/ResNet_Model/ResNet_56_cifar10_0_99_2018.02.09_Filter_Similar60_59/'
+            Model = '100.ckpt' 
+            #Global_Epoch = 70
         if FLAGs.Model_2nd == '56_Binary':
             Model_Path = 'Model/ResNet_Model/ResNet_56_Binary_98_cifar10_2018.04.25_Filter_Angle10_40/' 
             Model = '166.ckpt'
@@ -92,22 +97,23 @@ def main(argv):
             Global_Epoch = 0
         ## ResNet-50
         if FLAGs.Model_2nd == '50':
-            Model_Path = 'Model/ResNet_Model/ResNet_50_74_cifar10_2018.03.27_Filter_Angle10_18/'
-            Model = '11.ckpt'
-            Global_Epoch = 111 #2018.05.16
+            Model_Path = 'Model/ResNet_Model/ResNet_50_74_cifar10_2018.03.27/'
+            Model = '1.ckpt'
+            #Global_Epoch = 43
     # DenseNet
     if FLAGs.Model_1st == 'DenseNet':
         ## DenseNet_40_12
         if FLAGs.Model_2nd == '40_12':
-            Model_Path = 'Model/DenseNet_Model/DenseNet_40_12_99_cifar10_2018.03.06/'
+            Model_Path = 'Model/DenseNet_Model/DenseNet_40_12_99_cifar10_2018.03.06_Filter_Similar_K10_9/'
             Model = '300.ckpt'
+            #Global_Epoch = 220 
     # MobileNet
     if FLAGs.Model_1st == 'MobileNet':
         ## MobileNet_100_100
         if FLAGs.Model_2nd == '100_100':
-            Model_Path = 'Model/MobileNet_Model/MobileNet_100_100_65_cifar10_2018.04.07_Filter_Angle10_7/'
-            Model = '27.ckpt'
-            Global_Epoch = 27
+            Model_Path = 'Model/MobileNet_Model/MobileNet_100_100_65_cifar10_2018.04.07_Filter_Similar20_13/'
+            Model = '43.ckpt'
+            Global_Epoch = 43
     
     Model_Path_Ori = Model_Path
     Model_Ori = Model
@@ -117,10 +123,13 @@ def main(argv):
             Model_Path = Model_Path_Ori
             Model = Model_Ori
         while(1):
-            if Global_Epoch < FLAGs.Epoch * 0.9 and FLAGs.Epoch >= 10:
-                epochs_per_eval = 10
+            if FLAGs.Dataset=='ILSVRC2012':
+                epochs_per_eval = 1
             else:
-                epochs_per_eval = FLAGs.epochs_per_eval
+                if Global_Epoch < FLAGs.Epoch * 0.9 and FLAGs.Epoch >= 10:
+                    epochs_per_eval = 10
+                else:
+                    epochs_per_eval = 10#FLAGs.epochs_per_eval
                 
             Model_Path, Model, Global_Epoch, is_skip = utils.run_pruning(              
                 FLAGs               = FLAGs             ,

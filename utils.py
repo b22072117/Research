@@ -102,7 +102,7 @@ def run_training(
         W_Resize = 224
         class_num = 1001
         train_num = 1281167
-        valid_num = 0
+        valid_num = 0 
         test_num = 50000
         
     #----------------#
@@ -125,23 +125,45 @@ def run_training(
         HP.update({'valid_num'                 : valid_num })
         HP.update({'test_num'                  : test_num  })
         if Model_first_name == 'ResNet':
-            HP.update({'LR'                        : 0.0000125 }) 
-            HP.update({'LR_Strategy'               : '3times'  })
-            HP.update({'LR_Final'                  : 1e-3      })
-            HP.update({'LR_Decade'                 : 10        })   
-            HP.update({'LR_Decade_1st_Epoch'       : 30        })
-            HP.update({'LR_Decade_2nd_Epoch'       : 60        })
-            HP.update({'LR_Decade_3rd_Epoch'       : 80        }) 
-            HP.update({'LR_Decade_4th_Epoch'       : 90        }) 
-            HP.update({'L2_Lambda'                 : 2e-4      })
-            HP.update({'Opt_Method'                : 'Momentum'})
-            HP.update({'Momentum_Rate'             : 0.9       })
-            HP.update({'IS_STUDENT'                : False     })
-            HP.update({'Ternary_Epoch'             : 50        })
-            HP.update({'Quantized_Activation_Epoch': 100       })
-            HP.update({'Dropout_Rate'              : 0.0       })
+            if Model_second_name == '50':
+                HP.update({'LR'                        : 0.000125        })  
+                HP.update({'LR_Strategy'               : '3times'        })
+                HP.update({'LR_Final'                  : 1e-3            })
+                HP.update({'LR_Decade'                 : 10              }) 
+                HP.update({'LR_Decade_1st_Epoch'       : 30              })
+                HP.update({'LR_Decade_2nd_Epoch'       : 60              })
+                HP.update({'LR_Decade_3rd_Epoch'       : 80              })
+                HP.update({'LR_Decade_4th_Epoch'       : 90              })
+                HP.update({'L2_Lambda'                 : 2e-4            })
+                HP.update({'Opt_Method'                : 'Momentum'      })
+                HP.update({'Momentum_Rate'             : 0.9             })
+                HP.update({'IS_STUDENT'                : False           })
+                HP.update({'Ternary_Epoch'             : 50              })
+                HP.update({'Quantized_Activation_Epoch': 100             })
+                HP.update({'Dropout_Rate'              : 0.0             })
+            else:
+                HP.update({'LR'                        : 0.1             })  
+                HP.update({'LR_Strategy'               : '3times'        })
+                HP.update({'LR_Final'                  : 1e-3            })
+                HP.update({'LR_Decade'                 : 10              }) 
+                HP.update({'LR_Decade_1st_Epoch'       : 80              })
+                HP.update({'LR_Decade_2nd_Epoch'       : 120             })
+                HP.update({'LR_Decade_3rd_Epoch'       : 200             })
+                HP.update({'LR_Decade_4th_Epoch'       : 200             })
+                HP.update({'L2_Lambda'                 : 2e-4            })
+                HP.update({'Opt_Method'                : 'Momentum'      })
+                HP.update({'Momentum_Rate'             : 0.9             })
+                HP.update({'IS_STUDENT'                : False           })
+                HP.update({'Ternary_Epoch'             : 161             })
+                HP.update({'Quantized_Activation_Epoch': 100             })
+                HP.update({'Dropout_Rate'              : 0.0             })
+                HP.update({'Ternary_LR'                : 1e-1            })
+                HP.update({'Ternary_LR_Decade_1st_Epoch': 80             })
+                HP.update({'Ternary_LR_Decade_2nd_Epoch': 120            })
+                HP.update({'Ternary_LR_Decade_3rd_Epoch': 150            })
+                HP.update({'Ternary_LR_Decade_4th_Epoch': 200            })
         elif Model_first_name == 'DenseNet':
-            HP.update({'LR'                        : 1e-1      }) 
+            HP.update({'LR'                        : 1e-1      })
             HP.update({'LR_Strategy'               : '3times'  })
             HP.update({'LR_Final'                  : 1e-3      })
             HP.update({'LR_Decade'                 : 10        })   
@@ -156,7 +178,7 @@ def run_training(
             HP.update({'Quantized_Activation_Epoch': 100       })
             HP.update({'Dropout_Rate'              : 0.0       })
         elif Model_first_name == 'MobileNet':
-            HP.update({'LR'                        : 1e-1      }) 
+            HP.update({'LR'                        : 0.0000125 }) 
             HP.update({'LR_Strategy'               : '3times'  })
             HP.update({'LR_Final'                  : 1e-3      })
             HP.update({'LR_Decade'                 : 10        })   
@@ -439,22 +461,40 @@ def run_pruning(
     HP.update({'test_num'                  : test_num        })
     HP.update({'Pruning_Strategy'          : Pruning_Strategy})
     if Model_first_name == 'ResNet':
-        HP.update({'LR'                        : 0.0000125        })  
-        HP.update({'LR_Strategy'               : '3times'        })
-        HP.update({'LR_Final'                  : 1e-3            })
-        HP.update({'LR_Decade'                 : 10              }) 
-        HP.update({'LR_Decade_1st_Epoch'       : 30              })
-        HP.update({'LR_Decade_2nd_Epoch'       : 150             })
-        HP.update({'LR_Decade_3rd_Epoch'       : 150             })
-        HP.update({'L2_Lambda'                 : 2e-4            })
-        HP.update({'Opt_Method'                : 'Momentum'      })
-        HP.update({'Momentum_Rate'             : 0.9             })
-        HP.update({'IS_STUDENT'                : False           })
-        HP.update({'Ternary_Epoch'             : 50              })
-        HP.update({'Quantized_Activation_Epoch': 100             })
-        HP.update({'Dropout_Rate'              : 0.0             })
-        HP.update({'Pruning_Propotion_Per'     : 0.1             })
-        HP.update({'Pruning_Retrain_Epoch'     : 50              })
+        if Model_second_name == '50':
+            HP.update({'LR'                        : 0.000125        })  
+            HP.update({'LR_Strategy'               : '3times'        })
+            HP.update({'LR_Final'                  : 1e-3            })
+            HP.update({'LR_Decade'                 : 10              }) 
+            HP.update({'LR_Decade_1st_Epoch'       : 30              })
+            HP.update({'LR_Decade_2nd_Epoch'       : 150             })
+            HP.update({'LR_Decade_3rd_Epoch'       : 150             })
+            HP.update({'L2_Lambda'                 : 2e-4            })
+            HP.update({'Opt_Method'                : 'Momentum'      })
+            HP.update({'Momentum_Rate'             : 0.9             })
+            HP.update({'IS_STUDENT'                : False           })
+            HP.update({'Ternary_Epoch'             : 50              })
+            HP.update({'Quantized_Activation_Epoch': 100             })
+            HP.update({'Dropout_Rate'              : 0.0             })
+            HP.update({'Pruning_Propotion_Per'     : 0.1             })
+            HP.update({'Pruning_Retrain_Epoch'     : 50              })
+        else:
+            HP.update({'LR'                        : 0.001           })  
+            HP.update({'LR_Strategy'               : '3times'        })
+            HP.update({'LR_Final'                  : 1e-3            })
+            HP.update({'LR_Decade'                 : 10              }) 
+            HP.update({'LR_Decade_1st_Epoch'       : 50              })
+            HP.update({'LR_Decade_2nd_Epoch'       : 150             })
+            HP.update({'LR_Decade_3rd_Epoch'       : 150             })
+            HP.update({'L2_Lambda'                 : 2e-4            })
+            HP.update({'Opt_Method'                : 'Momentum'      })
+            HP.update({'Momentum_Rate'             : 0.9             })
+            HP.update({'IS_STUDENT'                : False           })
+            HP.update({'Ternary_Epoch'             : 50              })
+            HP.update({'Quantized_Activation_Epoch': 100             })
+            HP.update({'Dropout_Rate'              : 0.0             })
+            HP.update({'Pruning_Propotion_Per'     : 0.1             })
+            HP.update({'Pruning_Retrain_Epoch'     : 100             })
     elif Model_first_name == 'DenseNet':
         HP.update({'LR'                        : 1e-3            })
         HP.update({'LR_Strategy'               : '3times'        })
@@ -473,10 +513,10 @@ def run_pruning(
         HP.update({'Pruning_Propotion_Per'     : 0.1             })
         HP.update({'Pruning_Retrain_Epoch'     : 200             })
     elif Model_first_name == 'MobileNet':
-        HP.update({'LR'                        : 1e-3            })
+        HP.update({'LR'                        : 0.000125        })
         HP.update({'LR_Strategy'               : '3times'        })
         HP.update({'LR_Final'                  : 1e-3            })
-        HP.update({'LR_Decade'                 : 10              })
+        HP.update({'LR_Decade'                 : 30              })
         HP.update({'LR_Decade_1st_Epoch'       : 100             })
         HP.update({'LR_Decade_2nd_Epoch'       : 300             })
         HP.update({'LR_Decade_3rd_Epoch'       : 300             })
@@ -488,7 +528,7 @@ def run_pruning(
         HP.update({'Quantized_Activation_Epoch': 100             })
         HP.update({'Dropout_Rate'              : 0.0             })
         HP.update({'Pruning_Propotion_Per'     : 0.1             })
-        HP.update({'Pruning_Retrain_Epoch'     : 200             }) 
+        HP.update({'Pruning_Retrain_Epoch'     : 50              }) 
         
     print("\033[1;32mBATCH SIZE\033[0m : {}" .format(HP['Batch_Size']))
     
@@ -786,8 +826,8 @@ def Training(
     ## is_ternary
     is_ternary = {}
     for layer in range(len(Model_dict)):
-        is_ternary.update({'layer%d'%layer : tf.placeholder(tf.bool)})  
-
+        is_ternary.update({'layer%d'%layer : tf.placeholder(tf.bool)})
+    
     #----------------------#
     #    Building Model    #
     #----------------------# 
@@ -820,10 +860,11 @@ def Training(
     Model_Size = 0
     trainable_variables = []
     for iter, variable in enumerate(tf.trainable_variables()):
-        Model_Size += reduce(lambda x, y: x*y, variable.get_shape().as_list())
-        # See all your variables in termainl	
-        #print("{}, {}" .format(iter, variable))
-        trainable_variables.append(variable.name)
+        if 'final_weights' not in variable.name and 'final_biases' not in variable.name:
+            Model_Size += reduce(lambda x, y: x*y, variable.get_shape().as_list())
+            # See all your variables in termainl	
+            #print("{}, {}" .format(iter, variable))
+            trainable_variables.append(variable.name)
     
     # For Load trained Model
     all_variables = []
@@ -831,12 +872,13 @@ def Training(
     for iter, variable in enumerate(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=None)):
         # See all your variables in termainl	
         if not any("mask" in s for s in variable.name.split('_:/')) and not any("constant" in s for s in variable.name.split('_:/')):
-            print("{}, {}" .format(i, variable))
-            all_variables.append(variable.name)
+            #print("{}, {}" .format(i, variable))
+            all_variables.append([variable.name, str(variable.get_shape().as_list())])
+            #pdb.set_trace()
             i = i + 1
             
-    np.savetxt('all_variables.csv', all_variables, delimiter=",", fmt="%s")
-    exit()
+    #np.savetxt('../pre-trained_model/all_variables.csv', all_variables, delimiter=",", fmt="%s")
+    #exit()
     print("\033[0;36m=======================\033[0m")
     print("\033[0;36m Model Size\033[0m = {}" .format(Model_Size))
     print("\033[0;36m=======================\033[0m")
@@ -857,13 +899,18 @@ def Training(
     ## Gradient Update
     var_list_collection                 = tf.get_collection("var_list"               , scope=None)
     float32_params                      = tf.get_collection("float32_params"         , scope=None) 
-        
+    
+    weights_collection = tf.get_collection("weights", scope=None)
+    biases_collection = tf.get_collection("biases", scope=None)
+
     ## -- Loss --
     labels = ys[0 : HP['Batch_Size']]
     
     # L2 Regularization
     l2_norm   = tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()
-                        if 'batch_normalization' not in v.name])
+                            if 'batch_normalization' not in v.name and 
+                               'final_weights'       not in v.name and 
+                               'final_biases'        not in v.name])
     l2_lambda = tf.constant(HP['L2_Lambda'])
     l2_norm   = tf.multiply(l2_lambda, l2_norm)
     
@@ -889,7 +936,20 @@ def Training(
         ## Compute Gradients
         var_list = tf.trainable_variables()
         gra_and_var = opt.compute_gradients(loss, var_list = var_list)
-            
+    
+    # Update gra_and_var
+    for iter, gra_and_var_ in enumerate(gra_and_var):
+        if Model_dict[gra_and_var_[1].name.split('/')[1].split('_')[0]]['IS_TERNARY'] == 'TRUE':
+            if gra_and_var_[1].name.split('/')[-1] == 'float32_weights:0':
+                gra = gra_and_var[iter+1][0]
+                lst = list(gra_and_var_)
+                lst[0] = gra
+                lst = tuple(lst)
+                gra_and_var[iter] = lst
+    """        
+    for iter, gra_and_var_ in enumerate(gra_and_var):
+        print(gra_and_var_)
+    """
     ## Apply Gradients
     train_step  = opt.apply_gradients(gra_and_var, global_step)
     
@@ -937,8 +997,8 @@ def Training(
             save_path = saver.restore(sess, trained_model_path + trained_model)
             
         """
-        path = '/home/2016/b22072117/tmp/resnet_model/'
-        name = 'resnet_50'
+        path = '/home/2016/b22072117/tmp/mobilenet_model/'
+        name = 'mobilenet_100_100'
         obj = load_obj(path, name)
         for _, variable in enumerate(tf.trainable_variables()):
             print(variable.name)
@@ -979,6 +1039,18 @@ def Training(
                     lr = HP['LR'] / pow(HP['LR_Decade'], 3)
                 else:
                     lr = HP['LR'] / pow(HP['LR_Decade'], 4)
+            # Ternary Learning Rate
+            if IS_TERNARY and (Global_Epoch+epoch+1) >= HP['Ternary_Epoch']:
+                if   (Global_Epoch+epoch+1) <= HP['Ternary_Epoch'] + HP['Ternary_LR_Decade_1st_Epoch']:
+                    lr = HP['Ternary_LR'] / pow(HP['LR_Decade'], 0)
+                elif (Global_Epoch+epoch+1) <= HP['Ternary_Epoch'] + HP['Ternary_LR_Decade_2nd_Epoch']:
+                    lr = HP['Ternary_LR'] / pow(HP['LR_Decade'], 1)
+                elif (Global_Epoch+epoch+1) <= HP['Ternary_Epoch'] + HP['Ternary_LR_Decade_3rd_Epoch']:
+                    lr = HP['Ternary_LR'] / pow(HP['LR_Decade'], 2)
+                elif (Global_Epoch+epoch+1) <= HP['Ternary_Epoch'] + HP['Ternary_LR_Decade_4th_Epoch']:
+                    lr = HP['Ternary_LR'] / pow(HP['LR_Decade'], 3)
+                else:
+                    lr = HP['Ternary_LR'] / pow(HP['LR_Decade'], 4)
             
             ## -- Shuffle Data --
             """
@@ -987,6 +1059,7 @@ def Training(
             train_data   = train_data  [shuffle_index]
             train_target = train_target[shuffle_index]
             """
+            
             ## -- Quantizad Activation --
             if IS_QUANTIZED_ACTIVATION and (epoch+1+Global_Epoch)==HP['Quantized_Activation_Epoch']:
                 batch_xs = train_data[0:HP['Batch_Size']]
@@ -998,7 +1071,7 @@ def Training(
                 QUANTIZED_NOW = True
             
             ## -- Ternary --
-            if IS_TERNARY and (epoch+1+Global_Epoch)==HP['Ternary_Epoch']:
+            if IS_TERNARY and (epoch+1+Global_Epoch)>=HP['Ternary_Epoch']:
                 # Calculate the ternary boundary of each layer's weights
                 weights_bd, biases_bd, weights_table, biases_table = tenarized_bd(
                     float32_weights_collection,  
@@ -1010,6 +1083,7 @@ def Training(
                 assign_ternary_boundary(ternary_weights_bd_collection, ternary_biases_bd_collection, weights_bd, biases_bd, sess)
                 # Start Quantize Activation
                 TERNARY_NOW = True
+                loss = cross_entropy
                 
             ## -- Set feed_dict --
             # train_step
@@ -1022,7 +1096,7 @@ def Training(
             feed_dict_assign = {}
             for layer in range(len(Model_dict)):
                 feed_dict_assign.update({is_ternary['layer'+str(layer)]: Model_dict['layer'+str(layer)]['IS_TERNARY']=='TRUE' and TERNARY_NOW})
-
+            
             ## -- Training --
             tStart = time.time()
             tStart_Batch = time.time()
@@ -1035,9 +1109,15 @@ def Training(
                 batch_ys = train_target [ batch_iter*HP['Batch_Size'] : (batch_iter+1)*HP['Batch_Size'] ]
                 """
                 
+                # Assign float32 or ternary weight and biases to final weights
+                # This may can be placed into GraphKeys.UPDATE_OPS, but i am not sure.
+                for assign_var_list_iter, assign_var_list in enumerate(assign_var_list_collection):
+                    sess.run(assign_var_list, feed_dict = feed_dict_assign)
+
                 # Run Training Step
+                #"""
+                feed_dict_train.update({is_training: True, learning_rate: lr}) # xs: batch_xs, ys: batch_ys,
                 
-                feed_dict_train.update({is_training: True, learning_rate: lr}) # xs: batch_xs, ys: batch_ys, 
                 _, Loss, Prediction, L2_norm, batch_ys = sess.run(
                     [train_step, loss, prediction, l2_norm, ys], 
                     feed_dict = feed_dict_train)
@@ -1047,10 +1127,7 @@ def Training(
                     [loss, prediction, l2_norm, ys], 
                     feed_dict = feed_dict_train)
                 """
-                # Assign float32 or ternary weight and biases to final weights
-                # This may can be placed into GraphKeys.UPDATE_OPS, but i am not sure.
-                for assign_var_list_iter, assign_var_list in enumerate(assign_var_list_collection):
-                    sess.run(assign_var_list, feed_dict = feed_dict_assign)
+
                 # Result
                 y_pre             = np.argmax(Prediction, -1)
                 correct_num       = np.sum(np.equal(np.argmax(batch_ys, -1), y_pre) == True , dtype = np.float32)
@@ -1062,7 +1139,7 @@ def Training(
                 # Per Batch Size Info
                 #print(y_pre)
                 #print(np.argmax(batch_ys, -1))
-                
+                """
                 if batch_iter % 1 == 0:
                     tEND_Batch = time.time()
                     print("\033[1;34;40mEpoch\033[0m : %3d" %(epoch+Global_Epoch), end=" ")
@@ -1073,11 +1150,15 @@ def Training(
                     print("\033[1;32;40mLearning Rate\033[0m : %4f" %(lr), end=" ")
                     print("(%2f sec)" %(tEND_Batch-tStart_Batch))
                     tStart_Batch = time.time()
-                    
+                """  
                 # Per Class Accuracy
                 """
                 per_class_accuracy(Prediction, batch_ys)
                 """
+            # Assign float32 or ternary weight and biases to final weights
+            # This may can be placed into GraphKeys.UPDATE_OPS, but i am not sure.
+            for assign_var_list_iter, assign_var_list in enumerate(assign_var_list_collection):
+                sess.run(assign_var_list, feed_dict = feed_dict_assign)
             
             tEnd = time.time()            
             Train_acc  = total_correct_num  / (total_correct_num + total_error_num)
@@ -1327,7 +1408,21 @@ def Testing(
         print("\033[0;36m=======================\033[0m")
         print("\033[0;36m Computation\033[0m = {}" .format(computation))
         print("\033[0;36m=======================\033[0m")
+        """ For Checking is it really ternary or not
+        # Assign float32 or ternary weight and biases to final weights
+        assign_var_list_collection = tf.get_collection("assign_var_list", scope=None)  
+        feed_dict_assign = {}
+        for layer in range(len(Model_dict)):
+            feed_dict_assign.update({is_ternary['layer'+str(layer)]: Model_dict['layer'+str(layer)]['IS_TERNARY']=='TRUE'})
         
+        weights_collection = tf.get_collection("weights", scope=None)
+        biases_collection = tf.get_collection("biases", scope=None)
+        # Assign float32 or ternary weight and biases to final weights
+        # This may can be placed into GraphKeys.UPDATE_OPS, but i am not sure.
+        for assign_var_list_iter, assign_var_list in enumerate(assign_var_list_collection):
+            sess.run(assign_var_list, feed_dict = feed_dict_assign)
+        pdb.set_trace()
+        """
         #similar_group(inputs_and_kernels, sess)
         print("Testing Data Result ... ")
         test_result, test_accuracy, test_accuracy_top2, test_accuracy_top3, test_Y_pre = compute_accuracy(
@@ -1528,8 +1623,22 @@ def Pruning(
         ## Compute Gradients
         var_list = tf.trainable_variables()
         gra_and_var = opt.compute_gradients(loss, var_list = var_list)
-            
-    ## Apply Gradients
+    
+    # Update gra_and_var
+    for iter, gra_and_var_ in enumerate(gra_and_var):
+        if Model_dict[gra_and_var_[1].name.split('/')[1].split('_')[0]]['IS_TERNARY'] == 'TRUE':
+            if gra_and_var_[1].name.split('/')[-1] == 'float32_weights:0':
+                gra = gra_and_var[iter+1][0]
+                lst = list(gra_and_var_)
+                lst[0] = gra
+                lst = tuple(lst)
+                gra_and_var[iter] = lst
+    """        
+    for iter, gra_and_var_ in enumerate(gra_and_var):
+        print(gra_and_var_)
+    """
+    
+    # Apply Gradients
     train_step  = opt.apply_gradients(gra_and_var, global_step)
     #-----------------------------#
     #   Some Control Parameters   #
@@ -1582,7 +1691,9 @@ def Pruning(
             pruning_propotion = HP['Pruning_Propotion_Per']
             kernel_values_per_layer = similar_group(inputs_and_kernels, sess)
             if HP['Pruning_Strategy'] == 'Filter_Angle':
-                if Model_first_name == 'DenseNet':
+                if Model_first_name == 'MobileNet':
+                    pruned_weights_info = mobileNet_filter_prune_by_angle(prune_info_dict, pruning_propotion, pruned_weights_info, sess)
+                elif Model_first_name == 'DenseNet':
                     pruned_weights_info = denseNet_filter_prune_by_angle(prune_info_dict, pruning_propotion, pruned_weights_info, sess)
                 else:
                     pruned_weights_info = filter_prune_by_angle(prune_info_dict, pruning_propotion, pruned_weights_info, sess)
@@ -1683,6 +1794,18 @@ def Pruning(
             Train_loss = 0
             iteration  = 0
             
+            ## Learning Rate
+            """
+            if HP['LR_Strategy'] == '3times':
+                if   (Global_Epoch+epoch+1) <= HP['LR_Decade_1st_Epoch']:
+                    learning_rate = HP['LR'] / pow(HP['LR_Decade'], 0)
+                elif (Global_Epoch+epoch+1) <= HP['LR_Decade_2nd_Epoch']:
+                    learning_rate = HP['LR'] / pow(HP['LR_Decade'], 1)
+                elif (Global_Epoch+epoch+1) <= HP['LR_Decade_3rd_Epoch']:
+                    learning_rate = HP['LR'] / pow(HP['LR_Decade'], 2)
+                else:
+                    learning_rate = HP['LR'] / pow(HP['LR_Decade'], 3)
+            """
             ## -- Shuffle Data --
             """
             shuffle_index = np.arange(train_data_num)
@@ -1699,6 +1822,7 @@ def Pruning(
                 assign_quantized_m_and_f(mantissa_collection, fraction_collection, m, f, sess)
                 # Start Quantize Activation
                 QUANTIZED_NOW = True
+            
             ## -- Ternary --
             if IS_TERNARY and (epoch+1+Global_Epoch)==HP['Ternary_Epoch']:
                 # Calculate the ternary boundary of each layer's weights
@@ -1712,6 +1836,8 @@ def Pruning(
                 assign_ternary_boundary(ternary_weights_bd_collection, ternary_biases_bd_collection, weights_bd, biases_bd, sess)
                 # Start Quantize Activation
                 TERNARY_NOW = True 
+                loss = cross_entropy
+                
             ## -- Set feed_dict --
             # train_step
             feed_dict_train = {}
@@ -1756,7 +1882,7 @@ def Pruning(
                 print("\033[1;32;40mBatch Accuracy\033[0m : %5f" %(batch_accuracy), end=" ")
                 print("\033[1;32;40mLoss\033[0m : %5f" %(np.mean(Loss)), end=" ")
                 print("\033[1;32;40mL2-norm\033[0m : %5f" %(L2_norm), end=" ")
-                print("\033[1;32;40mLearning Rate\033[0m : %4f" %(lr), end=" ")
+                print("\033[1;32;40mLearning Rate\033[0m : %4f" %(learning_rate), end=" ")
                 print("(%2f sec)" %(tEND_Batch-tStart_Batch))
                 tStart_Batch = time.time()
                 # Per Class Accuracy
@@ -1821,13 +1947,13 @@ def Pruning(
             #------------------------#
             #   Saving Computation   #
             #------------------------#
-            if (epoch+1)==HP['Epoch']:
+            if (Global_Epoch+epoch+1)==HP['Epoch']:
                 np.savetxt(Dir + 'computation.csv', np.array([computation]), delimiter=",", fmt="%d")
             
             #------------------------#
             #   Saving Pruned info   #
             #------------------------#
-            if (epoch+1)==HP['Epoch']:
+            if (Global_Epoch+epoch+1)==HP['Epoch']:
                 save_dict(pruned_weights_info, Dir, "pruned_info")
                 
         tEnd_All = time.time()
@@ -2332,6 +2458,8 @@ def Model_dict_Generator(
                 HP.update({'output_channel': class_num})
             else:
                 HP.update({key: HP_tmp[key][layer]})
+        if not 'IS_BINARY' in keys:
+            HP.update({'IS_BINARY': False})
         
         #HP.update({'is_ternary'             : is_ternary             ['layer' + str(layer)]}) # Placeholder
         #HP.update({'is_quantized_activation': is_quantized_activation['layer' + str(layer)]}) # Placeholder
@@ -2937,20 +3065,21 @@ def Model_dict_Decoder(
                     # For Pruning
                     if not bool(prune_info_dict.get('layer%d'%layer)):
                         prune_info_dict.update(
-                            {'layer%d'%layer: {'weights': tf.get_collection("float32_weights", scope="Model/layer%d/"%layer)[0]}}
+                            {'layer%d'%layer: {'weights': tf.get_collection("weights", scope="Model/layer%d/"%layer)[0]}}
                         )
                     else:
                         prune_info_dict['layer%d'%layer].update(
-                            {'weights': tf.get_collection("float32_weights", scope="Model/layer%d/"%layer)[0],
+                            {'weights': tf.get_collection("weights", scope="Model/layer%d/"%layer)[0],
                              
                             }
                         )
 
                     prune_info_dict['layer%d'%layer].update({
-                        'mask'       : tf.get_collection("float32_weights_mask", scope="Model/layer%d/"%layer)[0],
-                        'outputs'    : tf.get_collection("conv_outputs"  , scope="Model/layer%d/"%layer)[0],
-                        'stride'     : int(layer_now['stride']),
-                        'is_shortcut': is_shortcut_past_layer
+                        'mask'        : tf.get_collection("float32_weights_mask", scope="Model/layer%d/"%layer)[0],
+                        'outputs'     : tf.get_collection("conv_outputs"  , scope="Model/layer%d/"%layer)[0],
+                        'stride'      : int(layer_now['stride']),
+                        'is_shortcut' : is_shortcut_past_layer,
+                        'is_depthwise': layer_now['is_depthwise'] == 'TRUE'
                     })
                     if past_conv_layer != None:
                         # Children
@@ -2967,6 +3096,8 @@ def Model_dict_Decoder(
                             
                     past_conv_layer = 'layer%d'%layer
                     is_shortcut_past_layer = False
+                    
+                    
                 """
                 #----------------------------#
                 #    children For Pruning    #
@@ -4106,24 +4237,25 @@ def tenarized_bd(
     biases_bd_ratio,    # percentile. Ex 50=50%
     sess
     ):
-    
-    NUM = len(weights_collection)
-    
-    for i in range(NUM):
-        w     = np.absolute(sess.run(weights_collection[i]))
-        b     = np.absolute(sess.run(biases_collection [i]))
-        
-        w_bd  = np.percentile(w, weights_bd_ratio) 
-        b_bd  = np.percentile(b, biases_bd_ratio )
-    
-    
+    # Weight
+    for i in range(len(weights_collection)):
+        w = np.absolute(sess.run(weights_collection[i]))
+        w_bd = 0.7 * np.mean(w)
+        #w_bd = np.percentile(w, weights_bd_ratio) 
         if i==0:
             weights_bd = np.array([[-w_bd, w_bd]])
+        else:
+            weights_bd = np.concatenate([weights_bd, np.array([[-w_bd, w_bd]])], axis=0)    
+    # Bias
+    for i in range(len(biases_collection)):
+        b = np.absolute(sess.run(biases_collection [i]))
+        b_bd = 0.7 * np.mean(b)
+        #b_bd = np.percentile(b, biases_bd_ratio )
+        if i==0:
             biases_bd  = np.array([[-b_bd, b_bd]])
         else:
-            weights_bd = np.concatenate([weights_bd, np.array([[-w_bd, w_bd]])], axis=0)
             biases_bd  = np.concatenate([biases_bd , np.array([[-b_bd, b_bd]])], axis=0)
-    
+            
     weights_table = [-1, 0, 1]
     biases_table  = [-1, 0, 1]
     
@@ -4136,12 +4268,12 @@ def assign_ternary_boundary(
     ternary_biases_bd,
     sess
     ):
-    
-    NUM = len(ternary_weights_bd_collection)
-    
-    for i in range(NUM):
+    # Weight
+    for i in range(len(ternary_weights_bd_collection)):
         sess.run(ternary_weights_bd_collection[i].assign(ternary_weights_bd[i]))
-        sess.run( ternary_biases_bd_collection[i].assign(ternary_biases_bd [i]))
+    # Bias
+    for i in range(len(ternary_biases_bd_collection)):
+        sess.run(ternary_biases_bd_collection[i].assign(ternary_biases_bd [i]))
                 
 def quantized_m_and_f(
     activation_collection, 
@@ -4226,7 +4358,7 @@ def compute_angle(
 def filter_prune_by_magnitude( # not finished
     prune_info_dict,
     pruning_propotion,
-    pruning_layer,
+    #pruning_layer,
     sess
     ):
     key = prune_info_dict.keys()
@@ -5975,11 +6107,12 @@ def denseNet_filter_prune_by_angle(
                     # Check through all parents
                     is_head_channel_to_be_pruned = True
                     for _, child in enumerate(all_children[head]):
-                        start_point = all_children[head][child]
-                        position = start_point + interval
-                        if np.sum(all_mask[child][:, :, position, :]) != 0:
-                            is_head_channel_i_to_be_pruned = False
-                            break
+                        if child != layer:
+                            start_point = all_children[head][child]
+                            position = start_point + interval
+                            if np.sum(all_mask[child][:, :, position, :]) != 0:
+                                is_head_channel_i_to_be_pruned = False
+                                break
                 if is_head_channel_i_to_be_pruned:
                     pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(all_mask[head][:, :, :, interval]))
                     
@@ -7119,6 +7252,436 @@ def denseNet_filter_prune_by_angleII_with_skip_with_penalty(
     
     return pruned_weights_info
  
+def mobileNet_filter_prune_by_angle(
+    prune_info_dict,
+    pruning_propotion,
+    pruned_weights_info,
+    sess
+    ):
+    key = prune_info_dict.keys()
+    sorted_layer = np.sort(np.array([int(key[i].split('layer')[-1]) for i in range(len(key))]))
+    sorted_layer = ['layer' + str(sorted_layer[i]) for i in range(len(key))]
+    
+    # Load all wegihts and masks
+    all_weights = {}
+    all_mask = {}
+    all_outputs_shape = {}
+    all_stride = {}
+    all_is_depthwise = {}
+    all_parents = {}
+    all_children = {}
+    for layer_iter in range(len(sorted_layer)):
+        layer = sorted_layer[layer_iter]
+        all_weights.update({layer: sess.run(prune_info_dict[layer]['weights'])})
+        all_mask.update({layer: sess.run(prune_info_dict[layer]['mask'])})
+        all_outputs_shape.update({layer: prune_info_dict[layer]['outputs'].get_shape().as_list()})
+        all_stride.update({layer: prune_info_dict[layer]['stride']})
+        all_is_depthwise.update({layer: prune_info_dict[layer]['is_depthwise']})
+        if bool(prune_info_dict[layer].get('parents')):
+            all_parents.update({layer: prune_info_dict[layer]['parents']})
+            #print("{} -> {}" .format(layer, prune_info_dict[layer]['parents']))
+        if bool(prune_info_dict[layer].get('children')):
+            all_children.update({layer: prune_info_dict[layer]['children']})
+            #print("{} -> {}" .format(layer, prune_info_dict[layer]['children']))
+    
+    # Record the original weights parameter size
+    original_weights_size = {}
+    for layer_iter in range(0, len(sorted_layer)):
+        layer = sorted_layer[layer_iter]
+        original_weights_size.update({layer: np.sum(all_mask[layer])})
+    
+    # Build Pruned dict
+    pruned_dict = {}
+    for layer_iter in range(len(sorted_layer)):
+        layer = sorted_layer[layer_iter]
+        mask = all_mask[layer]
+        if not all_is_depthwise[layer]:
+            channel_num = np.shape(mask)[3]
+            tmp_dict = {}
+            for i in range(channel_num):
+                tmp_dict.update({str(i): np.mean(mask[:,:,:,i]) == 0})
+        else:
+            channel_num = np.shape(mask)[2]
+            tmp_dict = {}
+            for i in range(channel_num):
+                tmp_dict.update({str(i): np.mean(mask[:,:,i,:]) == 0})
+        pruned_dict.update({layer: tmp_dict})
+        
+    # Build the dictionary for angle
+    dict = {}
+    iter = 0
+    for layer_iter in range(1, len(sorted_layer)):
+        # current layer
+        layer = sorted_layer[layer_iter]
+        print(layer, end=" ")
+        weights = all_weights[layer]
+        weights = np.transpose(weights, (0,1,3,2))
+        mask = all_mask[layer]
+        # remove the pruned channel
+        channel_num = np.shape(weights)[2]
+        pruned_channels = []
+        for i in range(channel_num):
+            if pruned_dict[layer][str(i)]:
+                pruned_channels = np.append(pruned_channels, [i])
+        weights = np.delete(weights, pruned_channels, axis = 2)
+
+        tStart = time.time()
+        # calculate angle
+        if weights.size != 0:
+            angles_iter = 0
+            depth = np.shape(weights)[-1]
+            for i in range(depth):
+                angles_per_i_iter = 0
+                for j in range(i+1, depth):
+                    # If the depth i or j has been pruned, we don't calculate its angle to others
+                    # By doing so, we will not prune the same kernel which has been pruned before.
+                    is_depth_i_pruned = np.sum(mask[:, :, i, :]) == 0
+                    is_depth_j_pruned = np.sum(mask[:, :, j, :]) == 0
+                    if not is_depth_i_pruned and not is_depth_j_pruned:
+                        x = weights[:, :, :, i]
+                        y = weights[:, :, :, j]
+                        x = np.reshape(x, [np.size(x)])
+                        y = np.reshape(y, [np.size(y)])
+                        
+                        if sum(x*x) == 0 or sum(y*y) == 0:
+                            angle = 90.0
+                            print('{}, {}, {}' .format(layer, i, j))
+                        else:
+                            angle = compute_angle(x, y)
+                            angle = abs(angle - 90)
+                        
+                        if bool(dict.get(str(angle))):
+                            number = len(dict[str(angle)])
+                            dict[str(angle)].update({str(number): {'layer': layer, 'i': i, 'j': j, 'pruned': False}})
+                        else:
+                            dict.update({str(angle): {'0': {'layer': layer, 'i': i, 'j': j, 'pruned': False}}})
+                        
+                        if angles_per_i_iter == 0:
+                            angles_per_i = np.array([angle])
+                        else:
+                            angles_per_i = np.concatenate([angles_per_i, np.array([angle])])
+                        angles_per_i_iter = angles_per_i_iter + 1
+                
+                if angles_per_i_iter != 0:
+                    if angles_iter == 0:
+                        angles = angles_per_i
+                    else:
+                        angles = np.concatenate([angles, angles_per_i])
+                    angles_iter = angles_iter + 1
+            
+            if iter == 0:
+                total_angle = angles
+            else:
+                total_angle = np.concatenate([total_angle, angles])
+            iter = iter + 1   
+            """            
+                        if iter == 0:
+                            total_angle = np.array([angle])
+                        else:
+                            total_angle = np.concatenate([total_angle, np.array([angle])])
+                        iter = iter + 1    
+            """ 
+        tEnd = time.time()
+        print("(cost %f seconds)" %(tEnd - tStart))
+    
+    # Sort the angle
+    sorted_angle = np.sort(total_angle)[::-1]
+
+    # Calculate the total parameters number
+    total_num = 0
+    for layer_iter in range(len(sorted_layer)):
+        layer = sorted_layer[layer_iter]
+        total_num += reduce(lambda x, y: x*y, np.shape(all_mask[layer]))
+    
+    # Get the weights to be pruned
+    dict_ = copy.deepcopy(dict)
+    all_mask_ = copy.deepcopy(all_mask)
+    weights_to_be_pruned = {}
+    pruned_num = 0
+    pruned_angle_num = 0
+    for _, angle in enumerate(sorted_angle):
+        pruned_angle_num = pruned_angle_num + 1
+        for _, index in enumerate(dict_[str(angle)].keys()):
+            if dict_[str(angle)][index]['pruned']:
+                continue
+            dict_[str(angle)][index].update({'pruned': True})
+            # current layer
+            layer = dict_[str(angle)][index]['layer']
+            current_weights_mask = all_mask[layer]
+            # depth
+            depth_i = dict_[str(angle)][index]['i']
+            depth_j = dict_[str(angle)][index]['j']
+            # Build the pruning tree
+            if not bool(weights_to_be_pruned.get(layer)):
+                is_depth_i_appear = False
+                is_depth_j_appear = False
+                weights_to_be_pruned.update({layer: {str(depth_i): 1, str(depth_j): 1}})
+            else:
+                is_depth_i_appear = bool(weights_to_be_pruned[layer].get(str(depth_i)))
+                is_depth_j_appear = bool(weights_to_be_pruned[layer].get(str(depth_j)))
+                if not is_depth_i_appear:
+                    weights_to_be_pruned[layer].update({str(depth_i): 1})
+                else:
+                    weights_to_be_pruned[layer].update({str(depth_i): weights_to_be_pruned[layer][str(depth_i)]+1})
+                if not is_depth_j_appear:
+                    weights_to_be_pruned[layer].update({str(depth_j): 1})
+                else:
+                    weights_to_be_pruned[layer].update({str(depth_j): weights_to_be_pruned[layer][str(depth_j)]+1})
+            # Prune the channel
+            if not is_depth_i_appear or not is_depth_j_appear:
+                # Check the parent layer channel should be pruned or not
+                if bool(all_parents.get(layer)):
+                    # random choose depth i or j to be pruned
+                    rand_index = random.randrange(0, 2)
+                    if rand_index == 0:
+                        pruned_depth = depth_i
+                    else:
+                        pruned_depth = depth_j
+                    interval = pruned_depth
+                    
+                    all_mask_[layer][:, :, pruned_depth, :] = 0
+                    pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(current_weights_mask[:, :, depth_i, :]))
+                    
+                    # If current layer is depthwise, 
+                    # then prune the next layer until the next layer is not depthwise
+                    if all_is_depthwise[layer]:
+                        layer_index = sorted_layer.index(layer)
+                        while(1):
+                            layer_index = layer_index + 1
+                            next_layer = sorted_layer[layer_index]
+                            if not all_is_depthwise[next_layer]:
+                                all_mask_[next_layer][:, :, interval, :] = 0
+                                pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(all_mask[next_layer][:, :, interval, :]))
+                                break
+                            else:
+                                all_mask_[next_layer][:, :, interval, :] = 0
+                                pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(all_mask[next_layer][:, :, interval, :]))
+
+                    # Find the head for checking the head to be pruned or not
+                    for _, parent in enumerate(all_parents[layer]):
+                        if pruned_depth >= all_parents[layer][parent] and (pruned_depth - all_parents[layer][parent]) <= interval:
+                            interval = pruned_depth - all_parents[layer][parent]
+                            head = parent 
+                    # Check through all children of the head
+                    is_head_channel_to_be_pruned = True
+                    for _, child in enumerate(all_children[head]):
+                        start_point = all_children[head][child]
+                        position = start_point + interval
+                        if np.sum(all_mask_[child][:, :, position, :]) != 0:
+                            is_head_channel_to_be_pruned = False
+                            break
+                    if is_head_channel_to_be_pruned:
+                        if not all_is_depthwise[head]:
+                            all_mask_[head][:, :, :, interval] = 0
+                            pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(all_mask[head][:, :, :, interval]))
+                        else: # The head is depthwise
+                            all_mask_[head][:, :, interval, :] = 0
+                            pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(all_mask[head][:, :, interval, :]))
+                            # Prune the past layer until the past layer is not depthwise
+                            layer_index = sorted_layer.index(head)
+                            while(1):
+                                layer_index = layer_index - 1
+                                head_past_layer = sorted_layer[layer_index]
+                                if not all_is_depthwise[head_past_layer]:
+                                    all_mask_[head_past_layer][:, :, :, interval] = 0
+                                    pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(all_mask[head_past_layer][:, :, :, interval]))
+                                    break
+                                else:
+                                    all_mask_[head_past_layer][:, :, interval, :] = 0
+                                    pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(all_mask[head_past_layer][:, :, interval, :]))
+        if pruned_num >= total_num * pruning_propotion:
+            break    
+    
+    # Prune the corresponding weights
+    t = PrettyTable(['Pruned Number', 'Magnitude', 'layer', 'channel', 'Computation'])
+    t.align = 'l'
+    pruned_num = 0
+    for iter in range(pruned_angle_num):
+        angle = sorted_angle[iter]
+        for _, index in enumerate(dict[str(angle)].keys()):
+            if dict[str(angle)][index]['pruned']:
+                continue
+            # current layer
+            layer = dict[str(angle)][index]['layer']
+            current_weights_mask  = all_mask[layer]
+            current_weights       = all_weights[layer]
+            current_outputs_shape = all_outputs_shape[layer]
+            # depth
+            depth_i = dict[str(angle)][index]['i']
+            depth_j = dict[str(angle)][index]['j']
+            is_depth_i_pruned = np.sum(current_weights_mask[:, :, depth_i, :]) == 0
+            is_depth_j_pruned = np.sum(current_weights_mask[:, :, depth_j, :]) == 0
+ 
+            if not is_depth_i_pruned and not is_depth_j_pruned:
+                dict[str(angle)][index].update({'pruned': True})
+                if weights_to_be_pruned[layer][str(depth_i)] < weights_to_be_pruned[layer][str(depth_j)]:
+                    pruned_depth = depth_i
+                elif weights_to_be_pruned[layer][str(depth_i)] > weights_to_be_pruned[layer][str(depth_j)]:
+                    pruned_depth = depth_j
+                else:
+                    # Magnitude
+                    #if bool(dict[str(angle)][index].get('past_layer')):
+                    #sum_of_past_layer_kernal_i = np.sum(np.abs(past_weights[:, :, :, depth_i] * past_weights_mask[:, :, :, depth_i]))
+                    #sum_of_past_layer_kernel_j = np.sum(np.abs(past_weights[:, :, :, depth_j] * past_weights_mask[:, :, :, depth_j]))
+                    #else:
+                    #    sum_of_past_layer_kernal_i = 0
+                    #    sum_of_past_layer_kernel_j = 0
+                    sum_of_current_layer_depth_i = np.sum(np.abs(current_weights[:, :, depth_i, :] * current_weights_mask[:, :, depth_i, :]))
+                    sum_of_current_layer_depth_j = np.sum(np.abs(current_weights[:, :, depth_j, :] * current_weights_mask[:, :, depth_j, :]))
+                    sum_of_pruned_depth_i = sum_of_current_layer_depth_i #+ sum_of_past_layer_kernal_i
+                    sum_of_pruned_depth_j = sum_of_current_layer_depth_j #+ sum_of_past_layer_kernel_j 
+                    # Compare
+                    if sum_of_pruned_depth_i <= sum_of_pruned_depth_j:
+                        pruned_depth = depth_i
+                    else:
+                        pruned_depth = depth_j
+                
+                # remove the current pruned mask (for computing computation)
+                unpruned_current_mask = current_weights_mask
+                current_channel_num = np.shape(current_weights_mask)[3]
+                current_depth = np.shape(current_weights_mask)[2]
+                current_pruned_channels = []
+                current_pruned_depth = []
+                # (channel)
+                for i in range(current_channel_num):
+                    if np.sum(current_weights_mask[:, :, :, i]) == 0:
+                        current_pruned_channels = np.append(current_pruned_channels, [i])
+                unpruned_current_mask = np.delete(unpruned_current_mask, current_pruned_channels, axis = 3)
+                # (depth)
+                for i in range(current_depth):
+                    if np.sum(current_weights_mask[:, :, i, :]) == 0:
+                        current_pruned_depth = np.append(current_pruned_depth, [i])
+                unpruned_current_mask = np.delete(unpruned_current_mask, current_pruned_depth, axis = 2)
+                
+                ## Assign Zero to mask
+                tmp = {}
+                computation = 0
+                # Current
+                current_weights_mask[:, :, pruned_depth, :] = 0
+                pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(current_weights_mask[:, :, depth_i, :]))
+                current_weights_shape = np.shape(unpruned_current_mask)
+                computation = computation + current_weights_shape[0] * current_weights_shape[1] * current_weights_shape[3] * current_outputs_shape[2] * current_outputs_shape[3]
+                tmp.update({layer: {'depth': pruned_depth}})
+                
+                # If current layer is depthwise, 
+                # then prune the next layer until the next layer is not depthwise
+                if all_is_depthwise[layer]:
+                    layer_index = sorted_layer.index(layer)
+                    while(1):
+                        layer_index = layer_index + 1
+                        next_layer = sorted_layer[layer_index]
+                        if not all_is_depthwise[next_layer]:
+                            all_mask[next_layer][:, :, pruned_depth, :] = 0
+                            pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(all_mask[next_layer][:, :, pruned_depth, :]))
+                            break
+                        else:
+                            all_mask[next_layer][:, :, pruned_depth, :] = 0
+                            pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(all_mask[next_layer][:, :, pruned_depth, :]))
+                # Past 
+                # Check the parent layer channel should be pruned or not
+                if bool(all_parents.get(layer)):
+                    interval = pruned_depth             
+                    for _, parent in enumerate(all_parents[layer]):
+                        if pruned_depth >= all_parents[layer][parent] and (pruned_depth - all_parents[layer][parent]) <= interval:
+                            interval = pruned_depth - all_parents[layer][parent]
+                            head = parent
+                            
+                    # Check through all children
+                    is_head_channel_to_be_pruned = True
+                    for _, child in enumerate(all_children[head]):
+                        start_point = all_children[head][child]
+                        position = start_point + interval
+                        if np.sum(all_mask[child][:, :, position, :]) != 0:
+                            is_head_channel_to_be_pruned = False
+                            break
+                if is_head_channel_to_be_pruned:
+                    pruned_dict[head].update({str(pruned_depth): True})
+                    head_weights_mask  = all_mask[head]
+                    if not all_is_depthwise[head]:
+                        head_weights_mask[:, :, :, interval] = 0
+                        pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(all_mask[head][:, :, :, interval]))
+                    else:
+                        head_weights_mask[:, :, interval, :] = 0
+                        pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(all_mask[head][:, :, interval, :]))
+                        # Prune the past layer until the past layer is not depthwise
+                        layer_index = sorted_layer.index(head)
+                        while(1):
+                            layer_index = layer_index - 1
+                            head_past_layer = sorted_layer[layer_index]
+                            if not all_is_depthwise[head_past_layer]:
+                                all_mask[head_past_layer][:, :, :, interval] = 0
+                                pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(all_mask[head_past_layer][:, :, :, interval]))
+                                break
+                            else:
+                                all_mask[head_past_layer][:, :, interval, :] = 0
+                                pruned_num = pruned_num + reduce(lambda x, y: x*y, np.shape(all_mask[head_past_layer][:, :, interval, :]))                           
+                    # remove the past pruned mask (for computing computation)
+                    unpruned_head_mask = head_weights_mask
+                    head_channel_num = np.shape(head_weights_mask)[3]
+                    head_depth = np.shape(head_weights_mask)[2]
+                    head_pruned_channels = []
+                    head_pruned_depth = []
+                    # (channel)
+                    for i in range(head_channel_num):
+                        if np.sum(head_weights_mask[:, :, :, i]) == 0:
+                            head_pruned_channels = np.append(head_pruned_channels, [i])
+                    unpruned_head_mask = np.delete(unpruned_head_mask, head_pruned_channels, axis = 3)
+                    # (depth)
+                    for i in range(head_depth):
+                        if np.sum(head_weights_mask[:, :, i, :]) == 0:
+                            head_pruned_depth = np.append(head_pruned_depth, [i])
+                    unpruned_head_mask = np.delete(unpruned_head_mask, head_pruned_depth, axis = 2)
+                    
+                    head_weights_shape = np.shape(unpruned_head_mask)
+                    computation = computation + head_weights_shape[0] * head_weights_shape[1] * head_weights_shape[2] * head_weights_shape[2] * head_weights_shape[3]
+                    tmp.update({head: {'channel': pruned_depth}})
+                tmp.update({'computation': computation})
+                pruned_weights_info.append(tmp)
+                t.add_row([str(pruned_num)+' / '+str(total_num), angle, layer, 'depth' + str(pruned_depth), computation])
+            break
+    print(t)
+    
+    # Update all masks
+    print('Updating Masks ... ')
+    for layer_iter in range(len(sorted_layer)):
+        layer = sorted_layer[layer_iter]
+        #sess.run(tf.assign(prune_info_dict[layer]['weights'], all_weights[layer]))
+        sess.run(tf.assign(prune_info_dict[layer]['mask'], all_mask[layer]))
+    # See the parameter change
+    """
+    for layer_iter in range(0, len(sorted_layer)):
+        layer = sorted_layer[layer_iter]
+        mask_tensor = prune_info_dict[layer]['mask']
+        after_pruned_weights_size = np.sum(sess.run(mask_tensor))
+        print('{} : \033[0;32m{}\033[0m -> \033[0;32m{}\033[0m' .format(layer, int(original_weights_size[layer]), int(after_pruned_weights_size)))
+    """
+    # See the parameter shape change
+    for layer_iter in range(0, len(sorted_layer)):
+        layer = sorted_layer[layer_iter]
+        mask_tensor = prune_info_dict[layer]['mask']
+        mask = sess.run(mask_tensor)
+        # remove the pruned part
+        unpruned_mask = mask
+        # (channel)
+        channel_num = np.shape(mask)[3]
+        pruned_channels = []
+        for channel in range(channel_num):
+            if np.sum(unpruned_mask[:, :, :, channel]) == 0:
+                pruned_channels = np.append(pruned_channels, [channel])
+        unpruned_mask = np.delete(unpruned_mask, pruned_channels, axis = 3)
+        # (depth)
+        depths = np.shape(unpruned_mask)[2]
+        pruned_depths = []
+        for depth in range(depths):
+            if np.sum(unpruned_mask[:, :, depth, :]) == 0:
+                pruned_depths = np.append(pruned_depths, [depth])
+        unpruned_mask = np.delete(unpruned_mask, pruned_depths, axis = 2)
+        print('{} : \033[0;32m{}\033[0m -> \033[0;32m{}\033[0m' 
+        .format(layer, np.shape(mask), np.shape(unpruned_mask)))
+    print("Prune Over!")
+    
+    return pruned_weights_info
+
 #========================#
 #   Testing Components   #
 #========================#
@@ -7224,8 +7787,8 @@ def compute_accuracy(
         #    result = np.multiply(~correct_prediction_top3, top1) + np.multiply(correct_prediction_top3, np.argmax(v_ys_part, -1))
         #else:
         #    result = np.concatenate([result, np.multiply(~correct_prediction_top3, top1) + np.multiply(correct_prediction_top3, np.argmax(v_ys_part, -1))], axis=0)
-        print(accuracy_top1)
-        #print("\r{} / {} -> Accuracy:{}" .format((i+1)*test_batch_size, data_num, accuracy_top1), end = "") 
+        #print(accuracy_top1)
+        print("\r{} / {} -> Accuracy:{}" .format((i+1)*test_batch_size, data_num, accuracy_top1), end = "") 
 
     print("")    
     return result, accuracy_top1, accuracy_top2, accuracy_top3, Y_pre_total

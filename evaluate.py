@@ -80,12 +80,12 @@ else:
     if FLAGs.Model_1st == 'ResNet':
         ## ResNet-110
         if FLAGs.Model_2nd == '110_cifar10_0':
-            Model_Path = 'Model/ResNet_Model/ResNet_110_cifar10_0_99_2018.02.08_Filter_Magnitude29_47/'
-            Model = 'best.ckpt'
+            Model_Path = 'Model/ResNet_Model/ResNet_110_cifar10_0_99_2018.02.08_Filter_Similar_Y60_60/'
+            Model = '100.ckpt'
         ## ResNet-56
         if FLAGs.Model_2nd == '56_cifar10_0':
-            Model_Path = 'Model/ResNet_Model/ResNet_56_cifar10_0_99_2018.02.09_Filter_Similar_R60_59/'
-            Model = 'best.ckpt'
+            Model_Path = 'Model/ResNet_Model/ResNet_56_cifar10_0_99_2018.02.09_Filter_Similar60_59_41/' 
+            Model = '100.ckpt'
         if FLAGs.Model_2nd == '56_Binary':
             Model_Path = 'Model/ResNet_Model/ResNet_56_Binary_98_cifar10_2018.04.25_Filter_Angle10_40/' 
             Model = 'best.ckpt'
@@ -95,9 +95,9 @@ else:
             Model = 'best.ckpt'
         ## ResNet-20
         if FLAGs.Model_2nd == '20_cifar10_2':
-            Model_Path = 'Model/ResNet_Model/ResNet_20_cifar10_2_99_2018.02.06_Filter_Similar_K40_39/'
-            Model = 'best.ckpt'
-            diversify_layers = ['layer14', 'layer16', 'layer17']
+            Model_Path = 'Model/ResNet_Model/ResNet_20_cifar10_2_99_2018.02.06_Filter_Similar90_88_41/'
+            Model = '100.ckpt'
+            #diversify_layers = ['layer14', 'layer16', 'layer17']
         if FLAGs.Model_2nd == '20_Ternary':
             Model_Path = 'Model/ResNet_Model/ResNet_20_Ternary_98_cifar10_2018.04.14/'
             Model = '400.ckpt'
@@ -112,7 +112,7 @@ else:
     if FLAGs.Model_1st == 'DenseNet':
         ## DenseNet_40_12
         if FLAGs.Model_2nd == '40_12':
-            Model_Path = 'Model/DenseNet_Model/DenseNet_40_12_99_cifar10_2018.03.06/'
+            Model_Path = 'Model/DenseNet_Model/DenseNet_40_12_99_cifar10_2018.03.06_Filter_Similar_K10_59/'
             Model = '300.ckpt'
     # MobileNet
     if FLAGs.Model_1st == 'MobileNet':
@@ -144,7 +144,7 @@ def main(argv):
         train_Y_pre_path      = train_Y_pre_path        ,
         valid_Y_pre_path      = valid_Y_pre_path        ,
         test_Y_pre_path       = test_Y_pre_path         ,
-        training_type         = 'test'                  ,
+        training_type         = 'diversify'             ,
         diversify_layers      = diversify_layers        ,
         is_find_best_model    = False                   )
         

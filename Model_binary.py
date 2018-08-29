@@ -622,6 +622,7 @@ def conv2D_Variable(
     #    DIVERSITY 2x2 conv   #
     #-------------------------#
     if IS_DIVERSITY and fast_mode == '0':
+        kernel_size_fast = 2
         # float32 Variable
         if is_depthwise:
             float32_weights_fast = tf.get_variable(
@@ -1017,7 +1018,7 @@ def conv2D_Module(
                         ## Show the model
                         if SHOW_MODEL:
                             print("-> Dilated-Depthwise Conv, Weights:{}, stride:{}" .format(weights.get_shape().as_list(), stride))
-                        if IS_DIVERSITY:
+                        if IS_DIVERSITY and fast_mode != '3':
                             net_fast_tmp = tf.nn.depthwise_conv2d( 
                                 input       = net_tmp, 
                                 filter      = weights_fast, 
@@ -1036,7 +1037,7 @@ def conv2D_Module(
                         ## Show the model
                         if SHOW_MODEL:
                             print("-> Dilated Conv, Weights:{}, stride:{}" .format(weights.get_shape().as_list(), stride))
-                        if IS_DIVERSITY:
+                        if IS_DIVERSITY and fast_mode != '3':
                             net_fast_tmp = tf.nn.atrous_conv2d( 
                                 value       = net_tmp, 
                                 filters     = weights_fast, 
@@ -1052,7 +1053,7 @@ def conv2D_Module(
                         ## Show the model
                         if SHOW_MODEL:
                             print("-> Depthwise Conv, Weights:{}, stride:{}" .format(weights.get_shape().as_list(), stride))
-                        if IS_DIVERSITY:
+                        if IS_DIVERSITY and fast_mode != '3':
                             net_fast_tmp = tf.nn.depthwise_conv2d( 
                                 input       = net_tmp, 
                                 filter      = weights_fast, 
@@ -1069,7 +1070,7 @@ def conv2D_Module(
                         ## Show the model
                         if SHOW_MODEL:
                             print("-> Conv, Weights:{}, stride:{}" .format(weights.get_shape().as_list(), stride))
-                        if IS_DIVERSITY:
+                        if IS_DIVERSITY and fast_mode != '3':
                             net_fast_tmp = conv2d_fixed_padding(
                                 inputs      = net_tmp, 
                                 filters     = weights_fast,  
@@ -1090,7 +1091,7 @@ def conv2D_Module(
                     ## Show the model
                     if SHOW_MODEL:
                         print("-> Add Biases, Biases:{}".format(biases.get_shape().as_list()))
-                    if IS_DIVERSITY:
+                    if IS_DIVERSITY and fast_mode != '3':
                         net_fast_tmp = tf.nn.bias_add(net_fast_tmp, biases_fast, data_format)
                     net_tmp = tf.nn.bias_add(net_tmp, biases, data_format)
                 
@@ -1107,23 +1108,23 @@ def conv2D_Module(
                 # Output
                 # merge every group net together
                 if g==0:
-                    if IS_DIVERSITY:
+                    if IS_DIVERSITY and fast_mode != '3':
                         net_fast_ = net_fast_tmp
                     net_ = net_tmp
                 else:
                     if data_format == "NHWC":
-                        if IS_DIVERSITY:
+                        if IS_DIVERSITY and fast_mode != '3':
                             net_fast_ = tf.concat([net_fast_, net_fast_tmp], axis=3)
                         net_ = tf.concat([net_, net_tmp], axis=3)
                     elif data_format == "NCHW":
-                        if IS_DIVERSITY:
+                        if IS_DIVERSITY and fast_mode != '3':
                             net_fast_ = tf.concat([net_fast_, net_fast_tmp], axis=1)
                         net_ = tf.concat([net_, net_tmp], axis=1)
 
         #-----------------#
         #    Operation    #
         #-----------------#
-        if IS_DIVERSITY:
+        if IS_DIVERSITY and fast_mode != '3':
             net_fast = net_fast_
         net = net_
         
@@ -1132,7 +1133,7 @@ def conv2D_Module(
             ## Show the model
             if SHOW_MODEL:
                 print("-> Ternary")
-            if IS_DIVERSITY:
+            if IS_DIVERSITY and fast_mode != '3':
                 with tf.variable_scope('Ternary_Scalse_fast'):
                     ternary_scale_fast = tf.get_variable("ternary_scale_fast", [1], tf.float32, initializer=initializer)
                     tf.add_to_collection("ternary_scale_fast", ternary_scale_fast)
@@ -1143,7 +1144,7 @@ def conv2D_Module(
                 net = tf.multiply(net, ternary_scale)
         
         # (Diversity) Choose mode
-        if IS_DIVERSITY:
+        if IS_DIVERSITY and fast_mode != '3':
             net = tf.cond(is_fast_mode,
                             lambda: net_fast,
                             lambda: net)
@@ -1154,7 +1155,7 @@ def conv2D_Module(
             if SHOW_MODEL:
                 print("-> Batch_Norm")
             """
-            if IS_DIVERSITY:
+            if IS_DIVERSITY and fast_mode != '3':
                 net = batch_norm(net, tf.logical_and(is_training, tf.constant(False, tf.bool)), data_format, False)
                 net_fast = batch_norm(net_fast, is_training, data_format, trainable)
             else:

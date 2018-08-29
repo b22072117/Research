@@ -63,18 +63,65 @@ def main(argv):
     Model = None
     # -- Training --
     # For Loading Trained Weights
-    ## ResNet-20
-    if FLAGs.Model_1st == 'ResNet':
+    if FLAGs.Model_1st == 'ResNet': 
+        ## ResNet-110
+        if FLAGs.Model_2nd == '110_cifar10_0':
+            Model_Path = 'Model/ResNet_Model/ResNet_110_cifar10_0_99_2018.02.08/'
+            Model = '10.ckpt'
+            Model_Path_s = 'Model/ResNet_Model/ResNet_110_cifar10_0_layer1_to_layer54_mode1_Filter_Similar50_49_layer55_to_layer108_mode1_Filter_Similar30_29/'
+            Model_s = '50.ckpt'
+            
+            Model_Path_s = Model_Path
+            Model_s = Model
+            
+            diversify_layers = {}
+            diversify_layers.update({
+                '0': {'layer': ['layer1'  , 'layer54' ], 'type': 'diversify', 'mode' : '1', 'prune_propotion': 0.7, 'times': 1},
+                '1': {'layer': ['layer55' , 'layer108'], 'type': 'diversify', 'mode' : '1', 'prune_propotion': 0.7, 'times': 1},
+                '2': {'layer': ['layer109', 'layer162'], 'type': 'diversify', 'mode' : '1', 'prune_propotion': 0.7, 'times': 1},
+            })
+            pruned_model_path = None
+            pruned_model = None
+        ## ResNet-56
+        if FLAGs.Model_2nd == '56_cifar10_0':
+            Model_Path = 'Model/ResNet_Model/ResNet_56_cifar10_0_99_2018.02.09/'
+            Model = '10.ckpt'
+            
+            Model_Path_s = 'Model/ResNet_Model/ResNet_56_cifar10_0_layer1_to_layer27_mode1_Filter_Similar50_49/'
+            Model_s = '50.ckpt'
+            
+            #Model_Path_s = Model_Path
+            #Model_s = Model
+            
+            diversify_layers = {}
+            diversify_layers.update({
+                '0': {'layer': ['layer1' , 'layer27'], 'type': 'diversify', 'mode' : '1', 'prune_propotion': 0.6, 'times': 1},
+                '1': {'layer': ['layer28', 'layer54'], 'type': 'diversify', 'mode' : '1', 'prune_propotion': 0.6, 'times': 1},
+                '2': {'layer': ['layer55', 'layer81'], 'type': 'diversify', 'mode' : '1', 'prune_propotion': 0.6, 'times': 1},
+            })
+            pruned_model_path = None
+            pruned_model = None
+        ## ResNet-20
         if FLAGs.Model_2nd == '20_cifar10_2':
             Model_Path = 'Model/ResNet_Model/ResNet_20_cifar10_2_99_2018.02.06/'
             Model = '10.ckpt'
-            Model_Path_s = Model_Path #'Model/ResNet_Model/ResNet_20_cifar10_2_layer1_to_layer8_mode1_Filter_Similar60_59/'
-            Model_s = Model #'50.ckpt'
+            Model_Path_s = 'Model/ResNet_Model/ResNet_20_cifar10_2_layer1_to_layer9_mode1_Filter_Similar20_19_layer10_to_layer18_mode1_Filter_Similar20_19/'
+            Model_s = '50.ckpt'
+            
+            Model_Path_s = Model_Path
+            Model_s = Model
+            
             diversify_layers = {}
             diversify_layers.update({
-                #'0': {'layer': ['layer1' , 'layer8' ], 'type': 'diversify', 'mode' : '1', 'prune_propotion': 0.6, 'times': 1},
-                #'0': {'layer': ['layer10', 'layer17'], 'type': 'diversify', 'mode' : '1', 'prune_propotion': 0.1, 'times': 1},
-                '0': {'layer': ['layer19', 'layer26'], 'type': 'diversify', 'mode' : '1', 'prune_propotion': 0.4, 'times': 1},
+                '0': {'layer': ['layer1' , 'layer9' ], 'type': 'diversify', 'mode' : '1', 'prune_propotion': 0.4, 'times': 1},
+                '1': {'layer': ['layer10', 'layer18'], 'type': 'diversify', 'mode' : '1', 'prune_propotion': 0.4, 'times': 1},
+                '2': {'layer': ['layer19', 'layer27'], 'type': 'diversify', 'mode' : '1', 'prune_propotion': 0.4, 'times': 1},
+                #'0': {'layer': ['layer1', 'layer1'], 'type': 'diversify', 'mode' : '0', 'prune_propotion': 0.4, 'times': 1},
+                #'0': {'layer': ['layer2', 'layer2'], 'type': 'diversify', 'mode' : '0', 'prune_propotion': 0.4, 'times': 1},
+                #'2': {'layer': ['layer4', 'layer4'], 'type': 'diversify', 'mode' : '0', 'prune_propotion': 0.4, 'times': 1},
+                #'3': {'layer': ['layer5', 'layer5'], 'type': 'diversify', 'mode' : '0', 'prune_propotion': 0.4, 'times': 1},
+                #'4': {'layer': ['layer7', 'layer7'], 'type': 'diversify', 'mode' : '0', 'prune_propotion': 0.4, 'times': 1},
+                #'5': {'layer': ['layer8', 'layer8'], 'type': 'diversify', 'mode' : '0', 'prune_propotion': 0.4, 'times': 1},
                 
                 #'1': {'layer': ['layer10', 'layer18'], 'type': 'diversify', 'mode' : '4', 'prune_propotion': 0.1, 'times': 6},
                 #'2': {'layer': ['layer19', 'layer27'], 'type': 'diversify', 'mode' : '4', 'prune_propotion': 0.1, 'times': 6},

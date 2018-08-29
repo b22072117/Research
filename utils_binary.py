@@ -136,7 +136,7 @@ def run_training(
                 HP.update({'LR_Final'                  : 1e-3            })
                 HP.update({'LR_Decade'                 : 10              }) 
                 HP.update({'LR_Decade_1st_Epoch'       : 30              })
-                HP.update({'LR_Decade_2nd_Epoch'       : 60              })
+                HP.update({'LR_Decade_2nd_Epoch'       : 50              })
                 HP.update({'LR_Decade_3rd_Epoch'       : 80              })
                 HP.update({'LR_Decade_4th_Epoch'       : 90              })
                 HP.update({'L2_Lambda'                 : 2e-4            })
@@ -428,28 +428,36 @@ def run_pruning(
     ):
     
     if IS_IN_IPYTHON:
-        Dataset             = FLAGs['Dataset']
-        Model_first_name    = FLAGs['Model_1st']
-        Model_second_name   = FLAGs['Model_2nd']
-        EPOCH               = Epoch
-        BATCH_SIZE          = FLAGs['BatchSize']
-        Pruning_Strategy    = FLAGs['Pruning_Strategy']
-        Pruning_Propotion   = FLAGs['Pruning_Propotion']
-        Pruning_Times       = FLAGs['Pruning_Times']
-        Iterative_Pruning   = FLAGs['Iterative_Pruning']
+        Dataset                     = FLAGs['Dataset']
+        Model_first_name            = FLAGs['Model_1st']
+        Model_second_name           = FLAGs['Model_2nd']
+        EPOCH                       = Epoch
+        BATCH_SIZE                  = FLAGs['BatchSize']
+        Pruning_Strategy            = FLAGs['Pruning_Strategy']
+        Pruning_Propotion           = FLAGs['Pruning_Propotion']
+        Pruning_Propotion_2         = FLAGs['Pruning_Propotion_2']
+        Pruning_Threshold           = FLAGs['Pruning_Threshold']
+        Pruning_Threshold_2         = FLAGs['Pruning_Threshold_2']
+        Pruning_Times               = FLAGs['Pruning_Times']
+        Pruning_Propotion_Per_Time  = FLAGs['Pruning_Propotion_Per_Time']
+        Iterative_Pruning           = FLAGs['Iterative_Pruning']
     else:
-        Dataset             = FLAGs.Dataset
-        Model_first_name    = FLAGs.Model_1st
-        Model_second_name   = FLAGs.Model_2nd
-        EPOCH               = Epoch
-        BATCH_SIZE          = FLAGs.BatchSize
-        Pruning_Strategy    = FLAGs.Pruning_Strategy
-        Pruning_Propotion   = FLAGs.Pruning_Propotion
-        Pruning_Times       = FLAGs.Pruning_Times
-        Iterative_Pruning   = FLAGs.Iterative_Pruning
+        Dataset                     = FLAGs.Dataset
+        Model_first_name            = FLAGs.Model_1st
+        Model_second_name           = FLAGs.Model_2nd
+        EPOCH                       = Epoch
+        BATCH_SIZE                  = FLAGs.BatchSize
+        Pruning_Strategy            = FLAGs.Pruning_Strategy
+        Pruning_Propotion           = FLAGs.Pruning_Propotion
+        Pruning_Propotion_2         = FLAGs.Pruning_Propotion_2
+        Pruning_Threshold           = FLAGs.Pruning_Threshold
+        Pruning_Threshold_2         = FLAGs.Pruning_Threshold_2
+        Pruning_Times               = FLAGs.Pruning_Times
+        Pruning_Propotion_Per_Time  = FLAGs.Pruning_Propotion_Per_Time
+        Iterative_Pruning           = FLAGs.Iterative_Pruning
     
     if Iterative_Pruning == 'False':
-        Pruning_Propotion = Pruning_Propotion * (pruning_iter+1)
+        Pruning_Propotion = Pruning_Propotion + Pruning_Propotion_Per_Time * pruning_iter
     
     Model_Name = Model_first_name + '_' + Model_second_name
     
@@ -501,10 +509,13 @@ def run_pruning(
     HP.update({'test_num'           : test_num})
     HP.update({'Pruning_Strategy'   : Pruning_Strategy})
     HP.update({'Pruning_Propotion'  : Pruning_Propotion})
+    HP.update({'Pruning_Propotion_2': Pruning_Propotion_2})
+    HP.update({'Pruning_Threshold'  : Pruning_Threshold})
+    HP.update({'Pruning_Threshold_2': Pruning_Threshold_2})
     HP.update({'Pruning_Times'      : Pruning_Times})
     if Model_first_name == 'ResNet':
         if Model_second_name == '50':
-            HP.update({'LR'                        : 0.000125        })  
+            HP.update({'LR'                        : 0.0000125        })  
             HP.update({'LR_Strategy'               : 'Normal'        })
             HP.update({'LR_Final'                  : 1e-3            })
             HP.update({'LR_Decade'                 : 10              }) 
@@ -524,8 +535,8 @@ def run_pruning(
             HP.update({'LR_Decade'                  : 10              }) 
             
             HP.update({'LR_Decade_1st_Epoch'        : 30              })
-            HP.update({'LR_Decade_2nd_Epoch'        : 50              })
-            HP.update({'LR_Decade_3rd_Epoch'        : 80              })
+            HP.update({'LR_Decade_2nd_Epoch'        : 60              })
+            HP.update({'LR_Decade_3rd_Epoch'        : 90              })
             HP.update({'LR_Decade_4th_Epoch'        : 100             })
             
             HP.update({'L2_Lambda'                  : 2e-4            })
@@ -553,12 +564,13 @@ def run_pruning(
             HP.update({'Dropout_Rate'               : 0.0             })
     elif Model_first_name == 'DenseNet':
         HP.update({'LR'                        : 0.01            })
-        HP.update({'LR_Strategy'               : '3times'        })
+        HP.update({'LR_Strategy'               : 'Normal'        })
         HP.update({'LR_Final'                  : 1e-3            })
         HP.update({'LR_Decade'                 : 10              })
-        HP.update({'LR_Decade_1st_Epoch'       : 30              })
-        HP.update({'LR_Decade_2nd_Epoch'       : 50              })
-        HP.update({'LR_Decade_3rd_Epoch'       : 80              })
+        HP.update({'LR_Decade_1st_Epoch'       : 100             })
+        HP.update({'LR_Decade_2nd_Epoch'       : 150             })
+        HP.update({'LR_Decade_3rd_Epoch'       : 225             })
+        HP.update({'LR_Decade_4th_Epoch'       : 300             })
         HP.update({'L2_Lambda'                 : 2e-4            })
         HP.update({'Opt_Method'                : 'Momentum'      })
         HP.update({'Momentum_Rate'             : 0.9             })
@@ -567,12 +579,13 @@ def run_pruning(
         HP.update({'Dropout_Rate'              : 0.0             })
     elif Model_first_name == 'MobileNet':
         HP.update({'LR'                        : 0.000125        })
-        HP.update({'LR_Strategy'               : '3times'        })
+        HP.update({'LR_Strategy'               : 'Normal'        })
         HP.update({'LR_Final'                  : 1e-3            })
         HP.update({'LR_Decade'                 : 30              })
         HP.update({'LR_Decade_1st_Epoch'       : 100             })
         HP.update({'LR_Decade_2nd_Epoch'       : 300             })
         HP.update({'LR_Decade_3rd_Epoch'       : 300             })
+        HP.update({'LR_Decade_4th_Epoch'       : 300             })
         HP.update({'L2_Lambda'                 : 2e-4            })
         HP.update({'Opt_Method'                : 'Momentum'      })
         HP.update({'Momentum_Rate'             : 0.9             })
@@ -618,6 +631,7 @@ def run_pruning(
     #   Global_Epoch   #
     #------------------#
     Global_Epoch = Global_Epoch % FLAGs.Epoch
+    """
     if Global_Epoch == 0:
         try:
             with open(pruning_model_path + 'info.csv', 'rb') as csvfile:
@@ -628,7 +642,7 @@ def run_pruning(
                 pruning_model = best_model.split('/')[-1]
         except:
             None
-    
+    """
     Model_Path, Model, Global_Epoch, is_skip = Pruning(
         Model_dict          = Model_dict        ,        
         Dataset	            = Dataset           ,
@@ -719,6 +733,9 @@ def run_rebuilding(
     #   Hyperparameter : User Defined   #
     #-----------------------------------#
     HP = {}
+    
+    
+    
     HP.update({'Batch_Size'                : BATCH_SIZE      })
     HP.update({'Epoch'                     : EPOCH           })
     HP.update({'H_Resize'                  : H_Resize        })
@@ -728,19 +745,55 @@ def run_rebuilding(
     HP.update({'test_num'                  : test_num        })
     HP.update({'mode'                      : mode            })
     
-    HP.update({'LR'                        : 1e-3            }) 
-    HP.update({'LR_Strategy'               : 'Normal'        })
-    HP.update({'LR_Final'                  : 1e-3            })
-    HP.update({'LR_Decade'                 : 10              })   
-    HP.update({'LR_Decade_1st_Epoch'       : 80              })
-    HP.update({'LR_Decade_2nd_Epoch'       : 120             })
-    HP.update({'LR_Decade_3rd_Epoch'       : 200             })
-    HP.update({'L2_Lambda'                 : 2e-4            })
-    HP.update({'Opt_Method'                : 'Momentum'      })
-    HP.update({'Momentum_Rate'             : 0.9             })
-    HP.update({'Ternary_Epoch'             : 50              })
-    HP.update({'Quantized_Activation_Epoch': 100             })
-    HP.update({'Dropout_Rate'              : 0.0             })
+    if Model_first_name == 'ResNet':
+        if Model_second_name == '50':
+            HP.update({'LR'                        : 0.000125        })  
+            HP.update({'LR_Strategy'               : 'Normal'        })
+            HP.update({'LR_Final'                  : 1e-3            })
+            HP.update({'LR_Decade'                 : 10              }) 
+            HP.update({'LR_Decade_1st_Epoch'       : 30              })
+            HP.update({'LR_Decade_2nd_Epoch'       : 150             })
+            HP.update({'LR_Decade_3rd_Epoch'       : 150             })
+            HP.update({'L2_Lambda'                 : 2e-4            })
+            HP.update({'Opt_Method'                : 'Momentum'      })
+            HP.update({'Momentum_Rate'             : 0.9             })
+            HP.update({'Ternary_Epoch'             : 50              })
+            HP.update({'Quantized_Activation_Epoch': 100             })
+            HP.update({'Dropout_Rate'              : 0.0             })
+        else:
+            HP.update({'LR'                         : 0.01           })  
+            HP.update({'LR_Strategy'                : 'Normal'        })
+            HP.update({'LR_Final'                   : 1e-3            })
+            HP.update({'LR_Decade'                  : 10              }) 
+            
+            HP.update({'LR_Decade_1st_Epoch'        : 30              })
+            HP.update({'LR_Decade_2nd_Epoch'        : 60              })
+            HP.update({'LR_Decade_3rd_Epoch'        : 90              })
+            HP.update({'LR_Decade_4th_Epoch'        : 100             })
+            
+            HP.update({'L2_Lambda'                  : 2e-4            })
+            HP.update({'Opt_Method'                 : 'Momentum'      })
+            HP.update({'Momentum_Rate'              : 0.9             })
+            
+            HP.update({'Ternary_Epoch'              : 161             })
+            HP.update({'Ternary_LR'                 : 1e-1            })
+            HP.update({'Ternary_LR_Decade_1st_Epoch': 80              })
+            HP.update({'Ternary_LR_Decade_2nd_Epoch': 120             })
+            HP.update({'Ternary_LR_Decade_3rd_Epoch': 150             })
+            HP.update({'Ternary_LR_Decade_4th_Epoch': 200             })
+            
+            HP.update({'Binary_Epoch'               : 0               })
+            HP.update({'Binary_LR_Strategy'         : 'Normal'        })
+            HP.update({'Binary_LR'                  : 1e-2            })
+            HP.update({'Binary_LR_Final'            : 1e-4            })
+            HP.update({'Binary_LR_Decade'           : 10              })
+            HP.update({'Binary_LR_Decade_1st_Epoch' : 10              })
+            HP.update({'Binary_LR_Decade_2nd_Epoch' : 50              })
+            HP.update({'Binary_LR_Decade_3rd_Epoch' : 80              })
+            HP.update({'Binary_LR_Decade_4th_Epoch' : 200             })
+            
+            HP.update({'Quantized_Activation_Epoch' : 100             })
+            HP.update({'Dropout_Rate'               : 0.0             })
     
     print("\033[1;32mBATCH SIZE\033[0m : {}" .format(HP['Batch_Size']))
     
@@ -919,36 +972,43 @@ def run_diversifying(
                 HP.update({'Quantized_Activation_Epoch': 100             })
                 HP.update({'Dropout_Rate'              : 0.0             })
             else:
-                HP.update({'LR'                         : 0.01           })  
+                HP.update({'LR'                         : 0.01           }) # mode1: 0.01
                 HP.update({'LR_Strategy'                : 'Normal'       })
                 HP.update({'LR_Final'                   : 1e-3           })
-                HP.update({'LR_Decade'                  : 10             }) 
-                HP.update({'LR_Decade_1st_Epoch'        : 20             })
-                HP.update({'LR_Decade_2nd_Epoch'        : 40             })
-                HP.update({'LR_Decade_3rd_Epoch'        : 100            })
+                HP.update({'LR_Decade'                  : 10             })
+                
+                HP.update({'LR_Decade_1st_Epoch'        : 30             }) # model: 30
+                HP.update({'LR_Decade_2nd_Epoch'        : 60             }) # model: 60
+                HP.update({'LR_Decade_3rd_Epoch'        : 90             }) # model: 90
                 HP.update({'LR_Decade_4th_Epoch'        : 220            })
+                
                 HP.update({'L2_Lambda'                  : 2e-4           })
                 HP.update({'Opt_Method'                 : 'Momentum'     })
                 HP.update({'Momentum_Rate'              : 0.9            })
                 HP.update({'IS_STUDENT'                 : False          })
+                
                 HP.update({'Ternary_Epoch'              : 0              })
                 HP.update({'Ternary_LR_Strategy'        : 'Normal'       })
                 HP.update({'Ternary_LR_Decade'          : 10             })
                 HP.update({'Ternary_LR'                 : 1e-1           })
                 HP.update({'Ternary_LR_Final'           : 1e-3           })
+                
                 HP.update({'Ternary_LR_Decade_1st_Epoch': 80             })
                 HP.update({'Ternary_LR_Decade_2nd_Epoch': 120            })
                 HP.update({'Ternary_LR_Decade_3rd_Epoch': 150            })
                 HP.update({'Ternary_LR_Decade_4th_Epoch': 200            })
+                
                 HP.update({'Binary_Epoch'               : 0              })
                 HP.update({'Binary_LR_Strategy'         : 'Normal'       })
                 HP.update({'Binary_LR'                  : 1e-4           })
                 HP.update({'Binary_LR_Final'            : 1e-4           })
                 HP.update({'Binary_LR_Decade'           : 10             })
+                
                 HP.update({'Binary_LR_Decade_1st_Epoch' : 80             })
                 HP.update({'Binary_LR_Decade_2nd_Epoch' : 120            })
                 HP.update({'Binary_LR_Decade_3rd_Epoch' : 160            })
                 HP.update({'Binary_LR_Decade_4th_Epoch' : 200            })
+                
                 HP.update({'Quantized_Activation_Epoch' : 0              })
                 HP.update({'Dropout_Rate'               : 0.0            })                
         elif Model_first_name == 'DenseNet':
@@ -1078,7 +1138,123 @@ def run_diversifying(
         
     return Model_Path, Model, error, Global_Epoch
    
+def run_debuging(
+    # Info               
+    FLAGs               ,
+    # Path               
+    Dataset_Path        ,
+    debug_model_path    ,
+    debug_model         ,
+    ):
+    
+    
+    if IS_IN_IPYTHON:
+        Dataset           = FLAGs['Dataset']
+        Model_first_name  = FLAGs['Model_1st']
+        Model_second_name = FLAGs['Model_2nd']
+        EPOCH             = FLAGs['Epoch']
+        BATCH_SIZE        = FLAGs['BatchSize']
+        Debug_Mode        = FLAGs['Debug_Mode']
+    else:
+        Dataset           = FLAGs.Dataset
+        Model_first_name  = FLAGs.Model_1st
+        Model_second_name = FLAGs.Model_2nd
+        EPOCH             = FLAGs.Epoch
+        BATCH_SIZE        = FLAGs.BatchSize
+        Debug_Mode        = FLAGs.Debug_Mode
+    
+    Model_Name = Model_first_name + '_' + Model_second_name
+    
+    #---------------#
+    #   Data Info   #
+    #---------------#
+    if Dataset=='CamVid':   # original : [360, 480, 12]
+        H_Resize = 360
+        W_Resize = 480
+        class_num = 12
+        train_num = 367
+        valid_num = 101
+        test_num = 356
+    elif Dataset=='ade20k': # original : All Different
+        H_Resize = 224
+        W_Resize = 224
+        class_num = 151
+    elif Dataset=='mnist':  # original : [28, 28, 10]
+        H_Resize = 32
+        W_Resize = 32
+        class_num = 10
+    elif Dataset=='cifar10': # original : [28, 28, 10]
+        H_Resize = 32
+        W_Resize = 32
+        class_num = 10
+        train_num = 50000
+        valid_num = 0
+        test_num = 10000
+    elif Dataset=='ILSVRC2012': 
+        H_Resize = 224
+        W_Resize = 224
+        class_num = 1001
+        train_num = 1281167
+        valid_num = 0 
+        test_num = 50000
+        
+    #----------------#
+    #   Model_dict   #
+    #----------------#
+    Model_dict = Model_dict_Generator('Model/' + Model_first_name + '_Model/' + Model_Name + '.csv', class_num)
+    
+    #-----------------------------------#
+    #   Hyperparameter : User Defined   #
+    #-----------------------------------#
+    HP = {}
+    HP.update({'Batch_Size'                : BATCH_SIZE})
+    HP.update({'Epoch'                     : EPOCH     })
+    HP.update({'H_Resize'                  : H_Resize  })
+    HP.update({'W_Resize'                  : W_Resize  })
+    HP.update({'train_num'                 : train_num })
+    HP.update({'valid_num'                 : valid_num })
+    HP.update({'test_num'                  : test_num  })
+        
+    print("\033[1;32mBATCH SIZE\033[0m : {}" .format(HP['Batch_Size']))
+    
+    #---------------------------#
+    #    Hyperparameter Save    #
+    #---------------------------#
+    components = np.array(['Batch_Size'                ,
+                           'H_Resize'                  ,
+                           'W_Resize'                  ])
+    
+    for iter, component in enumerate(components):
+        if iter == 0:
+            HP_csv = np.array([HP[component]])
+        else:
+            HP_csv = np.concatenate([HP_csv, np.array([HP[component]])], axis=0)
+            
+    components = np.expand_dims(components, axis=1)
+    HP_csv = np.expand_dims(HP_csv, axis=1)
+    HP_csv = np.concatenate([HP_csv, components], axis=1)
+    
+    #----------------#
+    #    Training    #
+    #----------------#
+    TRAINED_WEIGHT_FILE = None
+
+    Model_Path, Model = Debuging( 
+        Model_dict          = Model_dict        ,               
+        Dataset             = Dataset           ,
+        Dataset_Path        = Dataset_Path      ,
+        class_num           = class_num         ,            
+        HP                  = HP                ,     
+        HP_csv              = HP_csv            ,
+        Model_first_name    = Model_first_name  ,
+        Model_second_name   = Model_second_name ,
+        debug_model_path    = debug_model_path  ,
+        debug_model         = debug_model       ,
+        Debug_Mode          = Debug_Mode        )
+        
+    return Model_Path, Model
    
+
 def Training( 
     # Model
     Model_dict           ,
@@ -1234,7 +1410,7 @@ def Training(
                                'final_biases'        not in v.name])
         l2_lambda = tf.constant(HP['L2_Lambda'])
         l2_norm   = tf.multiply(l2_lambda, l2_norm)
-        loss = cross_entropy
+        loss = cross_entropy + l2_norm
     else:
         loss = cross_entropy + l2_norm
     
@@ -1710,6 +1886,10 @@ def Testing(
     config.allow_soft_placement = True
     config.intra_op_parallelism_threads = 256
     with tf.Session(config = config) as sess:
+        # tensorboard
+        logs_path = 'tensorboard'
+        summary_writer = tf.summary.FileWriter(logs_path, graph=tf.get_default_graph())
+        
         #--------------------------#
         #   Load trained weights   #
         #--------------------------#
@@ -1736,9 +1916,89 @@ def Testing(
         Pruned_Size = 0
         for iter, mask in enumerate(tf.get_collection('float32_weights_mask')):
             Pruned_Size = Pruned_Size + np.sum(sess.run(mask) == 0)
-                
+        
+        # Diversify
+        original_size = 0
+        original_computation = 0
+        extra_size = 0
+        extra_computation = 0
+        iter = 0
+        for layer in range(len(Model_dict)):
+            #print("\033[0;32mCurrent Layer\033[0m %s" %('layer%d'%layer))
+            if Model_dict['layer%d'%layer]['DIVERSIFY_MODE'] != "None" and iter < len(tf.get_collection('float32_weights_mask', scope='student/Model/fast')):
+                while(1):
+                    if tf.get_collection('float32_weights_mask', scope='student/Model/fast')[iter]:
+                        scope = tf.get_collection('float32_weights_mask', scope='student/Model/fast')[iter].name
+                        scope_layer = scope.split('/')[3].split('_')[-1]
+                        if scope_layer != 'layer%d'%layer:
+                            break
+                        mask = sess.run(tf.get_collection('float32_weights_mask', scope='student/Model/fast')[iter])
+                        float32_weights = sess.run(tf.get_collection('float32_weights', scope='student/Model/fast')[iter])
+                        weights = sess.run(tf.get_collection('weights', scope='student/Model/fast')[iter])
+                        outputs = tf.get_collection('conv_outputs', scope='student/Model/fast')[iter]
+                        if data_format == "NCHW" or data_format == "channels_first":
+                            H = outputs.get_shape().as_list()[2]
+                            W = outputs.get_shape().as_list()[3]
+                        elif data_format == "NHWC" or data_format == "channels_last":
+                            H = outputs.get_shape().as_list()[1]
+                            W = outputs.get_shape().as_list()[2]
+                        ## Check the final weights
+                        size = reduce(lambda x, y: x*y, np.shape(weights))
+                        assert np.sum(float32_weights * mask == weights) == size, "Final Weights is Wrong!"
+                        
+                        ## Show the Change of the Size
+                        original_size = original_size + size
+                        unpruned_size = int(np.sum(mask))
+                        extra_size = extra_size + unpruned_size
+                        
+                        ## Show the Change of the Computation
+                        computation = reduce(lambda x, y: x*y, np.shape(mask)) * H * W
+                        original_computation = original_computation + computation
+                        # pruned computation
+                        unpruned_mask = mask
+                        channel_num = np.shape(unpruned_mask)[3]
+                        depth = np.shape(unpruned_mask)[2]
+                        pruned_channels = []
+                        pruned_depth = []
+                        # (channel)
+                        for i in range(channel_num):
+                            if np.sum(unpruned_mask[:, :, :, i]) == 0:
+                                pruned_channels = np.append(pruned_channels, [i])
+                        unpruned_mask = np.delete(unpruned_mask, pruned_channels, axis = 3)
+                        # (depth)
+                        for i in range(depth):
+                            if np.sum(unpruned_mask[:, :, i, :]) == 0:
+                                pruned_depth = np.append(pruned_depth, [i])
+                        unpruned_mask = np.delete(unpruned_mask, pruned_depth, axis = 2)
+                        
+                        unpruned_computation = reduce(lambda x, y: x*y, np.shape(unpruned_mask)) * H * W
+                        extra_computation = extra_computation + unpruned_computation
+                        
+                        ## Control
+                        iter = iter + 1
+                        if iter == len(tf.get_collection('float32_weights_mask', scope='student/Model/fast')):
+                            break
+                        #print(np.shape(weights))
+                        #print(H, W)
+                        #print("{} : {} -> {}, {} -> {}" .format(scope.split('/')[3], size, unpruned_size, computation, unpruned_computation))
+                    else:
+                        break
+            if Model_dict['layer%d'%layer]['DIVERSIFY_MODE'] == '3':
+                print("\033[0;36m=================================\033[0m")
+                print("\033[0;36m Extra Model Size\033[0m = {} ({})" .format(extra_size, original_size))
+                print("\033[0;36m Extra Computation\033[0m = {} ({})" .format(extra_computation, original_computation))
+                print("\033[0;36m=================================\033[0m")
+                original_size = 0
+                original_computation = 0
+                extra_size = 0
+                extra_computation = 0
+            
+        
+        # Total Model Size
+        #for _, mask in enumerate(tf.get_collection('float32_weights_mask', scope=None)):
+        #    Model_Size = Model_Size + np.sum(sess.run(mask))
         print("\033[0;36m=======================\033[0m")
-        print("\033[0;36m Model Size\033[0m = {}" .format(Model_Size-Pruned_Size))
+        print("\033[0;36m Model Size\033[0m = {}" .format(int(Model_Size)-Pruned_Size))
         print("\033[0;36m=======================\033[0m")
         
         #-------------------#
@@ -1792,6 +2052,7 @@ def Testing(
             #diversify_layer_num = len(diversify_layers)
             test_accuracy_total = []
             test_accuracy_total.append(np.concatenate([np.array(diversify_layers), np.array(['Accuracy'])], axis=0))
+            
             for d in range(pow(2, diversify_layer_num)):
                 d2b = '{0:0' + str(diversify_layer_num) + 'b}'
                 b = d2b.format(d)
@@ -1808,7 +2069,7 @@ def Testing(
                         else:
                             mode = np.concatenate([mode, np.array([1 - int(value)])])
                         # is_fast_mode_dict
-                        is_fast_mode_dict.update({is_fast_mode[diversify_layers[bit]]: value != '0' })
+                        is_fast_mode_dict.update({is_fast_mode[diversify_layers[bit]]: int(value) != 0 })
                         # show
                         if value != '0':
                             print_mode = 'F'
@@ -1859,8 +2120,7 @@ def Testing(
                     assign_var_list_collection = tf.get_collection("assign_var_list", scope=None)  
                     for assign_var_list_iter, assign_var_list in enumerate(assign_var_list_collection):
                         sess.run(assign_var_list, feed_dict = feed_dict_assign)
-                
-                
+                    
                     test_result, test_accuracy, test_accuracy_top2, test_accuracy_top3, test_Y_pre = compute_accuracy(
                         xs                      = xs, 
                         ys                      = ys, 
@@ -1956,7 +2216,7 @@ def Testing(
                         csvwriter = csv.writer(csvfile, delimiter=' ', quotechar='|', quoting=csv.QUOTE_MINIMAL)
                         csvwriter.writerow([str(test_accuracy)])
                         csvwriter.writerow([testing_model_path + testing_model])
-        
+
         #--------------------------#
         #   Save Result as Image   #
         #--------------------------#
@@ -2206,11 +2466,23 @@ def Pruning(
             print("Pruning ...")
             pruned_weights_info = load_obj(pruning_model_path, "pruned_info")
             pruning_propotion = HP['Pruning_Propotion'] / 100.
+            pruning_propotion_2 = HP['Pruning_Propotion_2'] / 100.
             kernel_values_per_layer = similar_group(inputs_and_kernels, sess)
             
-            if HP['Pruning_Strategy'] != HP['Pruning_Strategy'].split('Filter_Similar')[0]:
-                info = list(HP['Pruning_Strategy'].split('Filter_Similar')[1])
-                
+            #if HP['Pruning_Strategy'] != HP['Pruning_Strategy'].split('Filter_Similar')[0]:
+            if 'Similar' in HP['Pruning_Strategy'].split('_'):
+                pruning_threshold = HP['Pruning_Threshold'] / 100.
+                if 'Magnitude' in HP['Pruning_Strategy'].split('_'):
+                    if HP['Pruning_Strategy'].split('_')[2] != 'Magnitude':
+                        info = list(HP['Pruning_Strategy'].split('_')[2])
+                    else:
+                        info = []
+                else:
+                    if len(HP['Pruning_Strategy'].split('_')) == 3:
+                        info = list(HP['Pruning_Strategy'].split('_')[2])
+                    else:
+                        info = []
+                    
                 if 'C' in info:
                     print("Connection", end = " / ")
                 if 'B' in info:
@@ -2229,27 +2501,65 @@ def Pruning(
                     print("Filter Similarity", end = " / ")
                 if 'T' in info:
                     print("Filter Similarity + Channel Similarity", end = " / ")
+                if 'P' in info:
+                    print("Layer By Layer", end = " / ")
+                if 'E' in info:
+                    print("Prune_Entire_Model_In_One_Time", end = " / ")
+                if 'X' in info:
+                    print("Only Prune Positive Similarity", end = " / ")
+                if 'Y' in info:
+                    print("Only Prune Negtive Similarity", end = " / ")
                 print("")
                 
-                pruned_weights_info = filter_prune_by_similarity(
-                    prune_info_dict             = prune_info_dict, 
-                    pruning_propotion           = pruning_propotion, 
-                    pruned_weights_info         = pruned_weights_info, 
-                    sess                        = sess,
-                    is_connection               = 'C' in info,
-                    is_beta                     = 'B' in info,
-                    skip_first_layer            = 'F' in info,
-                    skip_last_layer             = 'L' in info,
-                    discard_feature             = 'D' in info,
-                    all_be_pruned               = 'A' in info,
-                    cut_connection_less_to_more = 'W' in info,
-                    beta_threshold              = pow(10, -int(info[info.index('B')-1])) if 'B' in info else 0.01,
-                    filter                      = 'K' in info,
-                    filter_and_channel          = 'T' in info,
-                    is_denseNet                 = Model_first_name == 'DenseNet')
+                if 'P' in info:
+                    pruned_weights_info, is_skip = filter_prune_by_similarity_layer_by_layer(
+                        prune_info_dict             = prune_info_dict, 
+                        pruning_propotion           = pruning_propotion, 
+                        pruning_threshold           = pruning_threshold,
+                        pruned_weights_info         = pruned_weights_info,
+                        pruning_iter                = pruning_iter,
+                        sess                        = sess,
+                        is_connection               = 'C' in info,
+                        is_beta                     = 'B' in info,
+                        skip_first_layer            = 'F' in info,
+                        skip_last_layer             = 'L' in info,
+                        discard_feature             = 'D' in info,
+                        all_be_pruned               = 'A' in info,
+                        cut_connection_less_to_more = 'W' in info,
+                        beta_threshold              = pow(10, -int(info[info.index('B')-1])) if 'B' in info else 0.01,
+                        filter                      = 'K' in info,
+                        filter_and_channel          = 'T' in info,
+                        is_denseNet                 = Model_first_name == 'DenseNet',
+                        is_entire_model             = 'E' in info)
+                else:
+                    pruned_weights_info = filter_prune_by_similarity(
+                        prune_info_dict             = prune_info_dict, 
+                        pruning_propotion           = pruning_propotion, 
+                        pruning_threshold           = pruning_threshold,
+                        pruned_weights_info         = pruned_weights_info,
+                        sess                        = sess,
+                        is_connection               = 'C' in info,
+                        is_beta                     = 'B' in info,
+                        skip_first_layer            = 'F' in info,
+                        skip_last_layer             = 'L' in info,
+                        discard_feature             = 'D' in info,
+                        all_be_pruned               = 'A' in info,
+                        cut_connection_less_to_more = 'W' in info,
+                        beta_threshold              = pow(10, -int(info[info.index('B')-1])) if 'B' in info else 0.01,
+                        filter                      = 'K' in info,
+                        filter_and_channel          = 'T' in info,
+                        is_denseNet                 = Model_first_name == 'DenseNet',
+                        only_positive_similarity    = 'X' in info,
+                        only_negtive_similarity     = 'Y' in info,)
                     
-            elif HP['Pruning_Strategy'] != HP['Pruning_Strategy'].split('Filter_Magnitude')[0]:
-                info = list(HP['Pruning_Strategy'].split('Filter_Magnitude')[1])
+            if 'Magnitude' in HP['Pruning_Strategy'].split('_'):
+                pruning_threshold = HP['Pruning_Threshold_2'] if 'Similar' in HP['Pruning_Strategy'].split('_') else HP['Pruning_Threshold']
+                if HP['Pruning_Strategy'].split('_')[1] == 'Magnitude':
+                    info = list(HP['Pruning_Strategy'].split('_')[2])
+                elif HP['Pruning_Strategy'].split('_')[2] == 'Magnitude':
+                    info = list(HP['Pruning_Strategy'].split('_')[3])
+                else:
+                    info = []
                 
                 if 'C' in info:
                     print("Connection", end = " / ")
@@ -2265,11 +2575,19 @@ def Pruning(
                     print("All_Prune", end = " / ")
                 if 'W' in info:
                     print("Cut_Connection_From_Less_2_More", end = " / ")
+                if 'E' in info:
+                    print("Prune_Entire_Model_In_One_Time", end = " / ")
+                if 'S' in info:
+                    print("Combine Similarity", end = " / ")
+                if 'R' in info:
+                    print("Random Shuffle the Magnitudes", end = " / ")
+                
                 print("")
                 
                 pruned_weights_info, is_skip = filter_prune_by_magnitude(
                     prune_info_dict             = prune_info_dict, 
-                    pruning_propotion           = pruning_propotion, 
+                    pruning_propotion           = pruning_propotion_2 if 'Similar' in HP['Pruning_Strategy'].split('_') else pruning_propotion, 
+                    pruning_threshold           = pruning_threshold,
                     pruned_weights_info         = pruned_weights_info,
                     pruning_iter                = pruning_iter,
                     sess                        = sess,
@@ -2280,10 +2598,12 @@ def Pruning(
                     discard_feature             = 'D' in info,
                     all_be_pruned               = 'A' in info,
                     cut_connection_less_to_more = 'W' in info,
-                    beta_threshold              = pow(10, -int(info[info.index('B')-1])) if 'B' in info else 0.01)
-            else:
-                print("\033[1;31mError\033[0m : No such strategy!")
-                exit()
+                    beta_threshold              = pow(10, -int(info[info.index('B')-1])) if 'B' in info else 0.01,
+                    is_entire_model             = 'E' in info,
+                    is_similarity               = 'S' in info,
+                    is_filter                   = 'K' in info,
+                    filter_and_channel          = 'T' in info,
+                    random_filter               = 'R' in info)
 
         """
         path = 'Model/ResNet_Model/ResNet_56_cifar10_0_99_cifar10_2018.02.09_Filter_Angle10_88/'
@@ -2317,6 +2637,7 @@ def Pruning(
                 print(int(row[0]))
         exit()
         """
+        
         #-------------#
         #    Epoch    #
         #-------------#
@@ -2445,16 +2766,16 @@ def Pruning(
                 Train_loss        = Train_loss + np.mean(Loss)  
                 
                 # Per Batch Info
-                """
-                tEnd_Batch = time.time()
-                print("\033[1;34;40mEpoch\033[0m : %3d" %(Global_Epoch), end=" ")
-                print("\033[1;34;40mData Iteration\033[0m : %7d" %(batch_iter*HP['Batch_Size']), end=" ")
-                print("\033[1;32;40mBatch Accuracy\033[0m : %5f" %(batch_accuracy), end=" ")
-                print("\033[1;32;40mLoss\033[0m : %5f" %(np.mean(Loss)), end=" ")
-                print("\033[1;32;40mL2-norm\033[0m : %5f" %(L2_norm), end=" ")
-                print("\033[1;32;40mLearning Rate\033[0m : %4f" %(lr), end=" ")
-                print("(%2f sec)" %(tEnd_Batch-tStart_Batch))
-                """
+                if Dataset == 'ILSVRC2012':
+                    tEnd_Batch = time.time()
+                    print("\033[1;34;40mEpoch\033[0m : %3d" %(Global_Epoch), end=" ")
+                    print("\033[1;34;40mData Iteration\033[0m : %7d" %(batch_iter*HP['Batch_Size']), end=" ")
+                    print("\033[1;32;40mBatch Accuracy\033[0m : %5f" %(batch_accuracy), end=" ")
+                    print("\033[1;32;40mLoss\033[0m : %5f" %(np.mean(Loss)), end=" ")
+                    print("\033[1;32;40mL2-norm\033[0m : %5f" %(L2_norm), end=" ")
+                    print("\033[1;32;40mLearning Rate\033[0m : %4f" %(lr), end=" ")
+                    print("(%2f sec)" %(tEnd_Batch-tStart_Batch))
+                
                 
                 # Per Class Accuracy
                 """
@@ -2490,7 +2811,21 @@ def Pruning(
                 for iter, mask in enumerate(tf.get_collection('float32_weights_mask')):
                     Pruned_Size = Pruned_Size + np.sum(sess.run(mask) == 0)
                 Pruning_Propotion_Now = int(Pruned_Size / Model_Size * 100)
-                Dir = Dir.split('_' + HP['Pruning_Strategy'])[0] + '_' + HP['Pruning_Strategy'] + str(int(HP['Pruning_Propotion'])) + '_' + str(Pruning_Propotion_Now) + '/'
+                if 'Similar' in HP['Pruning_Strategy'].split('_') and 'Magnitude' in HP['Pruning_Strategy'].split('_'):
+                    if HP['Pruning_Propotion'] == 100 and HP['Pruning_Propotion_2'] == 100:
+                        Dir = Dir.split('_' + HP['Pruning_Strategy'])[0] + '_' + HP['Pruning_Strategy'] + str(int(HP['Pruning_Propotion'])) + '_' + str(int(HP['Pruning_Threshold'])) + '_' + str(int(HP['Pruning_Propotion_2'])) + '_' + str(int(HP['Pruning_Threshold_2'])) + '_' + str(Pruning_Propotion_Now) + '/'
+                    elif HP['Pruning_Propotion'] == 100 and not HP['Pruning_Propotion_2'] == 100:
+                        Dir = Dir.split('_' + HP['Pruning_Strategy'])[0] + '_' + HP['Pruning_Strategy'] + str(int(HP['Pruning_Propotion'])) + '_' + str(int(HP['Pruning_Threshold'])) + '_' + str(int(HP['Pruning_Propotion_2'])) + '_' + str(Pruning_Propotion_Now) + '/'
+                    elif not HP['Pruning_Propotion'] == 100 and HP['Pruning_Propotion_2'] == 100:
+                        Dir = Dir.split('_' + HP['Pruning_Strategy'])[0] + '_' + HP['Pruning_Strategy'] + str(int(HP['Pruning_Propotion'])) + '_' + str(int(HP['Pruning_Propotion_2'])) + '_' + str(int(HP['Pruning_Threshold_2'])) + '_' + str(Pruning_Propotion_Now) + '/'
+                    else:
+                        Dir = Dir.split('_' + HP['Pruning_Strategy'])[0] + '_' + HP['Pruning_Strategy'] + str(int(HP['Pruning_Propotion'])) + '_' + str(int(HP['Pruning_Propotion_2'])) + '_' + str(Pruning_Propotion_Now) + '/'
+                else:
+                    if HP['Pruning_Propotion'] == 100:
+                        Dir = Dir.split('_' + HP['Pruning_Strategy'])[0] + '_' + HP['Pruning_Strategy'] + str(int(HP['Pruning_Propotion'])) + '_' + str(int(HP['Pruning_Threshold'])) + '_' + str(Pruning_Propotion_Now) + '/'
+                    else:
+                        Dir = Dir.split('_' + HP['Pruning_Strategy'])[0] + '_' + HP['Pruning_Strategy'] + str(int(HP['Pruning_Propotion'])) + '_' + str(Pruning_Propotion_Now) + '/'
+                
                 if (not os.path.exists(Dir)):
                     print("\033[0;35m%s\033[0m is not exist!" %Dir)
                     print("\033[0;35m%s\033[0m is created!" %Dir)
@@ -2516,6 +2851,7 @@ def Pruning(
                 # pruned_info.pkl
                 if Global_Epoch == HP['Epoch']:
                     save_dict(pruned_weights_info, Dir, "pruned_info")
+                    #save_dict(pruned_weights_info, 'Model/ResNet_Model/ResNet_56_cifar10_0_99_2018.02.09_Filter_Similar10_9_Filter_Magnitude_E10_63/', "pruned_info")
                 
                 # train_info.csv
                 if Global_Epoch != HP['Epoch']:
@@ -2797,8 +3133,8 @@ def Rebuilding(
         #    Set the trainable mask    #
         #------------------------------#
         pruned_weights_info = load_obj(rebuilding_model_path_base, "pruned_info")
-        if HP['mode'] == '1' or HP['mode'] == '2':
-            if Global_Epoch == 0:
+        if Global_Epoch == 0:
+            if HP['mode'] == '1' or HP['mode'] == 1 or HP['mode'] == '2' or HP['mode'] == 2:
                 for index in range(index_now[1], index_now[0] + 1)[::-1]:
                     #print(index)
                     keys = pruned_weights_info[index].keys()
@@ -3202,14 +3538,22 @@ def Diversifying(
     ## is_fast_mode
     is_fast_mode = {}
     for layer in range(len(Model_dict)):
+        #if Model_dict_s['layer%d'%layer]['IS_DIVERSITY'] == 'TRUE' or 'layer%d'%(layer) == diversify_layer['layer'][-1]:
         is_fast_mode.update({'layer%d'%layer : tf.placeholder(tf.bool, name='is_fast_mode_layer'+str(layer))})
     
     ## complexity_mode
     complexity_mode = {}
     for layer in range(len(Model_dict)):
+        #cond_0 = Model_dict_s['layer%d'%layer]['DIVERSIFY_MODE'] == '4'
+        #cond_1 = Model_dict_s['layer%d'%layer]['DIVERSIFY_MODE'] == '5'
+        #cond_2 = Model_dict_s['layer%d'%layer]['DIVERSIFY_MODE'] == '6'
+        #cond_3 = Model_dict_s['layer%d'%layer]['DIVERSIFY_MODE'] == '7'
+        #cond_4 = Model_dict_s['layer%d'%layer]['DIVERSIFY_MODE'] == '8'
+        #cond_5 = Model_dict_s['layer%d'%layer]['DIVERSIFY_MODE'] == '9'
+        #cond_6 = (diversify_layer['mode'] == '4' or diversify_layer['mode'] == '7') and 'layer%d'%layer in diversify_layer['layer']
+        #if cond_0 or cond_1 or cond_2 or cond_3 or cond_4 or cond_5 or cond_6:
         complexity_mode.update({'layer%d'%layer : tf.placeholder(tf.float32, name='complexity_mode_layer'+str(layer))})
 
-    
     #----------------------#
     #    Building Model    #
     #----------------------#
@@ -3315,7 +3659,7 @@ def Diversifying(
                 
                 # Teacher Model
                 prediction, train_net, _, _, _, _ = Model_dict_Decoder_DiversifyVersion(
-                net                     = image_batch, 
+                net                     = image_batch,
                 Model_dict              = Model_dict_,
                 diversify_layer         = diversify_layer,
                 is_testing              = False,
@@ -3331,7 +3675,7 @@ def Diversifying(
                 DROPOUT_RATE            = HP['Dropout_Rate'],
                 data_format             = data_format,
                 reuse                   = None)
-                                
+                
                 ## -- Loss --
                 # L2 Regularization
                 l2_norm   = tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()
@@ -3444,7 +3788,21 @@ def Diversifying(
     ## Final weights
     weights_collection                  = tf.get_collection("weights"                   , scope=None)
     biases_collection                   = tf.get_collection("biases"                    , scope=None)
-
+    
+    #-----------------#
+    #   Tensorboard   #
+    #-----------------#
+    # Create a summary to monitor cost tensor
+    #tf.summary.scalar("loss", loss)
+    
+    # Create a summary to monitor accuracy tensor
+    #tf.summary.scalar("accuracy", acc)
+    
+    # Merge all summaries into a single op
+    #merged_summary_op = tf.summary.merge_all()
+    
+    logs_path = '/home/2016/b22072117/ObjectSegmentation/codes/nets/tensorboard/'
+    
     #-----------#
     #   Saver   #
     #-----------#	
@@ -3462,7 +3820,9 @@ def Diversifying(
     #config.log_device_placement = True
     config.allow_soft_placement = True
     config.intra_op_parallelism_threads = 256
-    with tf.Session(config = config) as sess: 
+    with tf.Session(config = config) as sess:
+        summary_writer = tf.summary.FileWriter(logs_path, graph=tf.get_default_graph())
+        
         #----------------------#
         #    Initialization    #
         #----------------------#
@@ -3493,14 +3853,15 @@ def Diversifying(
                 pruned_checkpoint_path = os.path.join(pruned_model_path, pruned_model)
                 pruned_reader = pywrap_tensorflow.NewCheckpointReader(pruned_checkpoint_path)
                 pruned_var_to_shape_map = pruned_reader.get_variable_to_shape_map()
-            for j, s in enumerate(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='student')): 
+            for j, s in enumerate(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='student/')): 
                 found = False
-                layer = str(s.name.split('/')[2])
-                cond_0 = True #s.name.split('/')[-1] == 'float32_weights_mask:0'
-                cond_1 = 'fast' in s.name.split('/')
+                layer = 'layer' + str(s.name.split('layer')[1].split('/')[0].split('_')[0])
+                cond_0 = True                               #s.name.split('/')[-1] == 'float32_weights_mask:0'
+                cond_1 = len(s.name.split('fast_')) == 2    #'fast' in s.name.split('/')[2].split('_')
                 cond_2 = diversify_layer['mode'] == '1'
                 cond_3 = layer in diversify_layer['layer']
                 if cond_0 and cond_1 and cond_2 and cond_3:
+                    fast_block = 'fast_' + str(s.name.split('fast_')[1][0])
                     for key in sorted(var_to_shape_map.keys()):
                         #if key.split('/')[-1] == 'Momentum':
                         #    print(key)
@@ -3510,12 +3871,12 @@ def Diversifying(
                         else:
                             name = s.name
                         #name = name.split('_fast')[0] + name.split('_fast')[1]
-                        name = name.split('fast/')[0] + name.split('fast/')[1]
+                        name = name.split(fast_block+'/')[0] + name.split(fast_block+'/')[1]
                         if name == key + ':0':
                             #print('[\033[1;32mO\033[0m] %s \033[1;32m->\033[0m %s' %(s.name, key))
                             found = True
                             sess.run(tf.assign(s, value))
-                            #break
+                            break
                 else:
                     for key in sorted(var_to_shape_map.keys()):
                         value = reader.get_tensor(key)
@@ -3533,7 +3894,7 @@ def Diversifying(
                     None
                 else:
                     print('[\033[1;31mX\033[0m] %s \033[1;32m->\033[0m \033[1;33m%s\033[0m' %(s.name, 'Not Found'))
-         
+        
         #---------------#
         #    Pruning    #
         #---------------#
@@ -3565,6 +3926,7 @@ def Diversifying(
                 pruned_weights_info = filter_prune_by_similarity(
                     prune_info_dict             = prune_info_dict_s, 
                     pruning_propotion           = pruning_propotion, 
+                    pruning_threshold           = 0.01,
                     pruned_weights_info         = pruned_weights_info, 
                     sess                        = sess,
                     is_connection               = 'C' in info,
@@ -3718,7 +4080,7 @@ def Diversifying(
                     if 'layer'+str(layer) in diversify_layer['layer']:
                         feed_dict_train.update({is_fast_mode['layer'+str(layer)]: True})
                     else:
-                        rand_mode = True #random.randint(0, 1) == 0
+                        rand_mode = random.randint(0, 1) == 0 # True
                         feed_dict_train.update({is_fast_mode['layer'+str(layer)]: rand_mode})
                         if rand_mode:
                             print("%s: \033[1;31m%d\033[0m" %('layer'+str(layer), 0), end = " ")
@@ -3925,39 +4287,63 @@ def Diversifying(
                     print("\033[0;35m%s\033[0m is not exist!" %'Model/'+Model_first_name)
                     os.mkdir(Model_first_name)
                     print("\033[0;35m%s\033[0m is created!" %'Model/'+Model_first_name)
-                
-                Dir = 'Model/' + Model_first_name + '_Model/'
-                Dir = Dir + Model_Name + '_'
-                Dir = Dir + diversify_layer['layer'][0] + '_to_' + diversify_layer['layer'][-1]
-                if diversify_layer['mode'] == '1' or diversify_layer['mode'] == '4':
-                    Pruned_Size = 0.
-                    for layer in diversify_layer['layer']:
-                        if Model_dict_s[layer]['type'] == 'CONV':
-                            mask = tf.get_collection('float32_weights_mask', scope = 'student/Model/'+layer+'/')[0]
-                            Pruned_Size = Pruned_Size + np.sum(sess.run(mask) == 0)
-                            if np.sum(sess.run(mask) == 0) != 0:
-                                print("{} -> {}" .format(mask, np.sum(sess.run(mask) == 0)))
-                    Pruning_Propotion_Now = int(Pruned_Size / Model_Size * 100)
-                    Dir = Dir + '_' + 'mode' + diversify_layer['mode']
-                    Dir = Dir + '_' + HP['Pruning_Strategy'] + str(int(diversify_layer['prune_propotion']*100)) + '_' + str(Pruning_Propotion_Now)
-                if diversify_layer['mode'] == '7':
-                    Pruned_Size = 0.
-                    for layer in diversify_layer['layer']:
-                        if Model_dict_s[layer]['type'] == 'CONV':
-                            mask = tf.get_collection('float32_weights_mask', scope = 'student/Model/'+layer+'/')[0]
-                            Pruned_Size = Pruned_Size + np.sum(sess.run(mask) == 0)
-                            if np.sum(sess.run(mask) == 0) != 0:
-                                print("{} -> {}" .format(mask, np.sum(sess.run(mask) == 0)))
-                    Pruning_Propotion_Now = int(Pruned_Size / Model_Size * 100)
-                    Dir = Dir + '_' + 'mode' + diversify_layer['mode']
-                    #Dir = Dir + '_' + str(Pruning_Propotion_Now)
-                Dir = Dir + '/'
-                
-                if (not os.path.exists(Dir)):
-                    print("\033[0;35m%s\033[0m is not exist!" %Dir)
-                    print("\033[0;35m%s\033[0m is created!" %Dir)
-                    os.makedirs(Dir)
-                
+                if Global_Epoch == HP['Epoch']:
+                    if teacher_model_path == student_model_path:
+                        Dir = 'Model/' + Model_first_name + '_Model/'
+                        Dir = Dir + Model_Name + '_'
+                        if diversify_layer['mode'] == '0':
+                            Dir = Dir + diversify_layer['layer'][0]
+                            Dir = Dir + '_' + 'mode' + diversify_layer['mode']
+                        if diversify_layer['mode'] == '1' or diversify_layer['mode'] == '4':
+                            Dir = Dir + diversify_layer['layer'][0] + '_to_' + diversify_layer['layer'][-1]
+                            Pruned_Size = 0.
+                            
+                            mask_collection = tf.get_collection('float32_weights_mask', scope = 'student/Model/fast')
+                            for _, mask in enumerate(tf.get_collection('float32_weights_mask', scope = 'student/Model/fast')):
+                                if mask.name.split('/')[3] in diversify_layer['layer']:
+                                    Pruned_Size = Pruned_Size + np.sum(sess.run(mask) == 0)
+                                    print("{} -> {}" .format(mask, np.sum(sess.run(mask) != 0)))
+                            Pruning_Propotion_Now = int(Pruned_Size / Model_Size * 100)
+                            Dir = Dir + '_' + 'mode' + diversify_layer['mode']
+                            Dir = Dir + '_' + HP['Pruning_Strategy'] + str(int(diversify_layer['prune_propotion']*100)) + '_' + str(Pruning_Propotion_Now)
+                        if diversify_layer['mode'] == '7':
+                            Dir = Dir + diversify_layer['layer'][0] + '_to_' + diversify_layer['layer'][-1]
+                            Pruned_Size = 0.
+                            for layer in diversify_layer['layer']:
+                                if Model_dict_s[layer]['type'] == 'CONV':
+                                    mask = tf.get_collection('float32_weights_mask', scope = 'student/Model/'+layer+'/')[0]
+                                    Pruned_Size = Pruned_Size + np.sum(sess.run(mask) == 0)
+                                    if np.sum(sess.run(mask) == 0) != 0:
+                                        print("{} -> {}" .format(mask, np.sum(sess.run(mask) == 0)))
+                            Pruning_Propotion_Now = int(Pruned_Size / Model_Size * 100)
+                            Dir = Dir + '_' + 'mode' + diversify_layer['mode']
+                            #Dir = Dir + '_' + str(Pruning_Propotion_Now)
+                        Dir = Dir + '/'
+                    else:
+                        Dir = student_model_path[0:-1]
+                        if diversify_layer['mode'] == '0':
+                            Dir = Dir + '_' + diversify_layer['layer'][0]
+                            Dir = Dir + '_' + 'mode' + diversify_layer['mode']
+                        if diversify_layer['mode'] == '1' or diversify_layer['mode'] == '4':
+                            Dir = Dir + '_' + diversify_layer['layer'][0] + '_to_' + diversify_layer['layer'][-1]
+                            Pruned_Size = 0.
+                            
+                            mask_collection = tf.get_collection('float32_weights_mask', scope = 'student/Model/fast')
+                            for _, mask in enumerate(tf.get_collection('float32_weights_mask', scope = 'student/Model/fast')):
+                                if mask.name.split('/')[3] in diversify_layer['layer']:
+                                    Pruned_Size = Pruned_Size + np.sum(sess.run(mask) == 0)
+                                    print("{} -> {}" .format(mask, np.sum(sess.run(mask) != 0)))
+                            Pruning_Propotion_Now = int(Pruned_Size / Model_Size * 100)
+                            Dir = Dir + '_' + 'mode' + diversify_layer['mode']
+                            Dir = Dir + '_' + HP['Pruning_Strategy'] + str(int(diversify_layer['prune_propotion']*100)) + '_' + str(Pruning_Propotion_Now)
+                        Dir = Dir + '/'
+                    if (not os.path.exists(Dir)):
+                        print("\033[0;35m%s\033[0m is not exist!" %Dir)
+                        print("\033[0;35m%s\033[0m is created!" %Dir)
+                        os.makedirs(Dir)
+                else:
+                    Dir = student_model_path
+                    
                 # Model.ckpt
                 print("Saving Trained Weights ...")
                 save_path = saver_s.save(sess, Dir + str(Global_Epoch) + ".ckpt")
@@ -3976,7 +4362,7 @@ def Diversifying(
                 np.savetxt(Dir + 'computation.csv', np.array([computation]), delimiter=",", fmt="%d")
                 
                 # pruned_info.pkl
-                if Global_Epoch == HP['Epoch']:
+                if Global_Epoch == HP['Epoch'] and diversify_layer['mode'] != '0':
                     save_dict(pruned_weights_info, Dir, "pruned_info")
                     
                 # train_info.csv
@@ -4013,6 +4399,233 @@ def Diversifying(
         Model = str(Global_Epoch) + '.ckpt'
         return Model_Path, Model, error, Global_Epoch
 
+def Debuging(
+    # Model
+    Model_dict          ,
+    # Dataset           
+    Dataset	            ,
+    Dataset_Path        ,
+    class_num           ,
+    # Parameter	    
+    HP                  ,
+    # Model Save        
+    HP_csv              ,
+    Model_first_name    ,
+    Model_second_name   ,
+    # Pre-trained Weights
+    debug_model_path    ,
+    debug_model         ,
+    # Debug Mode
+    Debug_Mode          ,
+    ):
+    
+    """
+    Debug_Mode:
+    Debug_Mode = 0 : Check the diversify_mode=1 model
+    """
+    
+    Model_Name = Model_first_name + '_' + Model_second_name
+    
+    #-----------------------------#
+    #   Some Control Parameters   #
+    #-----------------------------#
+    IS_TERNARY = False
+    IS_BINARY = False
+    IS_QUANTIZED_ACTIVATION = False
+    for layer in range(len(Model_dict)):
+        if Model_dict['layer'+str(layer)]['IS_TERNARY'] == 'TRUE':
+            IS_TERNARY = True
+        if Model_dict['layer'+str(layer)]['IS_BINARY'] == 'TRUE':
+            IS_BINARY = True
+        if Model_dict['layer'+str(layer)]['IS_QUANTIZED_ACTIVATION'] == 'TRUE':
+            IS_QUANTIZED_ACTIVATION = True
+
+    #---------------#
+    #    Dataset    #
+    #---------------#
+    print("Parsing Data ... ")
+    ## cifar10
+    if Dataset == 'cifar10':
+        filenames = [os.path.join(Dataset_Path, 'test_batch.bin')]
+    ## Imagenet ILSVRC_2012
+    elif Dataset == 'ILSVRC2012':
+        _NUM_TEST_FILES = 128
+        filenames = [os.path.join(Dataset_Path, 'validation-%05d-of-00128' % i) for i in range(_NUM_TEST_FILES)]
+    
+    # tensor input
+    xs, ys = input_fn(filenames, class_num, True, HP, Dataset)
+    train_data_num = HP['train_num'] 
+    print("\033[0;32mTrain Data Number\033[0m : {}" .format(train_data_num))
+    
+    #------------------#
+    #    Placeholder   #
+    #------------------#
+    data_shape = [None, HP['H_Resize'], HP['W_Resize'], 3]
+    global_step = tf.train.get_or_create_global_step()
+    batches_per_epoch = train_data_num / HP['Batch_Size'] 
+    ## -- is_training --
+    is_training = tf.placeholder(tf.bool)
+    
+    ## -- learning Rate --
+    learning_rate = tf.placeholder(tf.float32)
+
+    ## -- is_quantized_activation --
+    is_quantized_activation = {}
+    for layer in range(len(Model_dict)):
+        is_quantized_activation.update({'layer%d'%layer : tf.placeholder(tf.bool)}) 
+        
+    ## -- is_ternary --
+    is_ternary = {}
+    for layer in range(len(Model_dict)):
+        is_ternary.update({'layer%d'%layer : tf.placeholder(tf.bool)})
+    
+    ## -- is_binary --
+    is_binary = {}
+    for layer in range(len(Model_dict)):
+        is_binary.update({'layer%d'%layer : tf.placeholder(tf.bool)})
+    
+    #-------------#
+    #    Model    #
+    #-------------# 
+    print("Building Model ...")
+    data_format = "NCHW"
+    ## -- Build Model --
+    net = xs[0 : HP['Batch_Size']]
+    Model_dict_ = copy.deepcopy(Model_dict)
+    
+    prediction, Analysis, max_parameter, inputs_and_kernels, prune_info_dict = Model_dict_Decoder(
+        net                     = net, 
+        Model_dict              = Model_dict_, 
+        is_training             = is_training,
+        is_ternary              = is_ternary,
+        is_binary               = is_binary,
+        is_quantized_activation = is_quantized_activation,
+        DROPOUT_RATE            = 0.,
+        data_format             = data_format,
+        reuse                   = None)
+
+    ## -- Collection --
+    float32_weights_collection          = tf.get_collection("float32_weights"        , scope=None)
+    float32_biases_collection           = tf.get_collection("float32_biases"         , scope=None)
+    # Ternary
+    ternary_weights_bd_collection       = tf.get_collection("ternary_weights_bd"     , scope=None)
+    ternary_biases_bd_collection        = tf.get_collection("ternary_biases_bd"      , scope=None)
+    # Binary
+    binary_weights_bd_collection        = tf.get_collection("binary_weights_bd"     , scope=None)
+    binary_biases_bd_collection         = tf.get_collection("binary_biases_bd"      , scope=None)     
+    # assign ternary or float32 weights/biases to final weights/biases  
+    assign_var_list_collection          = tf.get_collection("assign_var_list"        , scope=None)  
+    # Actvation Quantization    
+    float32_net_collection              = tf.get_collection("float32_net"            , scope=None)
+    is_quantized_activation_collection  = tf.get_collection("is_quantized_activation", scope=None)
+    mantissa_collection                 = tf.get_collection("mantissa"               , scope=None)
+    fraction_collection                 = tf.get_collection("fraction"               , scope=None)
+    # Gradient Update
+    var_list_collection                 = tf.get_collection("var_list"               , scope=None)
+    float32_params                      = tf.get_collection("float32_params"         , scope=None)
+    
+    #-----------#
+    #   Saver   #
+    #-----------#	
+    saver = tf.train.Saver(var_list=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='Model/'))
+    TERNARY_NOW = False
+    BINARY_NOW = False
+    QUANTIZED_NOW = False
+    
+    #---------------#
+    #    Session    #
+    #---------------#
+    config = tf.ConfigProto()
+    #config.gpu_options.allow_growth = True
+    #config.log_device_placement = True
+    config.allow_soft_placement = True
+    config.intra_op_parallelism_threads = 256
+    with tf.Session(config = config) as sess:
+        logs_path = 'tensorboard'
+        summary_writer = tf.summary.FileWriter(logs_path, graph=tf.get_default_graph())
+        
+        #----------------------#
+        #    Initialization    #
+        #----------------------#
+        print("Initializing ...")
+        init = tf.global_variables_initializer()
+        sess.run(init)
+
+        #--------------------------#
+        #   Load trained weights   #
+        #--------------------------#
+        print("Loading the trained weights (student) ... ")
+        print("\033[0;35m{}\033[0m" .format(debug_model_path + debug_model))
+        
+        for _, tensor in enumerate(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='Model/')):
+            is_found = False
+            checkpoint_path = os.path.join(debug_model_path, debug_model)
+            reader = pywrap_tensorflow.NewCheckpointReader(checkpoint_path)
+            var_to_shape_map = reader.get_variable_to_shape_map()
+            for key in sorted(var_to_shape_map.keys()):
+                if tensor.name == key.split('student/')[-1]+':0':
+                    value = reader.get_tensor(key)
+                    sess.run(tf.assign(tensor, value))
+                    is_found = True
+                    break
+            if is_found:
+                #print("[\033[0;32mO\033[0m] {}" .format(tensor.name))
+                None
+            else:
+                print("[\033[0;31mX\033[0m] {}" .format(tensor.name))
+        
+        if Debug_Mode == 0:
+            checkpoint_path = os.path.join(debug_model_path, debug_model)
+            reader = pywrap_tensorflow.NewCheckpointReader(checkpoint_path)
+            var_to_shape_map = reader.get_variable_to_shape_map()
+            for key in sorted(var_to_shape_map.keys()):
+                if len(key.split('fast')) == 2: #'fast' in key.split('/'):
+                    fast_block = 'fast_' + str(key.split('fast_')[1][0])
+                    value = reader.get_tensor(key)
+                    key_ = key.split('student/')[-1]
+                    key_ = key_.split(fast_block+'/')[0] + key_.split(fast_block+'/')[1] + ':0'
+                    is_found = False
+                    
+                    for _, tensor in enumerate(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='Model/')):
+                        if tensor.name == key_: 
+                            sess.run(tf.assign(tensor, value))
+                            is_found = True
+                            break
+                    if is_found:
+                        print("[\033[0;32mO\033[0m] {}" .format(key))
+                        None
+                    else:
+                        print("[\033[0;31mX\033[0m] {}" .format(key))
+                   
+        # Total Model Size
+        Model_Size = 0
+        for _, mask in enumerate(tf.get_collection('float32_weights_mask', scope = None)):
+            Model_Size = Model_Size + np.sum(sess.run(mask))
+            
+        print("\033[0;36m=======================\033[0m")
+        print("\033[0;36m Model Size\033[0m = {}" .format(int(Model_Size)))
+        print("\033[0;36m=======================\033[0m")
+                
+        test_result, test_accuracy, test_accuracy_top2, test_accuracy_top3, test_Y_pre = compute_accuracy(
+            xs                      = xs, 
+            ys                      = ys, 
+            is_training             = is_training,
+            is_quantized_activation = is_quantized_activation,
+            is_fast_mode_dict       = {},
+            complexity_mode_dict    = {},
+            Model_dict              = Model_dict,                
+            QUANTIZED_NOW           = True, 
+            prediction_list         = [prediction], 
+            data_num                = HP['test_num'],
+            BATCH_SIZE              = HP['Batch_Size'], 
+            sess                    = sess)
+                
+        print("\033[0;32mTesting Data Accuracy\033[0m = {test_Accuracy}".format(test_Accuracy = test_accuracy))
+        
+        Model_Path = debug_model_path
+        Model = debug_model
+    
+    return Model_Path, Model
     
 #=============#
 #    Model    #
@@ -4333,26 +4946,22 @@ def Model_dict_Decoder(
                                 data_format             = data_format,
                                 Analysis                = Analysis)
                     
-                    # Add the shortcut and net
-                    #with tf.variable_scope('layer%d' %(layer)):
-                    if shortcut_input_layer['shortcut_connection'] == "ADD":
-                        ## Show the model
-                        if SHOW_MODEL:
-                            print("-> ADD")
-                        net = tf.add(net, shortcut)
-                        
-                        # Activation Quantization
-                        if layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE':
-                            net = Model.quantize_Module(net, is_quantized_activation['layer'+str(layer)], data_format)
-        
-                        # -- Analyzer --
-                        Analyzer( Analysis, 
-                                net, 
-                                type                    = 'ADD', 
-                                IS_QUANTIZED_ACTIVATION = layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE', 
-                                name                    = 'shortcut_ADD')
-                
+                            # Add the shortcut and net
+                            ## Show the model
+                            if SHOW_MODEL:
+                                print("-> ADD")
+                            net = tf.add(net, shortcut)
+                            
+                            # Activation Quantization
+                            if layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE':
+                                net = Model.quantize_Module(net, is_quantized_activation['layer'+str(layer)], data_format)
             
+                            # -- Analyzer --
+                            Analyzer( Analysis, 
+                                    net, 
+                                    type                    = 'ADD', 
+                                    IS_QUANTIZED_ACTIVATION = layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE', 
+                                    name                    = 'shortcut_ADD')
             #-------------------#
             #    Destination    # 
             #-------------------#
@@ -5150,80 +5759,31 @@ def Model_dict_Decoder_DiversifyVersion(
     past_layer = 0
     max_parameter = 0
     fast_routine = 0
+    # Record the Input Feature Map in Each Layer
+    net_dict = {}
+    # Fast Block Iter
+    fast_index = 0
+    
     with tf.variable_scope("Model", reuse = reuse):
         for layer in range(len(Model_dict)):
             layer_now = Model_dict['layer'+str(layer)]
             #-------------------#
             #    Shortcut Add   #
             #-------------------#
-            if bool(layer_now.get('shortcut_num')):
+            if bool(layer_now.get('shortcut_num')): 
                 is_shortcut_past_layer = True # For Pruning
                 for shortcut_index in range(layer_now['shortcut_num']):
-                    with tf.variable_scope(layer_now['shortcut_input_layer'][str(shortcut_index)] + "_to_" + "layer%d"%layer):
-                        shortcut_input_layer = Model_dict[layer_now['shortcut_input_layer'][str(shortcut_index)]]
-                        shortcut = layer_now['shortcut_input'][str(shortcut_index)]
-                        shortcut_layer = layer_now['shortcut_input_layer'][str(shortcut_index)]
+                    shortcut_layer = layer_now['shortcut_input_layer'][str(shortcut_index)]
+                    with tf.variable_scope(shortcut_layer + "_to_" + "layer%d"%layer):
+                        shortcut_now = Model_dict[shortcut_layer]
+                        #shortcut = layer_now['shortcut_input'][str(shortcut_index)]
                         
-                        if shortcut_input_layer['shortcut_connection'] == "ADD":
+                        if shortcut_now['shortcut_connection'] == "ADD":
+                            shortcut = net_dict[shortcut_layer]
                             ## Show the model
                             if SHOW_MODEL:
                                 print("\033[0;35mShortcut from {}\033[0m" .format(shortcut_layer))
                             
-                            ## -- Fast --
-                            trainable = False
-                            if not is_testing:
-                                if shortcut_layer in diversify_layer['layer'] and is_student:
-                                    trainable = True
-                            
-                            with tf.variable_scope('fast'):
-                                if layer_now['DIVERSIFY_MODE'] == '2' and Model_dict[shortcut_layer]['DIVERSIFY_MODE'] == '2':
-                                    shortcut_fast = layer_now['shortcut_input_fast'][str(shortcut_index)]
-                                    shortcut_fast = Model.shortcut_Module(
-                                        net                     = shortcut_fast,
-                                        group                   = int(shortcut_input_layer['group']),
-                                        destination             = net_fast,
-                                        initializer             = tf.contrib.layers.variance_scaling_initializer(),
-                                        is_training             = is_training[shortcut_layer],
-                                        is_add_biases           = shortcut_input_layer['is_add_biases']           == 'TRUE',
-                                        is_projection_shortcut  = shortcut_input_layer['is_projection_shortcut']  == 'TRUE',
-                                        shortcut_type           = shortcut_input_layer['shortcut_type']                    ,
-                                        shortcut_connection     = shortcut_input_layer['shortcut_connection']              ,
-                                        is_batch_norm           = shortcut_input_layer['is_batch_norm']           == 'TRUE',
-                                        is_ternary              = is_ternary[shortcut_layer]                               ,
-                                        is_binary               = is_binary[shortcut_layer]                                ,
-                                        is_quantized_activation = is_quantized_activation[shortcut_layer]                  ,
-                                        IS_TERNARY              = shortcut_input_layer['IS_TERNARY']              == 'TRUE',
-                                        IS_BINARY               = shortcut_input_layer['IS_BINARY']               == 'TRUE',
-                                        IS_QUANTIZED_ACTIVATION = shortcut_input_layer['IS_QUANTIZED_ACTIVATION'] == 'TRUE',
-                                        padding                 = "SAME",			 
-                                        data_format             = data_format,
-                                        Analysis                = Analysis,
-                                        trainable               = trainable)
-                                elif layer_now['DIVERSIFY_MODE'] == '3' and Model_dict[shortcut_layer]['DIVERSIFY_MODE'] == '2':
-                                    shortcut_fast = layer_now['shortcut_input_fast'][str(shortcut_index)]
-                                    shortcut_fast = Model.shortcut_Module(
-                                        net                     = shortcut_fast,
-                                        group                   = int(shortcut_input_layer['group']),
-                                        destination             = net_fast,
-                                        initializer             = tf.contrib.layers.variance_scaling_initializer(),
-                                        is_training             = is_training[shortcut_layer],
-                                        is_add_biases           = shortcut_input_layer['is_add_biases']           == 'TRUE',
-                                        is_projection_shortcut  = shortcut_input_layer['is_projection_shortcut']  == 'TRUE',
-                                        shortcut_type           = shortcut_input_layer['shortcut_type']                    ,
-                                        shortcut_connection     = shortcut_input_layer['shortcut_connection']              ,
-                                        is_batch_norm           = shortcut_input_layer['is_batch_norm']           == 'TRUE',
-                                        is_ternary              = is_ternary[shortcut_layer]                               ,
-                                        is_binary               = is_binary[shortcut_layer]                                ,
-                                        is_quantized_activation = is_quantized_activation[shortcut_layer]                  ,
-                                        IS_TERNARY              = shortcut_input_layer['IS_TERNARY']              == 'TRUE',
-                                        IS_BINARY               = shortcut_input_layer['IS_BINARY']               == 'TRUE',
-                                        IS_QUANTIZED_ACTIVATION = shortcut_input_layer['IS_QUANTIZED_ACTIVATION'] == 'TRUE',
-                                        padding                 = "SAME",			 
-                                        data_format             = data_format,
-                                        Analysis                = Analysis,
-                                        trainable               = trainable)
-                            
-                            ## -- Normal --
                             trainable = False
                             if not is_testing:
                                 if 'layer'+str(layer) in diversify_layer['layer'] and is_student:
@@ -5238,60 +5798,30 @@ def Model_dict_Decoder_DiversifyVersion(
                                         
                             shortcut = Model.shortcut_Module(
                                 net                     = shortcut,
-                                group                   = int(shortcut_input_layer['group']),
+                                group                   = int(shortcut_now['group']),
                                 destination             = net,
                                 initializer             = tf.contrib.layers.variance_scaling_initializer(),
                                 is_training             = is_training[shortcut_layer],
-                                is_add_biases           = shortcut_input_layer['is_add_biases']           == 'TRUE',
-                                is_projection_shortcut  = shortcut_input_layer['is_projection_shortcut']  == 'TRUE',
-                                shortcut_type           = shortcut_input_layer['shortcut_type']                    ,
-                                shortcut_connection     = shortcut_input_layer['shortcut_connection']              ,
-                                is_batch_norm           = shortcut_input_layer['is_batch_norm']           == 'TRUE',
+                                is_add_biases           = shortcut_now['is_add_biases']           == 'TRUE',
+                                is_projection_shortcut  = shortcut_now['is_projection_shortcut']  == 'TRUE',
+                                shortcut_type           = shortcut_now['shortcut_type']                    ,
+                                shortcut_connection     = shortcut_now['shortcut_connection']              ,
+                                is_batch_norm           = shortcut_now['is_batch_norm']           == 'TRUE',
                                 is_ternary              = is_ternary[shortcut_layer]                               ,
                                 is_binary               = is_binary[shortcut_layer]                                ,
                                 is_quantized_activation = is_quantized_activation[shortcut_layer]                  ,
-                                IS_TERNARY              = shortcut_input_layer['IS_TERNARY']              == 'TRUE',
-                                IS_BINARY               = shortcut_input_layer['IS_BINARY']               == 'TRUE',
-                                IS_QUANTIZED_ACTIVATION = shortcut_input_layer['IS_QUANTIZED_ACTIVATION'] == 'TRUE',
+                                IS_TERNARY              = shortcut_now['IS_TERNARY']              == 'TRUE',
+                                IS_BINARY               = shortcut_now['IS_BINARY']               == 'TRUE',
+                                IS_QUANTIZED_ACTIVATION = shortcut_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE',
                                 padding                 = "SAME",			 
                                 data_format             = data_format,
                                 Analysis                = Analysis,
                                 trainable               = trainable)
-                    
-                    # Add the shortcut and net
-                    if shortcut_input_layer['shortcut_connection'] == "ADD":
-                        ## -- Fast --
-                        with tf.variable_scope('fast'):
-                            if layer_now['DIVERSIFY_MODE'] == '1':
-                                net_fast = tf.add(net, shortcut)
-                            elif layer_now['DIVERSIFY_MODE'] == '2':
-                                if Model_dict[shortcut_layer]['DIVERSIFY_MODE'] == '2':
-                                    net_fast = tf.add(net_fast, shortcut_fast)
-                                else:
-                                    net_fast = tf.add(net_fast, shortcut)
-                            elif layer_now['DIVERSIFY_MODE'] == '3':
-                                if Model_dict[shortcut_layer]['DIVERSIFY_MODE'] == '2':
-                                    net_fast = tf.add(net_fast, shortcut_fast)
-                                else:
-                                    net_fast = tf.add(net_fast, shortcut)
-                        ## -- Normal --
-                        ## Show the model
-                        if SHOW_MODEL:
-                            print("-> ADD")
-                        net = tf.add(net, shortcut)                        
-                        
-                        # Activation Quantization
-                        if layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE':
-                            net = Model.quantize_Module(net, is_quantized_activation['layer'+str(layer)], data_format)
-        
-                        # -- Analyzer --
-                        Analyzer( Analysis, 
-                                net, 
-                                type                    = 'ADD', 
-                                IS_QUANTIZED_ACTIVATION = layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE', 
-                                name                    = 'shortcut_ADD')
-                
-            
+
+                            ## Show the model
+                            if SHOW_MODEL:
+                                print("-> ADD")
+                            net = tf.add(net, shortcut)
             #-------------------#
             #    Destination    # 
             #-------------------#
@@ -5300,122 +5830,110 @@ def Model_dict_Decoder_DiversifyVersion(
                     if bool(Model_dict[shortcut_destination].get('shortcut_num')):
                         shortcut_num = Model_dict[shortcut_destination]['shortcut_num'] + 1
                         Model_dict[shortcut_destination].update({'shortcut_num':shortcut_num})
-                        Model_dict[shortcut_destination]['shortcut_input'].update({str(shortcut_num-1):net})
+                        Model_dict[shortWcut_destination]['shortcut_input'].update({str(shortcut_num-1):net})
                         Model_dict[shortcut_destination]['shortcut_input_layer'].update({str(shortcut_num-1):'layer%d' %(layer)})
-                        
-                        ## -- Fast --
-                        #if layer_now['DIVERSIFY_MODE'] == '1':
-                        #    Model_dict[shortcut_destination]['shortcut_input_fast'].update({str(shortcut_num-1):net})
-                        if layer_now['DIVERSIFY_MODE'] == '2':
-                            Model_dict[shortcut_destination]['shortcut_input_fast'].update({str(shortcut_num-1):net_fast})
-                        #elif layer_now['DIVERSIFY_MODE'] == '3':
-                        #    Model_dict[shortcut_destination]['shortcut_input_fast'].update({str(shortcut_num-1):net_fast})
-                        #else:
-                        #    Model_dict[shortcut_destination].update({'shortcut_input_fast': {str(shortcut_num-1):net}})
                     else:
                         shortcut_num = 1
                         Model_dict[shortcut_destination].update({'shortcut_num':shortcut_num})
                         Model_dict[shortcut_destination].update({'shortcut_input':{str(shortcut_num-1):net}})
                         Model_dict[shortcut_destination].update({'shortcut_input_layer':{str(shortcut_num-1):'layer%d' %(layer)}})
-                        
-                        ## -- Fast --
-                        #if layer_now['DIVERSIFY_MODE'] == '1':
-                        #    Model_dict[shortcut_destination].update({'shortcut_input_fast': {str(shortcut_num-1):net}})
-                        if layer_now['DIVERSIFY_MODE'] == '2':
-                            Model_dict[shortcut_destination].update({'shortcut_input_fast': {str(shortcut_num-1):net_fast}})
-                        #elif layer_now['DIVERSIFY_MODE'] == '3':
-                        #    Model_dict[shortcut_destination].update({'shortcut_input_fast': {str(shortcut_num-1):net_fast}})
-                        #else:
-                        #    Model_dict[shortcut_destination].update({'shortcut_input_fast': {str(shortcut_num-1):net}})
-            
+            #------------------------------------------------------#
+            #   Show & Record the Input Feature Map in Each Layer  #
+            #------------------------------------------------------#
             ## Show the model
             if SHOW_MODEL:
                 print("\033[0;33mlayer{}\033[0m -> {}, scope = {}" .format(layer, net.shape, layer_now['scope']))
+            net_dict.update({'layer%d'%layer: net})
             
+            # For Fast 
+            net_for_fast = net
             #-----------------------#
             #    Shortcut Concat    #
             #-----------------------#
             if bool(layer_now.get('shortcut_num')):
                 is_shortcut_past_layer = True # For Pruning
                 for shortcut_index in range(layer_now['shortcut_num']):
-                    with tf.variable_scope(layer_now['shortcut_input_layer'][str(shortcut_index)] + "_to_" + "layer%d"%layer):
-                        shortcut_input_layer = Model_dict[layer_now['shortcut_input_layer'][str(shortcut_index)]]
-                        shortcut = layer_now['shortcut_input'][str(shortcut_index)]
-                        shortcut_layer = layer_now['shortcut_input_layer'][str(shortcut_index)]
-                        if shortcut_input_layer['shortcut_connection'] == "CONCAT":
+                    shortcut_layer = layer_now['shortcut_input_layer'][str(shortcut_index)] # Shortcut Layer
+                    with tf.variable_scope(shortcut_layer + "_to_" + "layer%d"%layer):
+                        shortcut_now = Model_dict[shortcut_layer] # Model_dict of shortcut layer
+                        
+                        if shortcut_now['shortcut_connection'] == "CONCAT":
+                            #shortcut = layer_now['shortcut_input'][str(shortcut_index)]
+                            shortcut = net_dict[shortcut_layer]
+                            
                             ## Show the model
                             if SHOW_MODEL:
                                 print("\033[0;35mShortcut from {}\033[0m" .format(shortcut_layer))
 
                             shortcut = Model.shortcut_Module(
                                 net                     = shortcut,
-                                group                   = int(shortcut_input_layer['group']),
+                                group                   = int(shortcut_now['group']),
                                 destination             = net,
                                 initializer             = tf.contrib.layers.variance_scaling_initializer(),
                                 is_training             = is_training['layer'+str(layer)],
-                                is_add_biases           = shortcut_input_layer['is_add_biases']           == 'TRUE',
-                                is_projection_shortcut  = shortcut_input_layer['is_projection_shortcut']  == 'TRUE',
-                                shortcut_type           = shortcut_input_layer['shortcut_type']                    ,
-                                shortcut_connection     = shortcut_input_layer['shortcut_connection']              ,
-                                is_batch_norm           = shortcut_input_layer['is_batch_norm']           == 'TRUE',
+                                is_add_biases           = shortcut_now['is_add_biases']           == 'TRUE',
+                                is_projection_shortcut  = shortcut_now['is_projection_shortcut']  == 'TRUE',
+                                shortcut_type           = shortcut_now['shortcut_type']                    ,
+                                shortcut_connection     = shortcut_now['shortcut_connection']              ,
+                                is_batch_norm           = shortcut_now['is_batch_norm']           == 'TRUE',
                                 is_ternary              = is_ternary[shortcut_layer]                               ,
                                 is_binary               = is_binary[shortcut_layer]                                ,
                                 is_quantized_activation = is_quantized_activation[shortcut_layer]                  ,
-                                IS_TERNARY              = shortcut_input_layer['IS_TERNARY']              == 'TRUE',
-                                IS_BINARY               = shortcut_input_layer['IS_BINARY']               == 'TRUE',
-                                IS_QUANTIZED_ACTIVATION = shortcut_input_layer['IS_QUANTIZED_ACTIVATION'] == 'TRUE',
+                                IS_TERNARY              = shortcut_now['IS_TERNARY']              == 'TRUE',
+                                IS_BINARY               = shortcut_now['IS_BINARY']               == 'TRUE',
+                                IS_QUANTIZED_ACTIVATION = shortcut_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE',
                                 padding                 = "SAME",			 
                                 data_format             = data_format,
                                 Analysis                = Analysis) 
                             
-                    # Concatenate the shortcut and net
-                    if shortcut_input_layer['shortcut_connection'] == "CONCAT":
-                        with tf.variable_scope('layer%d' %(layer)):
-                            ## Show the model
-                            if SHOW_MODEL:
-                                print("-> CONCAT")
-                            
-                            # Get Destination
-                            destination = 'layer' + str(layer)
-                            while(1):
-                                if Model_dict[destination]['type'] != 'CONV':
-                                    destination = 'layer' + str(int(destination.split('layer')[-1]) + 1)
-                                    if destination == 'layer' + str(len(Model_dict)-1):
+                            # Concatenate the shortcut and net
+                            with tf.variable_scope('layer%d' %(layer)):
+                                ## Show the model
+                                if SHOW_MODEL:
+                                    print("-> CONCAT")
+                                
+                                ## For Pruning
+                                # Find the type=='CONV' destination
+                                destination = 'layer' + str(layer)
+                                while(1):
+                                    if Model_dict[destination]['type'] != 'CONV':
+                                        destination = 'layer' + str(int(destination.split('layer')[-1]) + 1)
+                                        if destination == 'layer' + str(len(Model_dict)-1):
+                                            break
+                                    else:
                                         break
-                                else:
-                                    break
-                            # Update Parent & children
-                            shortcut_conv_layer = shortcut_layer
-                            while(1):
-                                if Model_dict[shortcut_conv_layer]['type'] != 'CONV':
-                                    shortcut_conv_layer = 'layer' + str(int(shortcut_conv_layer.split('layer')[-1]) - 1)
-                                else:
-                                    # Children
-                                    if destination != 'layer' + str(len(Model_dict)-1): # Not the last layer
-                                        if data_format == "NHWC":
-                                            prune_info_dict[shortcut_conv_layer]['children'].update({destination: net.get_shape().as_list()[3]})
-                                        elif data_format == "NCHW":
-                                            prune_info_dict[shortcut_conv_layer]['children'].update({destination: net.get_shape().as_list()[1]})
-                                    # Parent
-                                        if not bool(prune_info_dict.get(destination)):
+                                # Update the shortcut start channel in Parent & Children layer
+                                shortcut_conv_layer = shortcut_layer
+                                while(1):
+                                    # Find the type=='CONV' shortcut layer
+                                    if Model_dict[shortcut_conv_layer]['type'] != 'CONV':
+                                        shortcut_conv_layer = 'layer' + str(int(shortcut_conv_layer.split('layer')[-1]) - 1)
+                                    else:
+                                        # Children
+                                        if destination != 'layer' + str(len(Model_dict)-1):
                                             if data_format == "NHWC":
-                                                prune_info_dict.update({destination: {'parents': {shortcut_conv_layer: net.get_shape().as_list()[3]}}})
+                                                prune_info_dict[shortcut_conv_layer]['children'].update({destination: net.get_shape().as_list()[3]})
                                             elif data_format == "NCHW":
-                                                prune_info_dict.update({destination: {'parents': {shortcut_conv_layer: net.get_shape().as_list()[1]}}})
-                                        else:
-                                            if data_format == "NHWC":
-                                                prune_info_dict[destination]['parents'].update({shortcut_conv_layer: net.get_shape().as_list()[3]})
-                                            elif data_format == "NCHW":
-                                                prune_info_dict[destination]['parents'].update({shortcut_conv_layer: net.get_shape().as_list()[1]})
-                                    break
-                            
+                                                prune_info_dict[shortcut_conv_layer]['children'].update({destination: net.get_shape().as_list()[1]})
+                                        # Parent
+                                            if not bool(prune_info_dict.get(destination)):
+                                                if data_format == "NHWC":
+                                                    prune_info_dict.update({destination: {'parents': {shortcut_conv_layer: net.get_shape().as_list()[3]}}})
+                                                elif data_format == "NCHW":
+                                                    prune_info_dict.update({destination: {'parents': {shortcut_conv_layer: net.get_shape().as_list()[1]}}})
+                                            else:
+                                                if data_format == "NHWC":
+                                                    prune_info_dict[destination]['parents'].update({shortcut_conv_layer: net.get_shape().as_list()[3]})
+                                                elif data_format == "NCHW":
+                                                    prune_info_dict[destination]['parents'].update({shortcut_conv_layer: net.get_shape().as_list()[1]})
+                                        break
+                                
                             # Concatenate
                             if data_format == "NHWC":
                                 net = tf.concat([net, shortcut], axis = 3)
                             elif data_format == "NCHW":
                                 net = tf.concat([net, shortcut], axis = 1)
-                            #print(".............{}".format(prune_info_dict[shortcut_conv_layer]['children']))
-                            
+                
             # Other Operation
             with tf.variable_scope('layer%d' %(layer)):                
                 #-------------------#
@@ -5426,86 +5944,22 @@ def Model_dict_Decoder_DiversifyVersion(
                     if SHOW_MODEL:
                         print("-> Max Pooling, Ksize={}, Stride={}".format(int(layer_now['kernel_size']), int(layer_now['stride'])))
                     
-                    ## -- Fast --
-                    with tf.variable_scope('fast'):
-                        if layer_now['DIVERSIFY_MODE'] == '1':
-                            if data_format == "NCHW":
-                                net_fast = tf.transpose(net_fast if bool(layer_now.get('shortcut_num')) else net, [0, 2, 3, 1])
-                            net_fast, indices_fast, output_shape_fast = Model.indice_pool( 
-                                net_fast, 
-                                kernel_size             = int(layer_now['kernel_size']), 
-                                stride                  = int(layer_now['stride']), 
-                                IS_QUANTIZED_ACTIVATION = layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE',
-                                Analysis                = Analysis,
-                                scope                   = layer_now['scope'])
-                            if data_format == "NCHW":
-                                net_fast = tf.transpose(net_fast, [0, 3, 1, 2])
-                            if layer_now['indice'] != 'None' and layer_now['indice'] != 'FALSE':
-                                Model_dict[layer_now['indice']].update({'indice_fast':indices_fast, 'output_shape_fat':output_shape_fast})
-                        elif layer_now['DIVERSIFY_MODE'] == '2':
-                            if data_format == "NCHW":
-                                net_fast = tf.transpose(net_fast, [0, 2, 3, 1])
-                            net_fast, indices_fast, output_shape_fast = Model.indice_pool( 
-                                net_fast, 
-                                kernel_size             = int(layer_now['kernel_size']), 
-                                stride                  = int(layer_now['stride']), 
-                                IS_QUANTIZED_ACTIVATION = layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE',
-                                Analysis                = Analysis,
-                                scope                   = layer_now['scope'])
-                            if data_format == "NCHW":
-                                net_fast = tf.transpose(net_fast, [0, 3, 1, 2])
-                            if layer_now['indice'] != 'None' and layer_now['indice'] != 'FALSE':
-                                Model_dict[layer_now['indice']].update({'indice_fast':indices_fast, 'output_shape_fat':output_shape_fast})
-                        elif layer_now['DIVERSIFY_MODE'] == '3':
-                            if data_format == "NCHW":
-                                net_fast = tf.transpose(net_fast, [0, 2, 3, 1])
-                            net_fast, indices_fast, output_shape_fast = Model.indice_pool( 
-                                net_fast, 
-                                kernel_size             = int(layer_now['kernel_size']), 
-                                stride                  = int(layer_now['stride']), 
-                                IS_QUANTIZED_ACTIVATION = layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE',
-                                Analysis                = Analysis,
-                                scope                   = layer_now['scope'])
-                            if data_format == "NCHW":
-                                net_fast = tf.transpose(net_fast, [0, 3, 1, 2])
-                            if layer_now['indice'] != 'None' and layer_now['indice'] != 'FALSE':
-                                Model_dict[layer_now['indice']].update({'indice_fast':indices_fast, 'output_shape_fat':output_shape_fast})
-                    
-                    ## -- Normal --
                     if data_format == "NCHW":
                         net = tf.transpose(net, [0, 2, 3, 1])
+                        
                     net, indices, output_shape = Model.indice_pool( 
-                        net, 
+                        net                     = net, 
                         kernel_size             = int(layer_now['kernel_size']), 
                         stride                  = int(layer_now['stride']), 
                         IS_QUANTIZED_ACTIVATION = layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE',
                         Analysis                = Analysis,
                         scope                   = layer_now['scope'])
+                    
                     if data_format == "NCHW":
                         net = tf.transpose(net, [0, 3, 1, 2])
                     
                     if layer_now['indice'] != 'None' and layer_now['indice'] != 'FALSE':
                         Model_dict[layer_now['indice']].update({'indice':indices, 'output_shape':output_shape})
-                    
-                    # Diversify layer
-                    if layer_now['DIVERSIFY_MODE'] == '3':
-                        net = tf.cond(is_fast_mode['layer'+str(layer)], 
-                                    lambda: net_fast,
-                                    lambda: net)
-                    
-                    """
-                    if data_format == "NCHW":
-                        data_format_ = 'channels_first'
-                    elif data_format == "NHWC":
-                        data_format_ = 'channels_last'
-                        
-                    net = tf.layers.max_pooling2d(
-                            inputs      = net, 
-                            pool_size   = int(layer_now['kernel_size']), 
-                            strides     = int(layer_now['stride']), 
-                            padding     = 'SAME',
-                            data_format = data_format_)
-                    """
                 #---------------------#
                 #    Max Unpooling    #
                 #---------------------#
@@ -5514,55 +5968,17 @@ def Model_dict_Decoder_DiversifyVersion(
                     if SHOW_MODEL:
                         print("-> Max Unpooling")
                     
-                    ## -- Fast --
-                    with tf.variable_scope('fast'):
-                        if layer_now['DIVERSIFY_MODE'] == '1':
-                            if data_format == "NCHW":
-                                net_fast = tf.transpose(net_fast if bool(layer_now.get('shortcut_num')) else net, [0, 2, 3, 1])
-                            net_fast = Model.indice_unpool( 
-                                net_fast,  
-                                output_shape = layer_now['output_shape_fast'], 
-                                indices      = layer_now['indice_fast'], 
-                                scope        = layer_now['scope'])
-                            if data_format == "NCHW":
-                                net_fast = tf.transpose(net_fast, [0, 3, 1, 2])
-                        elif layer_now['DIVERSIFY_MODE'] == '2':
-                            if data_format == "NCHW":
-                                net_fast = tf.transpose(net_fast, [0, 2, 3, 1])
-                            net_fast = Model.indice_unpool( 
-                                net_fast,  
-                                output_shape = layer_now['output_shape_fast'], 
-                                indices      = layer_now['indice_fast'], 
-                                scope        = layer_now['scope'])
-                            if data_format == "NCHW":
-                                net_fast = tf.transpose(net_fast, [0, 3, 1, 2])
-                        elif layer_now['DIVERSIFY_MODE'] == '3':
-                            if data_format == "NCHW":
-                                net_fast = tf.transpose(net_fast, [0, 2, 3, 1])
-                            net_fast = Model.indice_unpool( 
-                                net_fast,  
-                                output_shape = layer_now['output_shape_fast'], 
-                                indices      = layer_now['indice_fast'], 
-                                scope        = layer_now['scope'])
-                            if data_format == "NCHW":
-                                net_fast = tf.transpose(net_fast, [0, 3, 1, 2])
-                    
-                    ## -- Normal --
                     if data_format == "NCHW":
                         net = tf.transpose(net, [0, 2, 3, 1])
+                        
                     net = Model.indice_unpool( 
-                        net,  
+                        net          = net,  
                         output_shape = layer_now['output_shape'], 
                         indices      = layer_now['indice'], 
                         scope        = layer_now['scope'])
+                        
                     if data_format == "NCHW":
                         net = tf.transpose(net, [0, 3, 1, 2])
-                    
-                    # Diversify layer
-                    if layer_now['DIVERSIFY_MODE'] == '3':
-                        net = tf.cond(is_fast_mode['layer'+str(layer)], 
-                                    lambda: net_fast,
-                                    lambda: net)
                 #-------------------#
                 #    Avg Pooling    #
                 #-------------------#
@@ -5576,42 +5992,12 @@ def Model_dict_Decoder_DiversifyVersion(
                     elif data_format == "NHWC":
                         data_format_ = "channels_last"
                     
-                    ## -- Fast --
-                    with tf.variable_scope('fast'):
-                        if layer_now['DIVERSIFY_MODE'] == '1':
-                            net_fast = tf.layers.average_pooling2d(
-                                inputs      = net_fast if bool(layer_now.get('shortcut_num')) else net, 
-                                pool_size   = int(layer_now['kernel_size']), 
-                                strides     = int(layer_now['stride']), 
-                                padding     = 'VALID',
-                                data_format = data_format_)
-                        elif layer_now['DIVERSIFY_MODE'] == '2':
-                            net_fast = tf.layers.average_pooling2d(
-                                inputs      = net_fast, 
-                                pool_size   = int(layer_now['kernel_size']), 
-                                strides     = int(layer_now['stride']), 
-                                padding     = 'VALID',
-                                data_format = data_format_)
-                        elif layer_now['DIVERSIFY_MODE'] == '3':
-                            net_fast = tf.layers.average_pooling2d(
-                                inputs      = net_fast, 
-                                pool_size   = int(layer_now['kernel_size']), 
-                                strides     = int(layer_now['stride']), 
-                                padding     = 'VALID',
-                                data_format = data_format_)
-                    ## -- Normal --
                     net = tf.layers.average_pooling2d(
                         inputs      = net, 
                         pool_size   = int(layer_now['kernel_size']), 
                         strides     = int(layer_now['stride']), 
                         padding     = 'VALID',
                         data_format = data_format_)
-                        
-                    # Diversify layer
-                    if layer_now['DIVERSIFY_MODE'] == '3':
-                        net = tf.cond(is_fast_mode['layer'+str(layer)], 
-                                    lambda: net_fast,
-                                    lambda: net)
                 #---------------#
                 #    Shuffle    #
                 #---------------#
@@ -5619,6 +6005,7 @@ def Model_dict_Decoder_DiversifyVersion(
                     ## Show the model
                     if SHOW_MODEL:
                         print("-> Shuffle")
+                    
                     net = Model.shuffle_net(
                         net         = net, 
                         group       = int(layer_now['group']),
@@ -5630,6 +6017,7 @@ def Model_dict_Decoder_DiversifyVersion(
                     ## Show the model
                     if SHOW_MODEL:
                         print("-> Combine Add")
+                    
                     net = Model.combine_add(
                         net            = net,
                         is_training    = is_training['layer'+str(layer)],
@@ -5647,6 +6035,7 @@ def Model_dict_Decoder_DiversifyVersion(
                     ## Show the model
                     if SHOW_MODEL:
                         print("-> Combine Conv")
+                    
                     net = Model.combine_conv(
                         net            = net,
                         is_training    = is_training['layer'+str(layer)],
@@ -5661,69 +6050,10 @@ def Model_dict_Decoder_DiversifyVersion(
                 #    Batch Normalization    #
                 #---------------------------#
                 if layer_now['type'] == 'BN':
-                    ## -- Fast --
-                    trainable = False
-                    if not is_testing:
-                        if 'layer'+str(layer) in diversify_layer['layer'] and is_student:
-                            trainable = True
-                        
-                    with tf.variable_scope('fast'):
-                        if layer_now['DIVERSIFY_MODE'] == '1':
-                            net_fast = Model.batch_norm(
-                                net         = net_fast if bool(layer_now.get('shortcut_num')) else net, 
-                                is_training = is_training['layer'+str(layer)], 
-                                data_format = data_format,
-                                trainable   = trainable)
-                        elif layer_now['DIVERSIFY_MODE'] == '2':
-                            net_fast = Model.batch_norm(
-                                net         = net_fast, 
-                                is_training = is_training['layer'+str(layer)], 
-                                data_format = data_format,
-                                trainable   = trainable)
-                        elif layer_now['DIVERSIFY_MODE'] == '3':
-                            net_fast = Model.batch_norm(
-                                net         = net_fast, 
-                                is_training = is_training['layer'+str(layer)], 
-                                data_format = data_format,
-                                trainable   = trainable)
-                    # Activation
-                    if layer_now['Activation'] == 'ReLU':
-                        with tf.variable_scope('fast'):
-                            if layer_now['DIVERSIFY_MODE'] == '1':
-                                net_fast = tf.nn.relu(net_fast)
-                            elif layer_now['DIVERSIFY_MODE'] == '2':
-                                net_fast = tf.nn.relu(net_fast)
-                            elif layer_now['DIVERSIFY_MODE'] == '3':
-                                net_fast = tf.nn.relu(net_fast)
-                    elif layer_now['Activation'] == 'Sigmoid':
-                        with tf.variable_scope('fast'):
-                            if layer_now['DIVERSIFY_MODE'] == '1':
-                                net_fast = tf.nn.sigmoid(net_fast)
-                            elif layer_now['DIVERSIFY_MODE'] == '2':
-                                net_fast = tf.nn.sigmoid(net_fast)
-                            elif layer_now['DIVERSIFY_MODE'] == '3':
-                                net_fast = tf.nn.sigmoid(net_fast)
-                    elif layer_now['Activation'] == 'HardTanh':
-                        with tf.variable_scope('fast'):
-                            if layer_now['DIVERSIFY_MODE'] == '1':
-                                net_fast = tf.clip_by_value(net_fast, -1, 1)
-                            elif layer_now['DIVERSIFY_MODE'] == '2':
-                                net_fast = tf.clip_by_value(net_fast, -1, 1)
-                            elif layer_now['DIVERSIFY_MODE'] == '3':
-                                net_fast = tf.clip_by_value(net_fast, -1, 1)
-                    elif layer_now['Activation'] == 'PReLU':
-                        with tf.variable_scope('fast'):
-                            if layer_now['DIVERSIFY_MODE'] == '1':
-                                net_fast = tf.keras.layers.PReLU()(net_fast)
-                            elif layer_now['DIVERSIFY_MODE'] == '2':
-                                net_fast = tf.keras.layers.PReLU()(net_fast)
-                            elif layer_now['DIVERSIFY_MODE'] == '3':
-                                net_fast = tf.keras.layers.PReLU()(net_fast)
-                    
-                    ## -- Normal --
                     ## Show the model
                     if SHOW_MODEL:
                         print("-> Batch_Norm")
+                    
                     # trainable
                     trainable = False
                     if not is_testing:
@@ -5761,7 +6091,6 @@ def Model_dict_Decoder_DiversifyVersion(
                     cond4 = layer_now['DIVERSIFY_MODE'] == '8'
                     cond5 = layer_now['DIVERSIFY_MODE'] == '9'
                     
-                    # Normal
                     if cond0 or cond1 or cond2:
                         is_training_ = is_training['layer'+str(layer)]
                         trainable_ = layer_now['DIVERSIFY_MODE']!='0' and trainable
@@ -5772,124 +6101,12 @@ def Model_dict_Decoder_DiversifyVersion(
                         is_training_ = is_training['layer'+str(layer)]
                         trainable_ = layer_now['DIVERSIFY_MODE']!='0' and trainable
                     
-                    net_ = Model.batch_norm(
+                    net = Model.batch_norm(
                         net         = net, 
                         is_training = is_training_, #tf.logical_and(is_training['layer'+str(layer)], tf.constant(trainable, tf.bool)),
                         data_format = data_format,
                         trainable   = trainable_)
-                    """
-                    # Pruning / Rebuilding
-                    if cond0 or cond1 or cond2 or cond3 or cond4 or cond5:
-                        with tf.variable_scope('complexity_1'):
-                            # is_training
-                            if cond0 or cond1 or cond2:
-                                is_training_ = tf.logical_and(is_training['layer'+str(layer)], tf.equal(complexity_mode['layer'+str(layer)], tf.constant(0, tf.float32)))
-                                trainable_ = trainable and complexity_mode_now == 1
-                            elif (cond3 or cond4 or cond5) and rebuilding_now:
-                                is_training_ = tf.logical_and(is_training['layer'+str(layer)], tf.equal(complexity_mode['layer'+str(layer)], tf.constant(2, tf.float32)))
-                                trainable_ = trainable and complexity_mode_now == 1
-                            else:
-                                is_training_ = is_training['layer'+str(layer)]
-                                trainable_ = trainable
-                            net_1 = Model.batch_norm(net, is_training_, data_format, trainable_)
-                        with tf.variable_scope('complexity_2'):
-                            # is_training
-                            if cond0 or cond1 or cond2:
-                                is_training_ = tf.logical_and(is_training['layer'+str(layer)], tf.equal(complexity_mode['layer'+str(layer)], tf.constant(1, tf.float32)))
-                                trainable_ = trainable and complexity_mode_now == 2
-                            elif (cond3 or cond4 or cond5) and rebuilding_now:
-                                is_training_ = tf.logical_and(is_training['layer'+str(layer)], tf.equal(complexity_mode['layer'+str(layer)], tf.constant(3, tf.float32)))
-                                trainable_ = trainable and complexity_mode_now == 2
-                            else:
-                                is_training_ = is_training['layer'+str(layer)]
-                                trainable_ = trainable
-                            net_2 = Model.batch_norm(net, is_training_, data_format, trainable_)
-                        with tf.variable_scope('complexity_3'):
-                            # is_training
-                            if cond0 or cond1 or cond2:
-                                is_training_ = tf.logical_and(is_training['layer'+str(layer)], tf.equal(complexity_mode['layer'+str(layer)], tf.constant(2, tf.float32)))
-                                trainable_ = trainable and complexity_mode_now == 3
-                            elif (cond3 or cond4 or cond5) and rebuilding_now:
-                                is_training_ = tf.logical_and(is_training['layer'+str(layer)], tf.equal(complexity_mode['layer'+str(layer)], tf.constant(4, tf.float32)))
-                                trainable_ = trainable and complexity_mode_now == 3
-                            else:
-                                is_training_ = is_training['layer'+str(layer)]
-                                trainable_ = trainable
-                            net_3 = Model.batch_norm(net, is_training_, data_format, trainable_)
-                        with tf.variable_scope('complexity_4'):
-                            # is_training
-                            if cond0 or cond1 or cond2:
-                                is_training_ = tf.logical_and(is_training['layer'+str(layer)], tf.equal(complexity_mode['layer'+str(layer)], tf.constant(3, tf.float32)))
-                                trainable_ = trainable and complexity_mode_now == 4
-                            elif (cond3 or cond4 or cond5) and rebuilding_now:
-                                is_training_ = tf.logical_and(is_training['layer'+str(layer)], tf.equal(complexity_mode['layer'+str(layer)], tf.constant(5, tf.float32)))
-                                trainable_ = trainable and complexity_mode_now == 4
-                            else:
-                                is_training_ = is_training['layer'+str(layer)]
-                                trainable_ = trainable
-                            net_4 = Model.batch_norm(net, is_training_, data_format, trainable_)
-                        with tf.variable_scope('complexity_5'):
-                            # is_training
-                            if cond0 or cond1 or cond2:
-                                is_training_ = tf.logical_and(is_training['layer'+str(layer)], tf.equal(complexity_mode['layer'+str(layer)], tf.constant(4, tf.float32)))
-                                trainable_ = trainable and complexity_mode_now == 5
-                            elif (cond3 or cond4 or cond5) and rebuilding_now:
-                                is_training_ = tf.logical_and(is_training['layer'+str(layer)], tf.equal(complexity_mode['layer'+str(layer)], tf.constant(6, tf.float32)))
-                                trainable_ = trainable and complexity_mode_now == 5
-                            else:
-                                is_training_ = is_training['layer'+str(layer)]
-                                trainable_ = trainable
-                            net_5 = Model.batch_norm(net, is_training_, data_format, trainable_)
-                        with tf.variable_scope('complexity_6'):
-                            # is_training
-                            if cond0 or cond1 or cond2:
-                                is_training_ = tf.logical_and(is_training['layer'+str(layer)], tf.equal(complexity_mode['layer'+str(layer)], tf.constant(5, tf.float32)))
-                                trainable_ = trainable and complexity_mode_now == 6
-                            elif (cond3 or cond4 or cond5) and rebuilding_now:
-                                is_training_ = tf.logical_and(is_training['layer'+str(layer)], tf.equal(complexity_mode['layer'+str(layer)], tf.constant(7, tf.float32)))
-                                trainable_ = trainable and complexity_mode_now == 6
-                            else:
-                                is_training_ = is_training['layer'+str(layer)]
-                                trainable_ = trainable
-                            net_6 = Model.batch_norm(net, is_training_, data_format, trainable_)
-                        
-                        if cond0 or cond1 or cond2:
-                            net = tf.case(
-                                pred_fn_pairs = {
-                                    tf.equal(complexity_mode['layer'+str(layer)], tf.constant(0, tf.float32)): lambda: net_1,
-                                    tf.equal(complexity_mode['layer'+str(layer)], tf.constant(1, tf.float32)): lambda: net_2,
-                                    tf.equal(complexity_mode['layer'+str(layer)], tf.constant(2, tf.float32)): lambda: net_3,
-                                    tf.equal(complexity_mode['layer'+str(layer)], tf.constant(3, tf.float32)): lambda: net_4,
-                                    tf.equal(complexity_mode['layer'+str(layer)], tf.constant(4, tf.float32)): lambda: net_5,
-                                    tf.equal(complexity_mode['layer'+str(layer)], tf.constant(5, tf.float32)): lambda: net_6},
-                                default = None, exclusive = True)
-                        
-                        if cond3 or cond4 or cond5:
-                            if rebuilding_now:
-                                net = tf.case(
-                                    pred_fn_pairs = {
-                                        tf.equal(complexity_mode['layer'+str(layer)], tf.constant(1, tf.float32)): lambda: net_,
-                                        tf.equal(complexity_mode['layer'+str(layer)], tf.constant(2, tf.float32)): lambda: net_1,
-                                        tf.equal(complexity_mode['layer'+str(layer)], tf.constant(3, tf.float32)): lambda: net_2,
-                                        tf.equal(complexity_mode['layer'+str(layer)], tf.constant(4, tf.float32)): lambda: net_3,
-                                        tf.equal(complexity_mode['layer'+str(layer)], tf.constant(5, tf.float32)): lambda: net_4,
-                                        tf.equal(complexity_mode['layer'+str(layer)], tf.constant(6, tf.float32)): lambda: net_5},
-                                    default = None, exclusive = True)
-                            else:
-                                net = tf.case(
-                                    pred_fn_pairs = {
-                                        tf.equal(complexity_mode['layer'+str(layer)], tf.constant(0, tf.float32)): lambda: net_,
-                                        tf.equal(complexity_mode['layer'+str(layer)], tf.constant(1, tf.float32)): lambda: net_1,
-                                        tf.equal(complexity_mode['layer'+str(layer)], tf.constant(2, tf.float32)): lambda: net_2,
-                                        tf.equal(complexity_mode['layer'+str(layer)], tf.constant(3, tf.float32)): lambda: net_3,
-                                        tf.equal(complexity_mode['layer'+str(layer)], tf.constant(4, tf.float32)): lambda: net_4,
-                                        tf.equal(complexity_mode['layer'+str(layer)], tf.constant(5, tf.float32)): lambda: net_5,
-                                        tf.equal(complexity_mode['layer'+str(layer)], tf.constant(6, tf.float32)): lambda: net_6},
-                                    default = None, exclusive = True)
-                    else:
-                        net = net_
-                    """
-                    net = net_
+                    
                     # Activation
                     if layer_now['Activation'] == 'ReLU':
                         ## Show the model
@@ -5911,74 +6128,24 @@ def Model_dict_Decoder_DiversifyVersion(
                         if SHOW_MODEL:
                             print("-> PReLU")
                         net = tf.keras.layers.PReLU()(net)
-                    
-                    # Diversify layer
-                    if layer_now['DIVERSIFY_MODE'] == '3':
-                        net = tf.cond(is_fast_mode['layer'+str(layer)], 
-                                    lambda: net_fast,
-                                    lambda: net)
                                     
                     # For Pruning
-                    cond_1 = layer_now['DIVERSIFY_MODE'] == '2'
-                    cond_2 = layer_now['DIVERSIFY_MODE'] == '3'
-                    cond_3 = layer_now['DIVERSIFY_MODE'] == '4'
-                    cond_4 = layer_now['DIVERSIFY_MODE'] == '5'
-                    cond_5 = layer_now['DIVERSIFY_MODE'] == '6'
+                    cond_0 = layer_now['DIVERSIFY_MODE'] == '4'
+                    cond_1 = layer_now['DIVERSIFY_MODE'] == '5'
+                    cond_2 = layer_now['DIVERSIFY_MODE'] == '6'
                     if not is_testing:
-                        cond_6 = 'layer'+str(layer) in diversify_layer['layer']
+                        cond_3 = 'layer'+str(layer) in diversify_layer['layer']
                     else:
-                        cond_6 = False
+                        cond_3 = False
                         
-                    if (cond_1 or cond_2 or cond_3 or cond_4 or cond_5) and cond_6:
+                    if (cond_0 or cond_1 or cond_2) and cond_3:
                         prune_info_dict['layer%d'%(layer-1)].update({
                             'beta': [beta for beta in tf.trainable_variables(scope="student/Model/layer%d/"%layer) 
                                     if 'beta' in beta.name][0]})
-                    
-                    # Activation Quantization
-                    if layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE':
-                        ## Show the model
-                        if SHOW_MODEL:
-                            print("-> Quantized Activation ")
-                        net = Model.quantize_Module(net, is_quantized_activation['layer'+str(layer)], data_format)
                 #------------------#
                 #    Activation    #
                 #------------------#
                 if layer_now['type'] == 'ACT':
-                    ## -- Fast --
-                    if layer_now['Activation'] == 'ReLU':
-                        with tf.variable_scope('fast'):
-                            if layer_now['DIVERSIFY_MODE'] == '1':
-                                net_fast = tf.nn.relu(net_fast if bool(layer_now.get('shortcut_num')) else net)
-                            elif layer_now['DIVERSIFY_MODE'] == '2':
-                                net_fast = tf.nn.relu(net_fast)
-                            elif layer_now['DIVERSIFY_MODE'] == '3':
-                                net_fast = tf.nn.relu(net_fast)
-                    elif layer_now['Activation'] == 'Sigmoid':
-                        with tf.variable_scope('fast'):
-                            if layer_now['DIVERSIFY_MODE'] == '1':
-                                net_fast = tf.nn.sigmoid(net_fast if bool(layer_now.get('shortcut_num')) else net)
-                            elif layer_now['DIVERSIFY_MODE'] == '2':
-                                net_fast = tf.nn.sigmoid(net_fast)
-                            elif layer_now['DIVERSIFY_MODE'] == '3':
-                                net_fast = tf.nn.sigmoid(net_fast)
-                    elif layer_now['Activation'] == 'HardTanh':
-                        with tf.variable_scope('fast'):
-                            if layer_now['DIVERSIFY_MODE'] == '1':
-                                net_fast = tf.clip_by_value(net_fast if bool(layer_now.get('shortcut_num')) else net, -1, 1)
-                            elif layer_now['DIVERSIFY_MODE'] == '2':
-                                net_fast = tf.clip_by_value(net_fast, -1, 1)
-                            elif layer_now['DIVERSIFY_MODE'] == '3':
-                                net_fast = tf.clip_by_value(net_fast, -1, 1)
-                    elif layer_now['Activation'] == 'PReLU':
-                        with tf.variable_scope('fast'):
-                            if layer_now['DIVERSIFY_MODE'] == '1':
-                                net_fast = tf.keras.layers.PReLU()(net_fast if bool(layer_now.get('shortcut_num')) else net)
-                            elif layer_now['DIVERSIFY_MODE'] == '2':
-                                net_fast = tf.keras.layers.PReLU()(net_fast)
-                            elif layer_now['DIVERSIFY_MODE'] == '3':
-                                net_fast = tf.keras.layers.PReLU()(net_fast)
-                    
-                    ## -- Normal --
                     if layer_now['Activation'] == 'ReLU':
                         ## Show the model
                         if SHOW_MODEL:
@@ -5999,19 +6166,6 @@ def Model_dict_Decoder_DiversifyVersion(
                         if SHOW_MODEL:
                             print("-> PReLU")
                         net = tf.keras.layers.PReLU()(net)
-                    
-                    # Diversify layer
-                    if layer_now['DIVERSIFY_MODE'] == '3':
-                        net = tf.cond(is_fast_mode['layer'+str(layer)], 
-                                    lambda: net_fast,
-                                    lambda: net)
-                    
-                    # Activation Quantization
-                    if layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE':
-                        ## Show the model
-                        if SHOW_MODEL:
-                            print("-> Quantized Activation ")
-                        net = Model.quantize_Module(net, is_quantized_activation['layer'+str(layer)], data_format)
                 #-----------------------#
                 #    Fully Connected    #
                 #-----------------------#
@@ -6021,84 +6175,6 @@ def Model_dict_Decoder_DiversifyVersion(
                     if layer==(len(Model_dict)-1):
                         net = tf.cond(is_training['layer'+str(layer)], lambda: tf.layers.dropout(net, DROPOUT_RATE), lambda: net)
                     
-                    ## -- Fast --
-                    trainable = False
-                    if not is_testing:
-                        if 'layer'+str(layer) in diversify_layer['layer'] and is_student:
-                            trainable = True
-                    
-                    with tf.variable_scope('fast'):
-                        if layer_now['DIVERSIFY_MODE'] == '1':
-                            net_fast = Model.FC(
-                                net                     = net_fast if bool(layer_now.get('shortcut_num')) else net, 
-                                output_channel          = int(layer_now['output_channel']),
-                                initializer             = tf.variance_scaling_initializer(),
-                                trainable               = trainable,
-                                is_training             = is_training['layer'+str(layer)],
-                                is_add_biases           = layer_now['is_add_biases']           == 'TRUE',
-                                is_batch_norm           = layer_now['is_batch_norm']           == 'TRUE',
-                                is_dilated              = layer_now['is_dilated']              == 'TRUE',
-                                is_ternary              = is_ternary['layer'+str(layer)]                ,
-                                is_binary               = is_binary['layer'+str(layer)]                 ,
-                                is_quantized_activation = is_quantized_activation['layer'+str(layer)]   ,
-                                IS_TERNARY              = layer_now['IS_TERNARY']              == 'TRUE',
-                                IS_BINARY               = layer_now['IS_BINARY']               == 'TRUE',
-                                IS_QUANTIZED_ACTIVATION = layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE',
-                                IS_DIVERSITY            = False,
-                                is_fast_mode            = is_fast_mode['layer'+str(layer)],
-                                fast_mode               = layer_now['DIVERSIFY_MODE'] if layer_now['DIVERSIFY_MODE'] != None and layer_now['DIVERSIFY_MODE'] != 'None' else None,
-                                Activation              = layer_now['Activation'],
-                                data_format             = data_format,
-                                Analysis                = Analysis,
-                                scope                   = layer_now['scope'])
-                        elif layer_now['DIVERSIFY_MODE'] == '2':
-                            net_fast = Model.FC(
-                                net                     = net_fast, 
-                                output_channel          = int(layer_now['output_channel']),
-                                initializer             = tf.variance_scaling_initializer(),
-                                trainable               = trainable,
-                                is_training             = is_training['layer'+str(layer)],
-                                is_add_biases           = layer_now['is_add_biases']           == 'TRUE',
-                                is_batch_norm           = layer_now['is_batch_norm']           == 'TRUE',
-                                is_dilated              = layer_now['is_dilated']              == 'TRUE',
-                                is_ternary              = is_ternary['layer'+str(layer)]                ,
-                                is_binary               = is_binary['layer'+str(layer)]                 ,
-                                is_quantized_activation = is_quantized_activation['layer'+str(layer)]   ,
-                                IS_TERNARY              = layer_now['IS_TERNARY']              == 'TRUE',
-                                IS_BINARY               = layer_now['IS_BINARY']               == 'TRUE',
-                                IS_QUANTIZED_ACTIVATION = layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE',
-                                IS_DIVERSITY            = False,
-                                is_fast_mode            = is_fast_mode['layer'+str(layer)],
-                                fast_mode               = layer_now['DIVERSIFY_MODE'] if layer_now['DIVERSIFY_MODE'] != None and layer_now['DIVERSIFY_MODE'] != 'None' else None,
-                                Activation              = layer_now['Activation'],
-                                data_format             = data_format,
-                                Analysis                = Analysis,
-                                scope                   = layer_now['scope'])
-                        elif layer_now['DIVERSIFY_MODE'] == '3':
-                            net_fast = Model.FC(
-                                net                     = net_fast, 
-                                output_channel          = int(layer_now['output_channel']),
-                                initializer             = tf.variance_scaling_initializer(),
-                                trainable               = trainable,
-                                is_training             = is_training['layer'+str(layer)],
-                                is_add_biases           = layer_now['is_add_biases']           == 'TRUE',
-                                is_batch_norm           = layer_now['is_batch_norm']           == 'TRUE',
-                                is_dilated              = layer_now['is_dilated']              == 'TRUE',
-                                is_ternary              = is_ternary['layer'+str(layer)]                ,
-                                is_binary               = is_binary['layer'+str(layer)]                 ,
-                                is_quantized_activation = is_quantized_activation['layer'+str(layer)]   ,
-                                IS_TERNARY              = layer_now['IS_TERNARY']              == 'TRUE',
-                                IS_BINARY               = layer_now['IS_BINARY']               == 'TRUE',
-                                IS_QUANTIZED_ACTIVATION = layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE',
-                                IS_DIVERSITY            = False,
-                                is_fast_mode            = is_fast_mode['layer'+str(layer)],
-                                fast_mode               = layer_now['DIVERSIFY_MODE'] if layer_now['DIVERSIFY_MODE'] != None and layer_now['DIVERSIFY_MODE'] != 'None' else None,
-                                Activation              = layer_now['Activation'],
-                                data_format             = data_format,
-                                Analysis                = Analysis,
-                                scope                   = layer_now['scope'])
-                    
-                    ## -- Normal --
                     ## Show the model
                     if SHOW_MODEL:
                         print("-> Fully-Connected")
@@ -6140,20 +6216,8 @@ def Model_dict_Decoder_DiversifyVersion(
                         Analysis                = Analysis,
                         scope                   = layer_now['scope'])
                     
-                    # Diversify layer
-                    if layer_now['DIVERSIFY_MODE'] == '3':
-                        net = tf.cond(is_fast_mode['layer'+str(layer)], 
-                                    lambda: net_fast,
-                                    lambda: net)
-                    
                     if layer==(len(Model_dict)-1):
                         net = tf.reshape(net, [-1, reduce(lambda x, y: x*y, net.get_shape().as_list()[1:4])])
-                    """
-                    net = tf.reshape(net, [-1, 2048])
-                    net = tf.layers.dense(
-                        inputs = net, 
-                        units  = int(layer_now['output_channel']))
-                    """
                 #-------------------#
                 #    Convolution    #
                 #-------------------#
@@ -6165,106 +6229,6 @@ def Model_dict_Decoder_DiversifyVersion(
                     # For finding the similar weights
                     inputs_and_kernels.update({'layer%d' %(layer): {'inputs' : net}})
                     
-                    ## -- Fast --
-                    trainable = False
-                    if not is_testing:
-                        if 'layer'+str(layer) in diversify_layer['layer'] and is_student:
-                            trainable = True
-                        
-                    # Fast Mode Conv (Pruned Conv)
-                    with tf.variable_scope('fast'):
-                        if layer_now['DIVERSIFY_MODE'] == '1':
-                            net_fast = Model.conv2D( 
-                                net                     = net_fast if bool(layer_now.get('shortcut_num')) else net, 
-                                kernel_size             = int(layer_now['kernel_size']), 
-                                stride                  = int(layer_now['stride']          ),
-                                internal_channel        = int(layer_now['internal_channel']),
-                                output_channel          = int(layer_now['output_channel']  ),
-                                rate                    = int(layer_now['rate']            ),
-                                group                   = int(layer_now['group']           ),
-                                initializer             = tf.variance_scaling_initializer(),
-                                trainable               = trainable,
-                                is_training             = is_training['layer'+str(layer)],
-                                is_add_biases           = layer_now['is_add_biases']           == 'TRUE', 
-                                is_batch_norm           = layer_now['is_batch_norm']           == 'TRUE',      
-                                is_dilated              = layer_now['is_dilated']              == 'TRUE',      
-                                is_depthwise            = layer_now['is_depthwise']            == 'TRUE',  
-                                is_ternary              = is_ternary['layer'+str(layer)]                ,
-                                is_binary               = is_binary['layer'+str(layer)]                 ,
-                                is_quantized_activation = is_quantized_activation['layer'+str(layer)]   ,
-                                IS_TERNARY              = layer_now['IS_TERNARY']              == 'TRUE',
-                                IS_BINARY               = layer_now['IS_BINARY']               == 'TRUE',
-                                IS_QUANTIZED_ACTIVATION = layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE',
-                                IS_DIVERSITY            = False,
-                                is_fast_mode            = is_fast_mode['layer'+str(layer)],
-                                fast_mode               = layer_now['DIVERSIFY_MODE'] if layer_now['DIVERSIFY_MODE'] != None and layer_now['DIVERSIFY_MODE'] != 'None' else None,
-                                Activation              = layer_now['Activation'],
-                                padding                 = "SAME",
-                                data_format             = data_format,
-                                Analysis                = Analysis,
-                                scope                   = layer_now['scope'])
-                        elif layer_now['DIVERSIFY_MODE'] == '2':
-                            net_fast = Model.conv2D( 
-                                net_fast, 
-                                kernel_size             = int(layer_now['kernel_size']), 
-                                stride                  = int(layer_now['stride']          ),
-                                internal_channel        = int(layer_now['internal_channel']),
-                                output_channel          = int(layer_now['output_channel']  ),
-                                rate                    = int(layer_now['rate']            ),
-                                group                   = int(layer_now['group']           ),
-                                initializer             = tf.variance_scaling_initializer(),
-                                trainable               = trainable,
-                                is_training             = is_training['layer'+str(layer)],
-                                is_add_biases           = layer_now['is_add_biases']           == 'TRUE', 
-                                is_batch_norm           = layer_now['is_batch_norm']           == 'TRUE',      
-                                is_dilated              = layer_now['is_dilated']              == 'TRUE',      
-                                is_depthwise            = layer_now['is_depthwise']            == 'TRUE',  
-                                is_ternary              = is_ternary['layer'+str(layer)]                ,
-                                is_binary               = is_binary['layer'+str(layer)]                 ,
-                                is_quantized_activation = is_quantized_activation['layer'+str(layer)]   ,
-                                IS_TERNARY              = layer_now['IS_TERNARY']              == 'TRUE',
-                                IS_BINARY               = layer_now['IS_BINARY']               == 'TRUE',
-                                IS_QUANTIZED_ACTIVATION = layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE',
-                                IS_DIVERSITY            = False,
-                                is_fast_mode            = is_fast_mode['layer'+str(layer)],
-                                fast_mode               = layer_now['DIVERSIFY_MODE'] if layer_now['DIVERSIFY_MODE'] != None and layer_now['DIVERSIFY_MODE'] != 'None' else None,
-                                Activation              = layer_now['Activation'],
-                                padding                 = "SAME",
-                                data_format             = data_format,
-                                Analysis                = Analysis,
-                                scope                   = layer_now['scope'])
-                        elif layer_now['DIVERSIFY_MODE'] == '3':
-                            net_fast = Model.conv2D(
-                                net_fast, 
-                                kernel_size             = int(layer_now['kernel_size']), 
-                                stride                  = int(layer_now['stride']          ),
-                                internal_channel        = int(layer_now['internal_channel']),
-                                output_channel          = int(layer_now['output_channel']  ),
-                                rate                    = int(layer_now['rate']            ),
-                                group                   = int(layer_now['group']           ),
-                                initializer             = tf.variance_scaling_initializer(),
-                                trainable               = trainable,
-                                is_training             = is_training['layer'+str(layer)],
-                                is_add_biases           = layer_now['is_add_biases']           == 'TRUE', 
-                                is_batch_norm           = layer_now['is_batch_norm']           == 'TRUE',      
-                                is_dilated              = layer_now['is_dilated']              == 'TRUE',      
-                                is_depthwise            = layer_now['is_depthwise']            == 'TRUE',  
-                                is_ternary              = is_ternary['layer'+str(layer)]                ,
-                                is_binary               = is_binary['layer'+str(layer)]                 ,
-                                is_quantized_activation = is_quantized_activation['layer'+str(layer)]   ,
-                                IS_TERNARY              = layer_now['IS_TERNARY']              == 'TRUE',
-                                IS_BINARY               = layer_now['IS_BINARY']               == 'TRUE',
-                                IS_QUANTIZED_ACTIVATION = layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE',
-                                IS_DIVERSITY            = False,
-                                is_fast_mode            = is_fast_mode['layer'+str(layer)],
-                                fast_mode               = layer_now['DIVERSIFY_MODE'] if layer_now['DIVERSIFY_MODE'] != None and layer_now['DIVERSIFY_MODE'] != 'None' else None,
-                                Activation              = layer_now['Activation'],
-                                padding                 = "SAME",
-                                data_format             = data_format,
-                                Analysis                = Analysis,
-                                scope                   = layer_now['scope'])
-                    
-                    ## -- Normal --
                     # trainable
                     trainable = False
                     if not is_testing:
@@ -6330,33 +6294,21 @@ def Model_dict_Decoder_DiversifyVersion(
                         Analysis                = Analysis,
                         scope                   = layer_now['scope'])
                     
-                    # Diversify layer
-                    if layer_now['DIVERSIFY_MODE'] == '3':
-                        net = tf.cond(is_fast_mode['layer'+str(layer)], 
-                                    lambda: net_fast,
-                                    lambda: net)
-                    
                     if layer==(len(Model_dict)-1) and data_format == "NCHW":
                         net = tf.transpose(net, [0, 2, 3, 1])
 
                     # For Pruning
-                    cond_0 = layer_now['DIVERSIFY_MODE'] == '1'
-                    cond_1 = layer_now['DIVERSIFY_MODE'] == '2'
-                    cond_2 = layer_now['DIVERSIFY_MODE'] == '3'
-                    cond_3 = layer_now['DIVERSIFY_MODE'] == '4'
-                    cond_4 = layer_now['DIVERSIFY_MODE'] == '5'
-                    cond_5 = layer_now['DIVERSIFY_MODE'] == '6'
+                    cond_0 = layer_now['DIVERSIFY_MODE'] == '4'
+                    cond_1 = layer_now['DIVERSIFY_MODE'] == '5'
+                    cond_2 = layer_now['DIVERSIFY_MODE'] == '6'
                     if not is_testing:
-                        cond_6 = 'layer'+str(layer) in diversify_layer['layer']
+                        cond_3 = 'layer'+str(layer) in diversify_layer['layer']
                     else:
-                        cond_6 = False
+                        cond_3 = False
                         
-                    if (cond_0 or cond_1 or cond_2 or cond_3 or cond_4 or cond_5) and cond_6:
+                    if (cond_0 or cond_1 or cond_2) and cond_3:
                         # Scope
-                        if cond_3 or cond_4 or cond_5:
-                            scope = "student/Model/layer%d/"%layer
-                        elif cond_0 or cond_1 or cond_2:
-                            scope = "student/Model/layer%d/"%layer+'fast/'
+                        scope = "student/Model/layer%d/"%layer
                         
                         # prune_info_dict
                         if not bool(prune_info_dict.get('layer%d'%layer)):
@@ -6397,12 +6349,587 @@ def Model_dict_Decoder_DiversifyVersion(
                         past_conv_layer = 'layer%d'%layer
                         is_shortcut_past_layer = False
                     
-                # Diversify Trained Layer output
-                if is_testing:
-                    train_net = None
-                elif 'layer'+str(layer) == diversify_layer['layer'][-1]:
-                    train_net = net    
+            
+            if layer_now['DIVERSIFY_MODE'] == '1':
+                start_layer = layer
+            elif layer_now['DIVERSIFY_MODE'] == '3':
+                end_layer = layer
+                
+                with tf.variable_scope('fast_%d'%(fast_index)):
+                    net_fast = net_dict['layer%d'%start_layer]
                     
+                    for layer in range(start_layer, end_layer+1):
+                        layer_now = Model_dict['layer'+str(layer)]
+                        #-------------------#
+                        #    Shortcut Add   #
+                        #-------------------#
+                        if bool(layer_now.get('shortcut_num')):
+                            is_shortcut_past_layer = True # For Pruning
+                            for shortcut_index in range(layer_now['shortcut_num']):
+                                shortcut_layer = layer_now['shortcut_input_layer'][str(shortcut_index)]
+                                with tf.variable_scope(layer_now['shortcut_input_layer'][str(shortcut_index)] + "_to_" + "layer%d"%layer):
+                                    shortcut_now = Model_dict[shortcut_layer]
+                                    
+                                    if shortcut_now['shortcut_connection'] == "ADD":
+                                        trainable = False
+                                        if not is_testing:
+                                            if shortcut_layer in diversify_layer['layer'] and is_student:
+                                                trainable = True
+                                        cond_0 = layer_now['DIVERSIFY_MODE'] == '2'
+                                        cond_1 = layer_now['DIVERSIFY_MODE'] == '3'
+                                        cond_2 = Model_dict[shortcut_layer]['DIVERSIFY_MODE'] == '1'
+                                        cond_3 = Model_dict[shortcut_layer]['DIVERSIFY_MODE'] == '2'
+                                        if (cond_0 or cond_1) and (cond_2 or cond_3):
+                                            shortcut_fast = layer_now['shortcut_input_fast'][str(shortcut_index)]
+                                            shortcut_fast = Model.shortcut_Module(
+                                                net                     = shortcut_fast,
+                                                group                   = int(shortcut_now['group']), 
+                                                destination             = net_fast,
+                                                initializer             = tf.contrib.layers.variance_scaling_initializer(),
+                                                is_training             = is_training[shortcut_layer],
+                                                is_add_biases           = shortcut_now['is_add_biases']           == 'TRUE',
+                                                is_projection_shortcut  = shortcut_now['is_projection_shortcut']  == 'TRUE',
+                                                shortcut_type           = shortcut_now['shortcut_type'],
+                                                shortcut_connection     = shortcut_now['shortcut_connection'],
+                                                is_batch_norm           = shortcut_now['is_batch_norm']           == 'TRUE',
+                                                is_ternary              = is_ternary[shortcut_layer],
+                                                is_binary               = is_binary[shortcut_layer],
+                                                is_quantized_activation = is_quantized_activation[shortcut_layer],
+                                                IS_TERNARY              = shortcut_now['IS_TERNARY']              == 'TRUE',
+                                                IS_BINARY               = shortcut_now['IS_BINARY']               == 'TRUE',
+                                                IS_QUANTIZED_ACTIVATION = shortcut_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE',
+                                                padding                 = "SAME",			 
+                                                data_format             = data_format,
+                                                Analysis                = Analysis,
+                                                trainable               = trainable) 
+                                        
+                                            # Add the shortcut and net
+                                            net_fast = tf.add(net_fast, shortcut_fast)
+                        #-------------------#
+                        #    Destination    # 
+                        #-------------------#
+                        if layer_now['is_shortcut'] == 'TRUE':
+                            for shortcut_destination in layer_now['shortcut_destination'].split('/'):
+                                if bool(Model_dict[shortcut_destination].get('shortcut_num')):
+                                    shortcut_num = Model_dict[shortcut_destination]['shortcut_num']
+                                    if layer_now['DIVERSIFY_MODE'] == '1' or layer_now['DIVERSIFY_MODE'] == '2':
+                                        #Model_dict[shortcut_destination]['shortcut_input_fast'].update({str(shortcut_num-1):net_fast})
+                                        Model_dict[shortcut_destination].update({'shortcut_input_fast': {str(shortcut_num-1):net_fast}})
+                        
+                        with tf.variable_scope('layer%d' %(layer)):
+                            #-------------------#
+                            #    Max Pooling    #
+                            #-------------------#
+                            if layer_now['type'] == 'MAX_POOL':
+                                if layer_now['DIVERSIFY_MODE'] == '1':
+                                    if data_format == "NCHW":
+                                        net_fast = tf.transpose(net_fast if bool(layer_now.get('shortcut_num')) else net, [0, 2, 3, 1])
+                                    
+                                    net_fast, indices_fast, output_shape_fast = Model.indice_pool( 
+                                        net                     = net_fast, 
+                                        kernel_size             = int(layer_now['kernel_size']), 
+                                        stride                  = int(layer_now['stride']), 
+                                        IS_QUANTIZED_ACTIVATION = layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE',
+                                        Analysis                = Analysis,
+                                        scope                   = layer_now['scope'])
+                                    
+                                    if data_format == "NCHW":
+                                        net_fast = tf.transpose(net_fast, [0, 3, 1, 2])
+                                    
+                                    if layer_now['indice'] != 'None' and layer_now['indice'] != 'FALSE':
+                                        Model_dict[layer_now['indice']].update({'indice_fast':indices_fast, 'output_shape_fast':output_shape_fast})
+                                elif layer_now['DIVERSIFY_MODE'] == '2':
+                                    if data_format == "NCHW":
+                                        net_fast = tf.transpose(net_fast, [0, 2, 3, 1])
+                                    
+                                    net_fast, indices_fast, output_shape_fast = Model.indice_pool( 
+                                        net                     = net_fast, 
+                                        kernel_size             = int(layer_now['kernel_size']), 
+                                        stride                  = int(layer_now['stride']), 
+                                        IS_QUANTIZED_ACTIVATION = layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE',
+                                        Analysis                = Analysis,
+                                        scope                   = layer_now['scope'])
+                                    
+                                    if data_format == "NCHW":
+                                        net_fast = tf.transpose(net_fast, [0, 3, 1, 2])
+                                    
+                                    if layer_now['indice'] != 'None' and layer_now['indice'] != 'FALSE':
+                                        Model_dict[layer_now['indice']].update({'indice_fast':indices_fast, 'output_shape_fast':output_shape_fast})
+                                elif layer_now['DIVERSIFY_MODE'] == '3':
+                                    if data_format == "NCHW":
+                                        net_fast = tf.transpose(net_fast, [0, 2, 3, 1])
+                                    
+                                    net_fast, indices_fast, output_shape_fast = Model.indice_pool( 
+                                        net                     = net_fast, 
+                                        kernel_size             = int(layer_now['kernel_size']), 
+                                        stride                  = int(layer_now['stride']), 
+                                        IS_QUANTIZED_ACTIVATION = layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE',
+                                        Analysis                = Analysis,
+                                        scope                   = layer_now['scope'])
+                                    
+                                    if data_format == "NCHW":
+                                        net_fast = tf.transpose(net_fast, [0, 3, 1, 2])
+                                    
+                                    if layer_now['indice'] != 'None' and layer_now['indice'] != 'FALSE':
+                                        Model_dict[layer_now['indice']].update({'indice_fast':indices_fast, 'output_shape_fast':output_shape_fast})
+                            #---------------------#
+                            #    Max Unpooling    #
+                            #---------------------#
+                            if layer_now['type'] == 'MAX_UNPOOL':
+                                if layer_now['DIVERSIFY_MODE'] == '1':
+                                    if data_format == "NCHW":
+                                        net_fast = tf.transpose(net_fast if bool(layer_now.get('shortcut_num')) else net, [0, 2, 3, 1])
+                                    
+                                    net_fast = Model.indice_unpool( 
+                                        net          = net_fast,  
+                                        output_shape = layer_now['output_shape_fast'], 
+                                        indices      = layer_now['indice_fast'], 
+                                        scope        = layer_now['scope'])
+                                    
+                                    if data_format == "NCHW":
+                                        net_fast = tf.transpose(net_fast, [0, 3, 1, 2])
+                                elif layer_now['DIVERSIFY_MODE'] == '2':
+                                    if data_format == "NCHW":
+                                        net_fast = tf.transpose(net_fast, [0, 2, 3, 1])
+                                    
+                                    net_fast = Model.indice_unpool( 
+                                        net          = net_fast,  
+                                        output_shape = layer_now['output_shape_fast'], 
+                                        indices      = layer_now['indice_fast'], 
+                                        scope        = layer_now['scope'])
+                                    
+                                    if data_format == "NCHW":
+                                        net_fast = tf.transpose(net_fast, [0, 3, 1, 2])
+                                elif layer_now['DIVERSIFY_MODE'] == '3':
+                                    if data_format == "NCHW":
+                                        net_fast = tf.transpose(net_fast, [0, 2, 3, 1])
+                                    
+                                    net_fast = Model.indice_unpool( 
+                                        beta         = net_fast,  
+                                        output_shape = layer_now['output_shape_fast'], 
+                                        indices      = layer_now['indice_fast'], 
+                                        scope        = layer_now['scope'])
+                                    
+                                    if data_format == "NCHW":
+                                        net_fast = tf.transpose(net_fast, [0, 3, 1, 2])
+                            #-------------------#
+                            #    Avg Pooling    #
+                            #-------------------#
+                            if layer_now['type'] == 'AVG_POOL':
+                                if data_format == "NCHW":
+                                    data_format_ = "channels_first"
+                                elif data_format == "NHWC":
+                                    data_format_ = "channels_last"
+                                
+                                if layer_now['DIVERSIFY_MODE'] == '1':
+                                    net_fast = tf.layers.average_pooling2d(
+                                        inputs      = net_fast, 
+                                        pool_size   = int(layer_now['kernel_size']), 
+                                        strides     = int(layer_now['stride']), 
+                                        padding     = 'VALID',
+                                        data_format = data_format_)
+                                elif layer_now['DIVERSIFY_MODE'] == '2':
+                                    net_fast = tf.layers.average_pooling2d(
+                                        inputs      = net_fast, 
+                                        pool_size   = int(layer_now['kernel_size']), 
+                                        strides     = int(layer_now['stride']), 
+                                        padding     = 'VALID',
+                                        data_format = data_format_)
+                                elif layer_now['DIVERSIFY_MODE'] == '3':
+                                    net_fast = tf.layers.average_pooling2d(
+                                        inputs      = net_fast, 
+                                        pool_size   = int(layer_now['kernel_size']), 
+                                        strides     = int(layer_now['stride']), 
+                                        padding     = 'VALID',
+                                        data_format = data_format_)
+                            #---------------#
+                            #    Shuffle    #
+                            #---------------#
+                            if layer_now['type'] == "SHUFFLE":
+                                net_fast = Model.shuffle_net(
+                                    net         = net_fast, 
+                                    group       = int(layer_now['group']),
+                                    data_format = data_format)
+                            #-------------------#
+                            #    Combine Add    #
+                            #-------------------#
+                            if layer_now['type'] == "COMBINE_ADD":
+                                net_fast = Model.combine_add(
+                                    net            = net_fast,
+                                    is_training    = is_training['layer'+str(layer)],
+                                    group          = int(layer_now['group']),
+                                    combine_number = int(layer_now['kernel_size']),
+                                    is_batch_norm  = layer_now['is_batch_norm'] == 'TRUE',
+                                    Activation     = layer_now['Activation'],
+                                    initializer    = tf.variance_scaling_initializer(), 
+                                    data_format    = data_format,
+                                    scope          = layer_now['scope'])
+                            #--------------------#
+                            #    Combine Conv    #
+                            #--------------------#
+                            if layer_now['type'] == "COMBINE_CONCAT":
+                                net_fast = Model.combine_conv(
+                                    net            = net_fast,
+                                    is_training    = is_training['layer'+str(layer)],
+                                    group          = int(layer_now['group']),
+                                    combine_number = int(layer_now['kernel_size']),
+                                    is_batch_norm  = layer_now['is_batch_norm'] == 'TRUE',
+                                    Activation     = layer_now['Activation'],
+                                    initializer    = tf.variance_scaling_initializer(), 
+                                    data_format    = data_format,
+                                    scope          = layer_now['scope'])
+                            #---------------------------#
+                            #    Batch Normalization    #
+                            #---------------------------#
+                            if layer_now['type'] == 'BN':
+                                trainable = False
+                                if not is_testing:
+                                    if 'layer'+str(layer) in diversify_layer['layer'] and is_student:
+                                        trainable = True
+                                    
+                                if layer_now['DIVERSIFY_MODE'] == '1':
+                                    net_fast = Model.batch_norm(
+                                        net         = net_fast, 
+                                        is_training = is_training['layer'+str(layer)], 
+                                        data_format = data_format,
+                                        trainable   = trainable)
+                                elif layer_now['DIVERSIFY_MODE'] == '2':
+                                    net_fast = Model.batch_norm(
+                                        net         = net_fast, 
+                                        is_training = is_training['layer'+str(layer)], 
+                                        data_format = data_format,
+                                        trainable   = trainable)
+                                elif layer_now['DIVERSIFY_MODE'] == '3':
+                                    net_fast = Model.batch_norm(
+                                        net         = net_fast, 
+                                        is_training = is_training['layer'+str(layer)], 
+                                        data_format = data_format,
+                                        trainable   = trainable)
+                                        
+                                # Activation
+                                if layer_now['Activation'] == 'ReLU':
+                                    with tf.variable_scope('fast'):
+                                        if layer_now['DIVERSIFY_MODE'] == '1':
+                                            net_fast = tf.nn.relu(net_fast)
+                                        elif layer_now['DIVERSIFY_MODE'] == '2':
+                                            net_fast = tf.nn.relu(net_fast)
+                                        elif layer_now['DIVERSIFY_MODE'] == '3':
+                                            net_fast = tf.nn.relu(net_fast)
+                                elif layer_now['Activation'] == 'Sigmoid':
+                                    with tf.variable_scope('fast'):
+                                        if layer_now['DIVERSIFY_MODE'] == '1':
+                                            net_fast = tf.nn.sigmoid(net_fast)
+                                        elif layer_now['DIVERSIFY_MODE'] == '2':
+                                            net_fast = tf.nn.sigmoid(net_fast)
+                                        elif layer_now['DIVERSIFY_MODE'] == '3':
+                                            net_fast = tf.nn.sigmoid(net_fast)
+                                elif layer_now['Activation'] == 'HardTanh':
+                                    with tf.variable_scope('fast'):
+                                        if layer_now['DIVERSIFY_MODE'] == '1':
+                                            net_fast = tf.clip_by_value(net_fast, -1, 1)
+                                        elif layer_now['DIVERSIFY_MODE'] == '2':
+                                            net_fast = tf.clip_by_value(net_fast, -1, 1)
+                                        elif layer_now['DIVERSIFY_MODE'] == '3':
+                                            net_fast = tf.clip_by_value(net_fast, -1, 1)
+                                elif layer_now['Activation'] == 'PReLU':
+                                    with tf.variable_scope('fast'):
+                                        if layer_now['DIVERSIFY_MODE'] == '1':
+                                            net_fast = tf.keras.layers.PReLU()(net_fast)
+                                        elif layer_now['DIVERSIFY_MODE'] == '2':
+                                            net_fast = tf.keras.layers.PReLU()(net_fast)
+                                        elif layer_now['DIVERSIFY_MODE'] == '3':
+                                            net_fast = tf.keras.layers.PReLU()(net_fast)
+        
+                                # For Pruning
+                                cond_1 = layer_now['DIVERSIFY_MODE'] == '2'
+                                cond_2 = layer_now['DIVERSIFY_MODE'] == '3'
+                                if not is_testing:
+                                    cond_3 = 'layer'+str(layer) in diversify_layer['layer']
+                                else:
+                                    cond_3 = False
+                                    
+                                if (cond_1 or cond_2) and cond_3:
+                                    prune_info_dict['layer%d'%(layer-1)].update({
+                                        'beta': [beta for beta in tf.trainable_variables(scope="student/Model/fast_%d/layer%d/"%(fast_index, layer)) 
+                                                if 'beta' in beta.name][0]})
+                            #------------------#
+                            #    Activation    #
+                            #------------------#
+                            if layer_now['type'] == 'ACT':
+                                if layer_now['Activation'] == 'ReLU':
+                                    if layer_now['DIVERSIFY_MODE'] == '1':
+                                        net_fast = tf.nn.relu(net_fast)
+                                    elif layer_now['DIVERSIFY_MODE'] == '2':
+                                        net_fast = tf.nn.relu(net_fast)
+                                    elif layer_now['DIVERSIFY_MODE'] == '3':
+                                        net_fast = tf.nn.relu(net_fast)
+                                elif layer_now['Activation'] == 'Sigmoid':
+                                    if layer_now['DIVERSIFY_MODE'] == '1':
+                                        net_fast = tf.nn.sigmoid(net_fast)
+                                    elif layer_now['DIVERSIFY_MODE'] == '2':
+                                        net_fast = tf.nn.sigmoid(net_fast)
+                                    elif layer_now['DIVERSIFY_MODE'] == '3':
+                                        net_fast = tf.nn.sigmoid(net_fast)
+                                elif layer_now['Activation'] == 'HardTanh':
+                                    if layer_now['DIVERSIFY_MODE'] == '1':
+                                        net_fast = tf.clip_by_value(net_fast, -1, 1)
+                                    elif layer_now['DIVERSIFY_MODE'] == '2':
+                                        net_fast = tf.clip_by_value(net_fast, -1, 1)
+                                    elif layer_now['DIVERSIFY_MODE'] == '3':
+                                        net_fast = tf.clip_by_value(net_fast, -1, 1)
+                                elif layer_now['Activation'] == 'PReLU':
+                                    if layer_now['DIVERSIFY_MODE'] == '1':
+                                        net_fast = tf.keras.layers.PReLU()(net_fast)
+                                    elif layer_now['DIVERSIFY_MODE'] == '2':
+                                        net_fast = tf.keras.layers.PReLU()(net_fast)
+                                    elif layer_now['DIVERSIFY_MODE'] == '3':
+                                        net_fast = tf.keras.layers.PReLU()(net_fast)
+                            #-----------------------#
+                            #    Fully Connected    #
+                            #-----------------------#
+                            if layer_now['type'] == 'FC':
+                                trainable = False
+                                if not is_testing:
+                                    if 'layer'+str(layer) in diversify_layer['layer'] and is_student:
+                                        trainable = True
+                                
+                                if layer_now['DIVERSIFY_MODE'] == '1':
+                                    net_fast = Model.FC(
+                                        net                     = net_fast,
+                                        output_channel          = int(layer_now['output_channel']),
+                                        initializer             = tf.variance_scaling_initializer(),
+                                        trainable               = trainable,
+                                        is_training             = is_training['layer'+str(layer)],
+                                        is_add_biases           = layer_now['is_add_biases']           == 'TRUE',
+                                        is_batch_norm           = layer_now['is_batch_norm']           == 'TRUE',
+                                        is_dilated              = layer_now['is_dilated']              == 'TRUE',
+                                        is_ternary              = is_ternary['layer'+str(layer)]                ,
+                                        is_binary               = is_binary['layer'+str(layer)]                 ,
+                                        is_quantized_activation = is_quantized_activation['layer'+str(layer)]   ,
+                                        IS_TERNARY              = layer_now['IS_TERNARY']              == 'TRUE',
+                                        IS_BINARY               = layer_now['IS_BINARY']               == 'TRUE',
+                                        IS_QUANTIZED_ACTIVATION = layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE',
+                                        IS_DIVERSITY            = False,
+                                        is_fast_mode            = is_fast_mode['layer'+str(layer)],
+                                        fast_mode               = layer_now['DIVERSIFY_MODE'] if layer_now['DIVERSIFY_MODE'] != None and layer_now['DIVERSIFY_MODE'] != 'None' else None,
+                                        Activation              = layer_now['Activation'],
+                                        data_format             = data_format,
+                                        Analysis                = Analysis,
+                                        scope                   = layer_now['scope'])
+                                elif layer_now['DIVERSIFY_MODE'] == '2':
+                                    net_fast = Model.FC(
+                                        net                     = net_fast, 
+                                        output_channel          = int(layer_now['output_channel']),
+                                        initializer             = tf.variance_scaling_initializer(),
+                                        trainable               = trainable,
+                                        is_training             = is_training['layer'+str(layer)],
+                                        is_add_biases           = layer_now['is_add_biases']           == 'TRUE',
+                                        is_batch_norm           = layer_now['is_batch_norm']           == 'TRUE',
+                                        is_dilated              = layer_now['is_dilated']              == 'TRUE',
+                                        is_ternary              = is_ternary['layer'+str(layer)]                ,
+                                        is_binary               = is_binary['layer'+str(layer)]                 ,
+                                        is_quantized_activation = is_quantized_activation['layer'+str(layer)]   ,
+                                        IS_TERNARY              = layer_now['IS_TERNARY']              == 'TRUE',
+                                        IS_BINARY               = layer_now['IS_BINARY']               == 'TRUE',
+                                        IS_QUANTIZED_ACTIVATION = layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE',
+                                        IS_DIVERSITY            = False,
+                                        is_fast_mode            = is_fast_mode['layer'+str(layer)],
+                                        fast_mode               = layer_now['DIVERSIFY_MODE'] if layer_now['DIVERSIFY_MODE'] != None and layer_now['DIVERSIFY_MODE'] != 'None' else None,
+                                        Activation              = layer_now['Activation'],
+                                        data_format             = data_format,
+                                        Analysis                = Analysis,
+                                        scope                   = layer_now['scope'])
+                                elif layer_now['DIVERSIFY_MODE'] == '3':
+                                    net_fast = Model.FC(
+                                        net                     = net_fast, 
+                                        output_channel          = int(layer_now['output_channel']),
+                                        initializer             = tf.variance_scaling_initializer(),
+                                        trainable               = trainable,
+                                        is_training             = is_training['layer'+str(layer)],
+                                        is_add_biases           = layer_now['is_add_biases']           == 'TRUE',
+                                        is_batch_norm           = layer_now['is_batch_norm']           == 'TRUE',
+                                        is_dilated              = layer_now['is_dilated']              == 'TRUE',
+                                        is_ternary              = is_ternary['layer'+str(layer)]                ,
+                                        is_binary               = is_binary['layer'+str(layer)]                 ,
+                                        is_quantized_activation = is_quantized_activation['layer'+str(layer)]   ,
+                                        IS_TERNARY              = layer_now['IS_TERNARY']              == 'TRUE',
+                                        IS_BINARY               = layer_now['IS_BINARY']               == 'TRUE',
+                                        IS_QUANTIZED_ACTIVATION = layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE',
+                                        IS_DIVERSITY            = False,
+                                        is_fast_mode            = is_fast_mode['layer'+str(layer)],
+                                        fast_mode               = layer_now['DIVERSIFY_MODE'] if layer_now['DIVERSIFY_MODE'] != None and layer_now['DIVERSIFY_MODE'] != 'None' else None,
+                                        Activation              = layer_now['Activation'],
+                                        data_format             = data_format,
+                                        Analysis                = Analysis,
+                                        scope                   = layer_now['scope'])
+                                
+                                if layer_now['DIVERSIFY_MODE'] == '1' or layer_now['DIVERSIFY_MODE'] == '2' or layer_now['DIVERSIFY_MODE'] == '3':
+                                    if layer==(len(Model_dict)-1):
+                                        net_fast = tf.reshape(net_fast, [-1, reduce(lambda x, y: x*y, net_fast.get_shape().as_list()[1:4])])
+                                """
+                                net = tf.reshape(net, [-1, 2048])
+                                net = tf.layers.dense(
+                                    inputs = net, 
+                                    units  = int(layer_now['output_channel']))
+                                """
+                            #-------------------#
+                            #    Convolution    #
+                            #-------------------#
+                            if layer_now['type'] == 'CONV':
+                                trainable = False
+                                if not is_testing:
+                                    if 'layer'+str(layer) in diversify_layer['layer'] and is_student:
+                                        trainable = True
+                                    
+                                if layer_now['DIVERSIFY_MODE'] == '1':
+                                    net_fast = Model.conv2D( 
+                                        net                     = net_fast, 
+                                        kernel_size             = int(layer_now['kernel_size']), 
+                                        stride                  = int(layer_now['stride']          ),
+                                        internal_channel        = int(layer_now['internal_channel']),
+                                        output_channel          = int(layer_now['output_channel']  ),
+                                        rate                    = int(layer_now['rate']            ),
+                                        group                   = int(layer_now['group']           ),
+                                        initializer             = tf.variance_scaling_initializer(),
+                                        trainable               = trainable,
+                                        is_training             = is_training['layer'+str(layer)],
+                                        is_add_biases           = layer_now['is_add_biases']           == 'TRUE', 
+                                        is_batch_norm           = layer_now['is_batch_norm']           == 'TRUE',      
+                                        is_dilated              = layer_now['is_dilated']              == 'TRUE',      
+                                        is_depthwise            = layer_now['is_depthwise']            == 'TRUE',  
+                                        is_ternary              = is_ternary['layer'+str(layer)]                ,
+                                        is_binary               = is_binary['layer'+str(layer)]                 ,
+                                        is_quantized_activation = is_quantized_activation['layer'+str(layer)]   ,
+                                        IS_TERNARY              = layer_now['IS_TERNARY']              == 'TRUE',
+                                        IS_BINARY               = layer_now['IS_BINARY']               == 'TRUE',
+                                        IS_QUANTIZED_ACTIVATION = layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE',
+                                        IS_DIVERSITY            = False,
+                                        is_fast_mode            = is_fast_mode['layer'+str(layer)],
+                                        fast_mode               = layer_now['DIVERSIFY_MODE'] if layer_now['DIVERSIFY_MODE'] != None and layer_now['DIVERSIFY_MODE'] != 'None' else None,
+                                        Activation              = layer_now['Activation'],
+                                        padding                 = "SAME",
+                                        data_format             = data_format,
+                                        Analysis                = Analysis,
+                                        scope                   = layer_now['scope'])
+                                elif layer_now['DIVERSIFY_MODE'] == '2':
+                                    net_fast = Model.conv2D( 
+                                        net                     = net_fast, 
+                                        kernel_size             = int(layer_now['kernel_size']), 
+                                        stride                  = int(layer_now['stride']          ),
+                                        internal_channel        = int(layer_now['internal_channel']),
+                                        output_channel          = int(layer_now['output_channel']  ),
+                                        rate                    = int(layer_now['rate']            ),
+                                        group                   = int(layer_now['group']           ),
+                                        initializer             = tf.variance_scaling_initializer(),
+                                        trainable               = trainable,
+                                        is_training             = is_training['layer'+str(layer)],
+                                        is_add_biases           = layer_now['is_add_biases']           == 'TRUE', 
+                                        is_batch_norm           = layer_now['is_batch_norm']           == 'TRUE',      
+                                        is_dilated              = layer_now['is_dilated']              == 'TRUE',      
+                                        is_depthwise            = layer_now['is_depthwise']            == 'TRUE',  
+                                        is_ternary              = is_ternary['layer'+str(layer)]                ,
+                                        is_binary               = is_binary['layer'+str(layer)]                 ,
+                                        is_quantized_activation = is_quantized_activation['layer'+str(layer)]   ,
+                                        IS_TERNARY              = layer_now['IS_TERNARY']              == 'TRUE',
+                                        IS_BINARY               = layer_now['IS_BINARY']               == 'TRUE',
+                                        IS_QUANTIZED_ACTIVATION = layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE',
+                                        IS_DIVERSITY            = False,
+                                        is_fast_mode            = is_fast_mode['layer'+str(layer)],
+                                        fast_mode               = layer_now['DIVERSIFY_MODE'] if layer_now['DIVERSIFY_MODE'] != None and layer_now['DIVERSIFY_MODE'] != 'None' else None,
+                                        Activation              = layer_now['Activation'],
+                                        padding                 = "SAME",
+                                        data_format             = data_format,
+                                        Analysis                = Analysis,
+                                        scope                   = layer_now['scope'])
+                                elif layer_now['DIVERSIFY_MODE'] == '3':
+                                    net_fast = Model.conv2D(
+                                        net                     = net_fast, 
+                                        kernel_size             = int(layer_now['kernel_size']), 
+                                        stride                  = int(layer_now['stride']          ),
+                                        internal_channel        = int(layer_now['internal_channel']),
+                                        output_channel          = int(layer_now['output_channel']  ),
+                                        rate                    = int(layer_now['rate']            ),
+                                        group                   = int(layer_now['group']           ),
+                                        initializer             = tf.variance_scaling_initializer(),
+                                        trainable               = trainable,
+                                        is_training             = is_training['layer'+str(layer)],
+                                        is_add_biases           = layer_now['is_add_biases']           == 'TRUE', 
+                                        is_batch_norm           = layer_now['is_batch_norm']           == 'TRUE',      
+                                        is_dilated              = layer_now['is_dilated']              == 'TRUE',      
+                                        is_depthwise            = layer_now['is_depthwise']            == 'TRUE',  
+                                        is_ternary              = is_ternary['layer'+str(layer)]                ,
+                                        is_binary               = is_binary['layer'+str(layer)]                 ,
+                                        is_quantized_activation = is_quantized_activation['layer'+str(layer)]   ,
+                                        IS_TERNARY              = layer_now['IS_TERNARY']              == 'TRUE',
+                                        IS_BINARY               = layer_now['IS_BINARY']               == 'TRUE',
+                                        IS_QUANTIZED_ACTIVATION = layer_now['IS_QUANTIZED_ACTIVATION'] == 'TRUE',
+                                        IS_DIVERSITY            = False,
+                                        is_fast_mode            = is_fast_mode['layer'+str(layer)],
+                                        fast_mode               = layer_now['DIVERSIFY_MODE'] if layer_now['DIVERSIFY_MODE'] != None and layer_now['DIVERSIFY_MODE'] != 'None' else None,
+                                        Activation              = layer_now['Activation'],
+                                        padding                 = "SAME",
+                                        data_format             = data_format,
+                                        Analysis                = Analysis,
+                                        scope                   = layer_now['scope'])
+                                
+                                if layer==(len(Model_dict)-1) and data_format == "NCHW":
+                                    net_fast = tf.transpose(net_fast, [0, 2, 3, 1])
+            
+                                # For Pruning
+                                cond_0 = layer_now['DIVERSIFY_MODE'] == '1'
+                                cond_1 = layer_now['DIVERSIFY_MODE'] == '2'
+                                cond_2 = layer_now['DIVERSIFY_MODE'] == '3'
+                                
+                                if not is_testing:
+                                    cond_3 = 'layer'+str(layer) in diversify_layer['layer']
+                                else:
+                                    cond_3 = False
+                                    
+                                if (cond_0 or cond_1 or cond_2) and cond_3:
+                                    scope = "student/Model/fast_%d/layer%d/"%(fast_index, layer)
+                                    
+                                    # prune_info_dict
+                                    if not bool(prune_info_dict.get('layer%d'%layer)):
+                                        prune_info_dict.update({
+                                            'layer%d'%layer: {'weights': tf.get_collection("weights", scope=scope)[0]}})
+                                    else:
+                                        prune_info_dict['layer%d'%layer].update({
+                                            'weights': tf.get_collection("weights", scope=scope)[0]})
+                                        
+                                    prune_info_dict['layer%d'%layer].update({
+                                        'mask'        : tf.get_collection("float32_weights_mask", scope=scope)[0],
+                                        'outputs'     : tf.get_collection("conv_outputs"  , scope=scope)[0],
+                                        'stride'      : int(layer_now['stride']),
+                                        'is_shortcut' : is_shortcut_past_layer,
+                                        'is_depthwise': layer_now['is_depthwise'] == 'TRUE'})
+                                    
+                                    try:
+                                        if layer_now['is_batch_norm'] == 'TRUE':
+                                            prune_info_dict['layer%d'%layer].update({
+                                                'beta': [beta for beta in tf.trainable_variables(scope=scope) 
+                                                        if 'beta' in beta.name][0]})
+                                    except:
+                                        None
+                                    
+                                    past_conv_layer = 'layer%d'%layer
+                                    is_shortcut_past_layer = False
+                fast_index = fast_index + 1
+
+                
+            # Diversify layer
+            if layer_now['DIVERSIFY_MODE'] == '3':
+                net = tf.cond(is_fast_mode['layer'+str(layer)], 
+                            lambda: net_fast,
+                            lambda: net)
+            
+            #------------------------------------#
+            #   Diversify Trained Layer output   #
+            #------------------------------------#
+            if is_testing:
+                train_net = None
+            elif 'layer'+str(layer) == diversify_layer['layer'][-1]:
+                train_net = net
+
         # For finding the similar weights
         for layer in range(len(Model_dict)):
             #print(layer)
@@ -7445,10 +7972,11 @@ def compute_angle(
     theta = (np.arccos(cos_theta) / np.pi) * 180;
     
     return theta
-
+    
 def filter_prune_by_similarity( # Integration Version of All the Following Filter Pruning Methods
     prune_info_dict,
     pruning_propotion,
+    pruning_threshold,
     pruned_weights_info,
     sess,
     is_connection = False,
@@ -7462,6 +7990,8 @@ def filter_prune_by_similarity( # Integration Version of All the Following Filte
     filter = False,
     filter_and_channel = False,
     is_denseNet = False,
+    only_positive_similarity = False,
+    only_negtive_similarity = False,
     ):
     #================#
     #  Sorted Layer  #
@@ -7488,6 +8018,7 @@ def filter_prune_by_similarity( # Integration Version of All the Following Filte
         all_parents = {}
         all_children = {}
     for layer_iter, layer in enumerate(sorted_layer):
+        print(prune_info_dict[layer]['weights'])
         all_weight.update({layer: sess.run(prune_info_dict[layer]['weights'])})
         all_mask.update({layer: sess.run(prune_info_dict[layer]['mask'])})
         all_output_shape.update({layer: prune_info_dict[layer]['outputs'].get_shape().as_list()})
@@ -7501,6 +8032,16 @@ def filter_prune_by_similarity( # Integration Version of All the Following Filte
             if bool(prune_info_dict[layer].get('children')):
                 all_children.update({layer: prune_info_dict[layer]['children']})
                 #print("{} -> {}" .format(layer, prune_info_dict[layer]['children']))
+    
+    ##...##
+    #model_info_dict = {}
+    #model_info_dict.update({'all_mask': all_mask})
+    #model_info_dict.update({'all_output_shape': all_output_shape})
+    #model_info_dict.update({'all_stride': all_stride})
+    #Dir = 'Model/ResNet_Model/ResNet_56_cifar10_0_99_2018.02.09_Filter_Similar60_59/'
+    #save_dict(model_info_dict, Dir, "model_info")
+    #pdb.set_trace()
+    ##...##
     
     #=======================#
     #  Original Model Info  #
@@ -7531,8 +8072,13 @@ def filter_prune_by_similarity( # Integration Version of All the Following Filte
     #=========================#
     #  Build Similarity_dict  #
     #=========================#
+    tmp_dict = {} ##...##
+    depth_mag_sim_list = [] ##...##
+    angle_list = [] ##...##
+    
     print('Calculating Cosine Similarities ...')
     similarity_dict = {}
+    layer_similarity_dict = {}
     iter = 0
     for layer_iter, layer in enumerate(sorted_layer):
         # Skip Specific Layers
@@ -7551,13 +8097,22 @@ def filter_prune_by_similarity( # Integration Version of All the Following Filte
         past_weight = all_weight[past_layer]
         past_mask = all_mask[past_layer]
         
+        # next layer
+        if layer != sorted_layer[-1]:
+            next_layer = sorted_layer[layer_iter+1]
+            next_weight = all_weight[next_layer]
+            next_mask = all_mask[next_layer]
+        
         # (Option) Beta
         if is_beta:
             beta = all_beta[layer]
         
+        ##...##
+        tmp_dict.update({layer: {}}) 
+        
         # Calculate Cosine Similarities
         depth = np.shape(weight)[2] # Default is the Channel Pruning
-        if filter or filter_and_channel: # For Filter Pruning 
+        if filter or filter_and_channel: # For Filter Pruning
             depth = np.shape(past_weight)[3]
         depth_i_iter = 0
         for depth_i in range(depth):
@@ -7578,7 +8133,7 @@ def filter_prune_by_similarity( # Integration Version of All the Following Filte
                     y = weight[:, :, depth_j, :] * mask[:, :, depth_j, :]
                     x = np.reshape(x, [np.size(x)])
                     y = np.reshape(y, [np.size(y)])
- 
+                    
                     # Cosine Similarity
                     if np.sum(np.square(x))==0:
                         similarity = 0.0
@@ -7587,9 +8142,23 @@ def filter_prune_by_similarity( # Integration Version of All the Following Filte
                         similarity = 0.0
                         print('\033[0;33mWarning\033[0m: Origin Point in {}, {}' .format(layer, 'depth'+str(i)))
                     else:
-                        similarity = np.abs(np.sum(x*y)/(np.sqrt(np.sum(np.square(x)))*np.sqrt(np.sum(np.square(y)))))
+                        if only_positive_similarity:
+                            similarity = np.sum(x*y)/(np.sqrt(np.sum(np.square(x)))*np.sqrt(np.sum(np.square(y))))
+                            if similarity < 0:
+                                continue
+                        elif only_negtive_similarity:
+                            similarity = np.sum(x*y)/(np.sqrt(np.sum(np.square(x)))*np.sqrt(np.sum(np.square(y))))
+                            if similarity > 0:
+                                continue
+                        else:
+                            similarity = np.abs(np.sum(x*y)/(np.sqrt(np.sum(np.square(x)))*np.sqrt(np.sum(np.square(y)))))
                     
                     assert np.abs(similarity) <= 1.0, '|Similarity| <= 1.0'
+                    
+                    ##...##
+                    cos_theta = np.sum(x*y)/(np.sqrt(np.sum(np.square(x)))*np.sqrt(np.sum(np.square(y))))
+                    theta = (np.arccos(cos_theta) / np.pi) * 180
+                    angle_list.append(theta)
                     
                     # Filter Similarity
                     if filter or filter_and_channel:
@@ -7622,7 +8191,14 @@ def filter_prune_by_similarity( # Integration Version of All the Following Filte
                     
                     # [Warning] Fixed Point similarity (Something Wrong without This Step!)
                     similarity = int(similarity * 1e8)
-
+                    
+                    
+                    ##...## tmp
+                    if not bool(tmp_dict[layer].get(str(depth_i))):
+                        tmp_dict[layer].update({str(depth_i): {str(depth_j): similarity*1e-8}})
+                    else:
+                        tmp_dict[layer][str(depth_i)].update({str(depth_j): similarity*1e-8})
+                    
                     # similarity_dict
                     if bool(similarity_dict.get(str(similarity))):
                         number = len(similarity_dict[str(similarity)])
@@ -7631,7 +8207,7 @@ def filter_prune_by_similarity( # Integration Version of All the Following Filte
                                 'past_layer': past_layer, 
                                 'layer': layer, 
                                 'depth_i': depth_i, 
-                                'depth_j': depth_j, 
+                                'depth_j': depth_j,
                                 'pruned': False}})
                     else:
                         similarity_dict.update({str(similarity): {
@@ -7639,7 +8215,7 @@ def filter_prune_by_similarity( # Integration Version of All the Following Filte
                                 'past_layer': past_layer, 
                                 'layer': layer, 
                                 'depth_i': depth_i, 
-                                'depth_j': depth_j, 
+                                'depth_j': depth_j,
                                 'pruned': False}}})
                                 
                     # Total Similarities
@@ -7655,8 +8231,22 @@ def filter_prune_by_similarity( # Integration Version of All the Following Filte
                 else:
                     layer_similarities = np.concatenate([layer_similarities, depth_i_similarities])
                 depth_i_iter = depth_i_iter + 1
-            
+        
+        ##...##
+        for depth_i in tmp_dict[layer].keys():
+            similarity_list = []
+            depth_list = []
+            for depth_j in tmp_dict[layer][depth_i]:
+                similarity_list.append(tmp_dict[layer][depth_i][depth_j])
+                depth_list.append(depth_j)
+            arg_max_similarity = np.argmax(np.array(similarity_list))
+            max_depth_j = depth_list[arg_max_similarity]
+            max_similarity = similarity_list[arg_max_similarity]
+            max_magnitude = np.mean(abs(past_weight[:, :, :, int(max_depth_j)])) + np.mean(abs(weight[:, :, int(max_depth_j), :]))
+            depth_mag_sim_list.append([layer, int(depth_i), max_magnitude, max_similarity])
+                    
         if depth_i_iter != 0:
+            layer_similarity_dict.update({layer: layer_similarities})
             if iter == 0:
                 total_similarities = layer_similarities
             else:
@@ -7666,10 +8256,27 @@ def filter_prune_by_similarity( # Integration Version of All the Following Filte
         tEnd = time.time()
         print("(cost %f seconds)" %(tEnd - tStart))
     
+    ##...##
+    np.savetxt('depth_mag_sim.csv', depth_mag_sim_list, delimiter = ',', fmt = '%s')
+    np.savetxt('agnle.csv', angle_list, delimiter = ',', fmt = '%f')
+    
     #=========================#
     #  Sort All Similarities  #
     #=========================#
-    sorted_similarities = np.sort(total_similarities)[::-1]
+    if only_positive_similarity:
+        sorted_similarities = np.sort(total_similarities)[::-1]
+    elif only_negtive_similarity:
+        sorted_similarities = np.sort(total_similarities)
+    else:
+        sorted_similarities = np.sort(total_similarities)[::-1]
+    
+    #========================#
+    #   Prune by threshold   #
+    #========================#
+    if pruning_propotion == 1:
+        print('Prune by threshold')
+        threshold = pruning_threshold
+        sorted_similarities = sorted_similarities[np.where(sorted_similarities > threshold * 1e8)[0]]
     
     #========================================#
     #  Build Connection Tree & Similar Depth #
@@ -7680,11 +8287,18 @@ def filter_prune_by_similarity( # Integration Version of All the Following Filte
     similar_depth = {}
     pruned_size = 0
     pruned_similarity_num = 0
+    
+    if pruning_propotion == 1:
+        estimate_propotion = 1
+    else:
+        estimate_propotion = 0.8
+        
     for similarity_iter, similarity in enumerate(sorted_similarities):
         pruned_similarity_num = pruned_similarity_num + 1
         for _, index in enumerate(similarity_dict_[str(similarity)].keys()):
             if similarity_dict_[str(similarity)][index]['pruned']:
                 continue
+            is_pruned_size_change = False
             similarity_dict_[str(similarity)][index].update({'pruned': True})
             
             # past layer
@@ -7706,6 +8320,7 @@ def filter_prune_by_similarity( # Integration Version of All the Following Filte
                 pruned_size = pruned_size + reduce(lambda x, y: x*y, np.shape(mask[:, :, depth_i, :]))
                 pruned_size = pruned_size + reduce(lambda x, y: x*y, np.shape(past_mask[:, :, :, depth_j]))
                 pruned_size = pruned_size + reduce(lambda x, y: x*y, np.shape(mask[:, :, depth_j, :]))
+                is_pruned_size_change = True
             else:
                 # Connection & Similar Depth
                 if not bool(connection.get(layer_)):
@@ -7742,6 +8357,7 @@ def filter_prune_by_similarity( # Integration Version of All the Following Filte
                         
                 # Estimated Prune Size
                 if not is_depth_i_in_connection or not is_depth_j_in_connection:
+                    is_pruned_size_change = True
                     if not is_denseNet:
                         pruned_size = pruned_size + reduce(lambda x, y: x*y, np.shape(past_mask[:, :, :, depth_i]))
                         pruned_size = pruned_size + reduce(lambda x, y: x*y, np.shape(mask[:, :, depth_i, :]))
@@ -7755,7 +8371,7 @@ def filter_prune_by_similarity( # Integration Version of All the Following Filte
                                     pruned_size = pruned_size + reduce(lambda x, y: x*y, np.shape(child_mask[:, :, 0, :]))
         
         # Exact Pruned Size
-        if pruned_size >= original_size * pruning_propotion * 0.8:
+        if pruned_size >= original_size * pruning_propotion * estimate_propotion and is_pruned_size_change:
             # Build the connection_num directory
             if cut_connection_less_to_more:
                 similarity_dict_ = copy.deepcopy(similarity_dict)
@@ -7855,20 +8471,19 @@ def filter_prune_by_similarity( # Integration Version of All the Following Filte
                         mask[:, :, depth_j, :] = 0
                     else:
                         if not is_depth_i_pruned and not is_depth_j_pruned:
-                            # -- Compare Connection --
-                            if is_connection and connection[layer_][str(depth_i)] < connection[layer_][str(depth_j)]: # Prune depth_i
-                                if not discard_feature and depth_i in depth_can_not_be_pruned[layer_]: # depth_i can not be pruned
-                                    break # break for depth_j has more connection, and we don't want to prune it.
+                            if not discard_feature and depth_j in depth_can_not_be_pruned[layer_]:
                                 pruned_depth = depth_i
-                            elif is_connection and connection[layer_][str(depth_i)] > connection[layer_][str(depth_j)]: # Prune depth_j
-                                if not discard_feature and depth_j in depth_can_not_be_pruned[layer_]: # depth_j can not be pruned
-                                    break # break for depth_i has more connection, and we don't want to prune it.
+                            elif not discard_feature and depth_i in depth_can_not_be_pruned[layer_]:
                                 pruned_depth = depth_j
                             else:
-                                # -- Can Not be Pruned --
-                                if not discard_feature and depth_j in depth_can_not_be_pruned[layer_]:
+                                # -- Compare Connection --
+                                if is_connection and connection[layer_][str(depth_i)] < connection[layer_][str(depth_j)]: # Prune depth_i
+                                    #if not discard_feature and depth_i in depth_can_not_be_pruned[layer_]: # depth_i can not be pruned
+                                    #    break # break for depth_j has more connection, and we don't want to prune it.
                                     pruned_depth = depth_i
-                                elif not discard_feature and depth_i in depth_can_not_be_pruned[layer_]:
+                                elif is_connection and connection[layer_][str(depth_i)] > connection[layer_][str(depth_j)]: # Prune depth_j
+                                    #if not discard_feature and depth_j in depth_can_not_be_pruned[layer_]: # depth_j can not be pruned
+                                    #    break # break for depth_i has more connection, and we don't want to prune it.
                                     pruned_depth = depth_j
                                 else:
                                     # -- Beta -- 
@@ -7920,7 +8535,12 @@ def filter_prune_by_similarity( # Integration Version of All the Following Filte
                 after_prune_weights_size += np.sum(all_mask_[layer])
             #print("%f, %f" %(before_prune_weights_size-after_prune_weights_size, original_size*pruning_propotion))
             if (before_prune_weights_size-after_prune_weights_size) >= original_size*pruning_propotion:
+                print("({} / {})" .format(before_prune_weights_size-after_prune_weights_size, original_size * pruning_propotion))
                 break
+            else:
+                print("({} / {})" .format(before_prune_weights_size-after_prune_weights_size, original_size * pruning_propotion))
+                if original_size - (before_prune_weights_size-after_prune_weights_size) > 20000:
+                    estimate_propotion = estimate_propotion + 0.03
     
     #==============================#
     #   Connection_num Directory   #
@@ -8072,20 +8692,20 @@ def filter_prune_by_similarity( # Integration Version of All the Following Filte
                 if not is_depth_i_pruned and not is_depth_j_pruned:
                     similarity_dict[str(similarity)][index].update({'pruned': True})
                     # Get Pruned Depth
-                    # -- Compare Connection --
-                    if is_connection and connection[layer_][str(depth_i)] < connection[layer_][str(depth_j)]:
-                        if not discard_feature and depth_i in depth_can_not_be_pruned[layer_]:
-                            break
+                    # -- Can Not be Pruned --
+                    if not discard_feature and depth_j in depth_can_not_be_pruned[layer_]:
                         pruned_depth = depth_i
-                    elif is_connection and connection[layer_][str(depth_i)] > connection[layer_][str(depth_j)]:
-                        if not discard_feature and depth_j in depth_can_not_be_pruned[layer_]:
-                            break
+                    elif not discard_feature and depth_i in depth_can_not_be_pruned[layer]:
                         pruned_depth = depth_j
                     else:
-                        # -- Can Not be Pruned --
-                        if not discard_feature and depth_j in depth_can_not_be_pruned[layer_]:
+                        # -- Compare Connection --
+                        if is_connection and connection[layer_][str(depth_i)] < connection[layer_][str(depth_j)]:
+                            #if not discard_feature and depth_i in depth_can_not_be_pruned[layer_]:
+                            #    break
                             pruned_depth = depth_i
-                        elif not discard_feature and depth_i in depth_can_not_be_pruned[layer]:
+                        elif is_connection and connection[layer_][str(depth_i)] > connection[layer_][str(depth_j)]:
+                            #if not discard_feature and depth_j in depth_can_not_be_pruned[layer_]:
+                            #    break
                             pruned_depth = depth_j
                         else:
                             # -- Beta -- 
@@ -8111,7 +8731,1036 @@ def filter_prune_by_similarity( # Integration Version of All the Following Filte
                     if not discard_feature:
                         unpruned_similar_depth = []
                         for depth in similar_depth[layer_][str(pruned_depth)]:
-                            if not pruned_dict_[past_layer][depth]:
+                            if not pruned_dict[past_layer][depth]:
+                                unpruned_similar_depth.append(depth)
+                        if len(unpruned_similar_depth) == 1:
+                            depth_can_not_be_pruned[layer_].append(unpruned_similar_depth[0])
+                            #print("{} -> {}" .format(layer_, depth_can_not_be_pruned[layer_]))
+                    
+                    # Assign Zero to mask
+                    if not is_denseNet:
+                        # Assign Zero to mask
+                        pruned_dict[past_layer].update({str(pruned_depth): True})
+                        past_mask[:, :, :, pruned_depth] = 0
+                        mask[:, :, pruned_depth, :] = 0
+                        
+                        # Compute Reduced Computation
+                        computation = 0
+                        # Past Layer
+                        # Remove the past pruned mask (for computing computation)
+                        #--------------------------------------------------------
+                        past_unpruned_mask = past_mask
+                        past_channel_num = np.shape(past_mask)[3]
+                        past_depth = np.shape(past_mask)[2]
+                        past_pruned_channels = []
+                        past_pruned_depth = []
+                        # (channel)
+                        for i in range(past_channel_num):
+                            if np.sum(past_mask[:, :, :, i]) == 0:
+                                past_pruned_channels = np.append(past_pruned_channels, [i])
+                        past_unpruned_mask = np.delete(past_unpruned_mask, past_pruned_channels, axis = 3)
+                        # (depth)
+                        for i in range(past_depth):
+                            if np.sum(past_mask[:, :, i, :]) == 0:
+                                past_pruned_depth = np.append(past_pruned_depth, [i])
+                        past_unpruned_mask = np.delete(past_unpruned_mask, past_pruned_depth, axis = 2)
+                        #--------------------------------------------------------
+                        past_weight_shape = np.shape(past_unpruned_mask)
+                        computation = computation + past_weight_shape[0] * past_weight_shape[1] * past_weight_shape[2] * past_output_shape[2] * past_output_shape[3]
+                        # Current Layer
+                        # Remove the current pruned mask (for computing computation)
+                        #-----------------------------------------------------------
+                        current_unpruned_mask = mask
+                        current_channel_num = np.shape(mask)[3]
+                        current_depth = np.shape(mask)[2]
+                        current_pruned_channels = []
+                        current_pruned_depth = []
+                        # (channel)
+                        for i in range(current_channel_num):
+                            if np.sum(mask[:, :, :, i]) == 0:
+                                current_pruned_channels = np.append(current_pruned_channels, [i])
+                        current_unpruned_mask = np.delete(current_unpruned_mask, current_pruned_channels, axis = 3)
+                        # (depth)
+                        for i in range(current_depth):
+                            if np.sum(mask[:, :, i, :]) == 0:
+                                current_pruned_depth = np.append(current_pruned_depth, [i])
+                        current_unpruned_mask = np.delete(current_unpruned_mask, current_pruned_depth, axis = 2)
+                        #-----------------------------------------------------------
+                        weight_shape = np.shape(current_unpruned_mask)
+                        computation = computation + weight_shape[0] * weight_shape[1] * weight_shape[3] * output_shape[2] * output_shape[3]
+                        
+                        # Update List: pruned_weights_info
+                        info = {past_layer: {'channel': pruned_depth}, layer: {'depth': pruned_depth}, 'computation': computation}
+                        pruned_weights_info.append(info)
+                        t.add_row([similarity*1e-8, layer, 'depth' + str(pruned_depth), computation])
+                    else:
+                        if filter:
+                            # Assign Zero to mask
+                            past_mask[:, :, :, pruned_depth] = 0
+                            
+                            # Compute Reduced Computation
+                            computation = 0
+                            # Past Layer
+                            # Remove the past pruned mask (for computing computation)
+                            #--------------------------------------------------------
+                            past_unpruned_mask = past_mask
+                            past_channel_num = np.shape(past_mask)[3]
+                            past_depth = np.shape(past_mask)[2]
+                            past_pruned_channels = []
+                            past_pruned_depth = []
+                            # (channel)
+                            for i in range(past_channel_num):
+                                if np.sum(past_mask[:, :, :, i]) == 0:
+                                    past_pruned_channels = np.append(past_pruned_channels, [i])
+                            past_unpruned_mask = np.delete(past_unpruned_mask, past_pruned_channels, axis = 3)
+                            # (depth)
+                            for i in range(past_depth):
+                                if np.sum(past_mask[:, :, i, :]) == 0:
+                                    past_pruned_depth = np.append(past_pruned_depth, [i])
+                            past_unpruned_mask = np.delete(past_unpruned_mask, past_pruned_depth, axis = 2)
+                            #--------------------------------------------------------
+                            past_weight_shape = np.shape(past_unpruned_mask)
+                            computation = computation + past_weight_shape[0] * past_weight_shape[1] * past_weight_shape[2] * past_output_shape[2] * past_output_shape[3]
+                            info = {past_layer: {'channel': pruned_depth}}
+                            
+                            # Pruned the Children Channel
+                            if bool(all_children.get(past_layer)):
+                                for _, child in enumerate(all_children[past_layer].keys()):
+                                    child_mask = all_mask[child]
+                                    interval = all_children[past_layer][child]
+                                    
+                                    # Assign Zero to mask
+                                    child_mask[:, :, interval + pruned_depth, :] = 0
+                                    
+                                    # Compute Reduced Computation
+                                    # Child Layer
+                                    # Remove the current pruned mask (for computing computation)
+                                    #-----------------------------------------------------------
+                                    child_unpruned_mask = child_mask
+                                    child_channel_num = np.shape(child_mask)[3]
+                                    child_depth = np.shape(child_mask)[2]
+                                    child_pruned_channels = []
+                                    child_pruned_depth = []
+                                    # (channel)
+                                    for i in range(child_channel_num):
+                                        if np.sum(child_mask[:, :, :, i]) == 0:
+                                            child_pruned_channels = np.append(child_pruned_channels, [i])
+                                    child_unpruned_mask = np.delete(child_unpruned_mask, child_pruned_channels, axis = 3)
+                                    # (depth)
+                                    for i in range(child_depth):
+                                        if np.sum(child_mask[:, :, i, :]) == 0:
+                                            child_pruned_depth = np.append(child_pruned_depth, [i])
+                                    child_unpruned_mask = np.delete(child_unpruned_mask, child_pruned_depth, axis = 2)
+                                    #-----------------------------------------------------------
+                                    weight_shape = np.shape(child_unpruned_mask)
+                                    child_output_shape = all_output_shape[child]
+                                    computation = computation + weight_shape[0] * weight_shape[1] * weight_shape[3] * child_output_shape[2] * child_output_shape[3]
+                                    
+                                    info.update({child: {'depth': interval + pruned_depth}})
+                            
+                            # Update List: pruned_weights_info
+                            info.update({'computation': computation})
+                            pruned_weights_info.append(info)
+                            t.add_row([similarity*1e-8, past_layer, 'filter' + str(pruned_depth), computation])
+            break
+    print(t)
+    #===============#
+    #  Update Mask  #
+    #===============#
+    print('Updating Masks ... ')
+    for layer_iter, layer in enumerate(sorted_layer):
+        sess.run(tf.assign(prune_info_dict[layer]['mask'], all_mask[layer]))
+    
+    
+    ##...##
+    kernal_shape_list = []
+    pruned_channel_list = []
+    #===================#
+    #  Show the Result  #
+    #===================#
+    for layer_iter, layer in enumerate(sorted_layer):
+        mask_tensor = prune_info_dict[layer]['mask']
+        mask = sess.run(mask_tensor)
+        ##...##
+        pruned_channel = np.sum(np.sum(np.sum(mask, axis = 0), axis=0), axis=0) == 0
+        pruned_channel_list.append([pruned_channel])
+        
+        # remove the pruned part
+        unpruned_mask = mask
+        # (channel)
+        channel_num = np.shape(mask)[3]
+        pruned_channels = []
+        for channel in range(channel_num):
+            if np.sum(unpruned_mask[:, :, :, channel]) == 0:
+                pruned_channels = np.append(pruned_channels, [channel])
+        unpruned_mask = np.delete(unpruned_mask, pruned_channels, axis = 3)
+        # (depth)
+        depths = np.shape(unpruned_mask)[2]
+        pruned_depths = []
+        for depth in range(depths):
+            if np.sum(unpruned_mask[:, :, depth, :]) == 0:
+                pruned_depths = np.append(pruned_depths, [depth])
+        unpruned_mask = np.delete(unpruned_mask, pruned_depths, axis = 2)
+        print('{} : \033[0;32m{}\033[0m -> \033[0;32m{}\033[0m' 
+        .format(layer, np.shape(mask), np.shape(unpruned_mask)))
+        ##...##
+        kernal_shape_list.append(np.shape(unpruned_mask))
+    ##...##
+    np.savetxt('kernal_shape.csv', kernal_shape_list, delimiter = ',', fmt = '%d')
+    with open('pruned_channel.csv', 'w') as csvfile:
+        writer = csv.writer(csvfile)
+        
+        for layer in range(np.size(pruned_channel_list)):
+            writer.writerow([int(x) for x in pruned_channel_list[layer][0]])
+    #exit()
+    print("Prune Over!")
+    
+    return pruned_weights_info
+    
+
+def filter_prune_by_similarity_layer_by_layer( # Not Finish
+    prune_info_dict,
+    pruning_propotion,
+    pruning_threshold,
+    pruned_weights_info,
+    pruning_iter,
+    sess,
+    is_connection = False,
+    is_beta = False,
+    beta_threshold = 0.001,
+    skip_first_layer = False,
+    skip_last_layer = False,
+    discard_feature = False,
+    all_be_pruned = False,
+    cut_connection_less_to_more = False,
+    filter = False,
+    filter_and_channel = False,
+    is_denseNet = False,
+    is_entire_model = True
+    ):
+    #================#
+    #  Sorted Layer  #
+    #================#
+    key = prune_info_dict.keys()
+    sorted_layer = np.sort(np.array([int(key[i].split('layer')[-1]) for i in range(len(key))]))
+    sorted_layer = ['layer' + str(sorted_layer[i]) for i in range(len(key))]
+    print(sorted_layer)
+    
+    #===================#
+    #  Load Model Info  #
+    #===================#
+    skip_layers = sorted_layer[0]
+    if skip_first_layer:
+        skip_layers.append(sorted_layer[1])
+    if skip_last_layer:
+        skip_layers.append(sorted_layer[-1])
+    all_weight = {}
+    all_mask = {}
+    all_output_shape = {} # For Computing Computation
+    all_stride = {} # For Computing Computation
+    all_beta = {}
+    if is_denseNet: # For DenseNet
+        all_parents = {}
+        all_children = {}
+    for layer_iter, layer in enumerate(sorted_layer):
+        print(prune_info_dict[layer]['weights'])
+        all_weight.update({layer: sess.run(prune_info_dict[layer]['weights'])})
+        all_mask.update({layer: sess.run(prune_info_dict[layer]['mask'])})
+        all_output_shape.update({layer: prune_info_dict[layer]['outputs'].get_shape().as_list()})
+        all_stride.update({layer: prune_info_dict[layer]['stride']})
+        if is_beta:
+            all_beta.update({layer: sess.run(prune_info_dict[layer]['beta'])})
+        if is_denseNet:
+            if bool(prune_info_dict[layer].get('parents')):
+                all_parents.update({layer: prune_info_dict[layer]['parents']})
+                #print("{} -> {}" .format(layer, prune_info_dict[layer]['parents']))
+            if bool(prune_info_dict[layer].get('children')):
+                all_children.update({layer: prune_info_dict[layer]['children']})
+                #print("{} -> {}" .format(layer, prune_info_dict[layer]['children']))
+    
+    #=======================#
+    #  Original Model Info  #
+    #=======================#
+    # Original Model Size
+    original_size = 0
+    for layer_iter, layer in enumerate(sorted_layer):
+        original_size += reduce(lambda x, y: x*y, np.shape(all_mask[layer]))
+    
+    # before_prune_weights_size
+    before_prune_weights_size = 0
+    for layer_iter, layer in enumerate(sorted_layer):
+        before_prune_weights_size += np.sum(all_mask[layer])
+       
+    #=====================#
+    #  Build Pruned_dict  #
+    #=====================#
+    # Check the filter is pruned by checking the mask[:, :, :, i] == 0
+    pruned_dict = {}
+    for layer_iter, layer in enumerate(sorted_layer):
+        mask = all_mask[layer]
+        channel_num = np.shape(mask)[3]
+        tmp_dict = {}
+        for i in range(channel_num):
+            tmp_dict.update({str(i): np.mean(mask[:,:,:,i]) == 0})
+        pruned_dict.update({layer: tmp_dict})
+    
+    #=========================#
+    #  Build Similarity_dict  #
+    #=========================#
+    print('Calculating Cosine Similarities ...')
+    similarity_dict = {}
+    layer_similarities_dict = {}
+    iter = 0
+    for layer_iter, layer in enumerate(sorted_layer):
+        # Skip Specific Layers
+        if layer in skip_layers:
+            continue
+        else:
+            print(layer, end=" ")
+            tStart = time.time()
+        
+        # Current Layer
+        weight = all_weight[layer]
+        mask = all_mask[layer]
+        
+        # past layer
+        past_layer = sorted_layer[layer_iter-1]
+        past_weight = all_weight[past_layer]
+        past_mask = all_mask[past_layer]
+        
+        # next layer
+        if layer != sorted_layer[-1]:
+            next_layer = sorted_layer[layer_iter+1]
+            next_weight = all_weight[next_layer]
+            next_mask = all_mask[next_layer]
+        
+        # (Option) Beta
+        if is_beta:
+            beta = all_beta[layer]
+        
+        # Calculate Cosine Similarities
+        # Depth
+        depth = np.shape(weight)[2] # Default is the Channel Pruning
+        if filter or filter_and_channel: # For Filter Pruning
+            depth = np.shape(past_weight)[3]
+        
+        # Each Depth
+        depth_i_iter = 0
+        for depth_i in range(depth):
+            depth_j_iter = 0
+            for depth_j in range(depth_i+1, depth):
+                # If the depth_i or depth_j has been pruned, we don't calculate its angle to others
+                # By doing so, we will not prune the kernel which has been pruned before.
+                if filter:
+                    is_depth_i_pruned = np.sum(past_mask[:, :, :, depth_i]) == 0
+                    is_depth_j_pruned = np.sum(past_mask[:, :, :, depth_j]) == 0
+                else:
+                    is_depth_i_pruned = np.sum(mask[:, :, depth_i, :]) == 0
+                    is_depth_j_pruned = np.sum(mask[:, :, depth_j, :]) == 0
+                    
+                if not is_depth_i_pruned and not is_depth_j_pruned:
+                    # Channel Similarity (Default)
+                    # Vector
+                    x = weight[:, :, depth_i, :] * mask[:, :, depth_i, :]
+                    y = weight[:, :, depth_j, :] * mask[:, :, depth_j, :]
+                    x = np.reshape(x, [np.size(x)])
+                    y = np.reshape(y, [np.size(y)])
+                    
+                    # Cosine Similarity
+                    if np.sum(np.square(x))==0:
+                        similarity = 0.0
+                        print('\033[0;33mWarning\033[0m: Origin Point in {}, {}' .format(layer, 'depth'+str(i)))
+                    elif np.sum(np.square(y))==0:
+                        similarity = 0.0
+                        print('\033[0;33mWarning\033[0m: Origin Point in {}, {}' .format(layer, 'depth'+str(i)))
+                    else:
+                        similarity = np.abs(np.sum(x*y)/(np.sqrt(np.sum(np.square(x)))*np.sqrt(np.sum(np.square(y)))))
+                    
+                    assert np.abs(similarity) <= 1.0, '|Similarity| <= 1.0'
+                    
+                    # Filter Similarity
+                    if filter or filter_and_channel:
+                        # Vector
+                        past_x = past_weight[:, :, :, depth_i] * past_mask[:, :, :, depth_i]
+                        past_y = past_weight[:, :, :, depth_j] * past_mask[:, :, :, depth_j]
+                        past_x = np.reshape(past_x, [np.size(past_x)])
+                        past_y = np.reshape(past_y, [np.size(past_y)])
+                        
+                        # Cosine Similarity
+                        if np.sum(np.square(past_x))==0:
+                            past_similarity = 0.0
+                            print('\033[0;33mWarning\033[0m: Origin Point in {}, {}' .format(layer, 'depth'+str(i)))
+                        elif np.sum(np.square(past_y))==0:
+                            past_similarity = 0.0
+                            print('\033[0;33mWarning\033[0m: Origin Point in {}, {}' .format(layer, 'depth'+str(i)))
+                        else:
+                            past_similarity = np.abs(np.sum(past_x*past_y)/(np.sqrt(np.sum(np.square(past_x)))*np.sqrt(np.sum(np.square(past_y)))))
+                    
+                        assert np.abs(past_similarity) <= 1.0, '|Similarity| <= 1.0'
+                        
+                    if filter:
+                        similarity = past_similarity
+                    elif filter_and_channel:
+                        similarity = similarity + past_similarity
+                        
+                    # (Option) Beta
+                    if is_beta and (np.abs(beta[depth_i]) < beta_threshold or np.abs(beta[depth_j]) < beta_threshold):
+                        similarity = similarity * 1.5
+                    
+                    # [Warning] Fixed Point similarity (Something Wrong without This Step!)
+                    similarity = int(similarity * 1e8)
+                    
+                    # similarity_dict
+                    if bool(similarity_dict.get(str(similarity))):
+                        number = len(similarity_dict[str(similarity)])
+                        similarity_dict[str(similarity)].update({
+                            str(number):{
+                                'past_layer': past_layer, 
+                                'layer': layer, 
+                                'depth_i': depth_i, 
+                                'depth_j': depth_j,
+                                'pruned': False}})
+                    else:
+                        similarity_dict.update({str(similarity): {
+                            '0': {
+                                'past_layer': past_layer, 
+                                'layer': layer, 
+                                'depth_i': depth_i, 
+                                'depth_j': depth_j,
+                                'pruned': False}}})
+                                
+                    # Depth_i Similarity
+                    if depth_j_iter == 0:
+                        depth_i_similarities = np.array([similarity])
+                    else:
+                        depth_i_similarities = np.concatenate([depth_i_similarities, np.array([similarity])])
+                    depth_j_iter = depth_j_iter + 1
+            
+            # Layer Similarity
+            if depth_j_iter != 0:
+                if depth_i_iter == 0:
+                    layer_similarities = depth_i_similarities
+                else:
+                    layer_similarities = np.concatenate([layer_similarities, depth_i_similarities])
+                depth_i_iter = depth_i_iter + 1
+        
+        # Total Similarity
+        if depth_i_iter != 0:
+            layer_similarities_dict.update({layer: layer_similarities})
+            if iter == 0:
+                total_similarities = layer_similarities
+            else:
+                total_similarities = np.concatenate([total_similarities, layer_similarities])
+            iter = iter + 1
+            
+        print(len(layer_similarities), end=" ")
+        tEnd = time.time()
+        print("(cost %f seconds)" %(tEnd - tStart))
+    
+    #===========================#
+    #  Start Pruning Per Layer  #
+    #===========================#
+    pruned_weights_info_ = copy.deepcopy(pruned_weights_info)
+    while(1):
+        pruned_weights_info = copy.deepcopy(pruned_weights_info_)
+        t = PrettyTable(['Magnitude', 'Layer', 'Filter', 'Computation'])
+        t.align = 'l'
+        
+        # Copy Dictionary
+        all_weight_ = copy.deepcopy(all_weight)
+        all_mask_ = copy.deepcopy(all_mask)
+        all_output_shape_ = copy.deepcopy(all_output_shape)
+        similarity_dict_ = copy.deepcopy(similarity_dict)
+        layer_similarities_dict_ = copy.deepcopy(layer_similarities_dict)
+        pruned_dict_ = copy.deepcopy(pruned_dict)
+        
+        # Each Layer
+        for iter in range(len(sorted_layer)):
+            if is_entire_model:
+                pruning_iter = iter
+            # Current Layer
+            layer = sorted_layer[pruning_iter]
+            
+            if layer in skip_layers:
+                print("\033[0;33mWARNING\033[0m %s is skipped!" %(layer))
+                if is_entire_model:
+                    is_skip = False
+                    continue
+                else:
+                    is_skip = True
+                    return pruned_weights_info, is_skip
+            else:
+                is_skip = False
+            
+            weight = all_weight_[layer]
+            mask = all_mask_[layer]
+            output_shape = all_output_shape_[layer]
+            similarities = np.array(layer_similarities_dict_[layer])
+            
+            # Next layer
+            next_layer = sorted_layer[pruning_iter+1]
+            next_weight = all_weight_[next_layer]
+            next_mask = all_mask_[next_layer]
+            next_output_shape = all_output_shape_[next_layer]
+            
+            # Check if there is no filter can be pruned in the current layer
+            filter_num = np.shape(weight)[3]
+            if int(filter_num * pruning_filter_propotion)==0 or len(similarities) == 0:
+                print(filter_num, int(filter_num * pruning_filter_propotion))
+                #print("{} -> {}" .format(layer, int(filter * pruning_filter_propotion)))
+                continue
+            
+            pruned_filter_num = 0
+            for similarity_iter, similarity in enumerate(similarities):
+                for _, index in enumerate(magnitude_dict_[str(magnitude)].keys()):
+                    if magnitude_dict_[str(magnitude)][index]['pruned']:
+                        continue
+                    # filter
+                    filter_i = magnitude_dict_[str(magnitude)][index]['filter_i']
+                    is_filter_i_pruned = pruned_dict_[layer][str(filter_i)]
+                    
+                    # Detemine which channel to be pruned
+                    if not is_filter_i_pruned:
+                        #print(magnitude)
+                        magnitude_dict_[str(magnitude)][index].update({'pruned': True})
+                        pruned_filter = filter_i
+                        
+                        # Assign Zero to mask
+                        pruned_dict_[layer].update({str(pruned_filter): True})
+                        #print(pruned_filter)
+                        mask[:, :, :, pruned_filter] = 0
+                        next_mask[:, :, pruned_filter, :] = 0
+                        
+                        # Compute Reduced Computation
+                        computation = 0
+                        # Current Layer
+                        # Remove the current pruned mask (for computing computation)
+                        #--------------------------------------------------------
+                        current_unpruned_mask = mask
+                        current_filter = np.shape(mask)[3]
+                        current_channel = np.shape(mask)[2]
+                        current_pruned_filters = []
+                        current_pruned_channels = []
+                        # (filter)
+                        for i in range(current_filter):
+                            if np.sum(mask[:, :, :, i]) == 0:
+                                current_pruned_filters = np.append(current_pruned_filters, [i])
+                        current_unpruned_mask = np.delete(current_unpruned_mask, current_pruned_filters, axis = 3)
+                        # (channel)
+                        for i in range(current_channel):
+                            if np.sum(mask[:, :, i, :]) == 0:
+                                current_pruned_channels = np.append(current_pruned_channels, [i])
+                        current_unpruned_mask = np.delete(current_unpruned_mask, current_pruned_channels, axis = 2)
+                        #--------------------------------------------------------
+                        current_weight_shape = np.shape(current_unpruned_mask)
+                        computation = computation + current_weight_shape[0] * current_weight_shape[1] * current_weight_shape[2] * output_shape[2] * output_shape[3]
+                        # Next Layer
+                        # Remove the next pruned mask (for computing computation)
+                        #-----------------------------------------------------------
+                        next_unpruned_mask = next_mask
+                        next_filter = np.shape(next_mask)[3]
+                        next_channel = np.shape(next_mask)[2]
+                        next_pruned_filters = []
+                        next_pruned_channels = []
+                        # (filter)
+                        for i in range(next_filter):
+                            if np.sum(next_mask[:, :, :, i]) == 0:
+                                next_pruned_filters = np.append(next_pruned_filters, [i])
+                        next_unpruned_mask = np.delete(next_unpruned_mask, next_pruned_filters, axis = 3)
+                        # (channel)
+                        for i in range(next_channel):
+                            if np.sum(next_mask[:, :, i, :]) == 0:
+                                next_pruned_channels = np.append(next_pruned_channels, [i])
+                        next_unpruned_mask = np.delete(next_unpruned_mask, next_pruned_channels, axis = 2)
+                        #-----------------------------------------------------------
+                        next_weight_shape = np.shape(next_unpruned_mask)
+                        computation = computation + next_weight_shape[0] * next_weight_shape[1] * next_weight_shape[3] * next_output_shape[2] * next_output_shape[3]
+                        
+                        # Update List: pruned_weights_info
+                        info = {layer: {'channel': pruned_filter}, next_layer: {'depth': pruned_filter}, 'computation': computation}
+                        pruned_weights_info.append(info)
+                        t.add_row([magnitude*1e-8, layer, 'filter' + str(pruned_filter), computation])
+                        
+                        pruned_filter_num = pruned_filter_num + 1
+                    break
+                if pruned_filter_num == int(filter * pruning_filter_propotion) or (len(magnitudes) - pruned_filter_num) == 1:
+                    #print("{} -> {}" .format(layer, pruned_filter_num))
+                    break
+            if not is_entire_model:
+                break
+        
+        # -- Exact Pruned Model Size --
+        if not pruning_propotion == 1:
+            # after_prune_weights_size
+            after_prune_weights_size = 0
+            for layer_iter, layer in enumerate(sorted_layer):
+                after_prune_weights_size += np.sum(all_mask_[layer])
+            print("({} / {})" .format((before_prune_weights_size-after_prune_weights_size)/original_size, pruning_propotion))
+            if abs((before_prune_weights_size-after_prune_weights_size)/original_size - pruning_propotion) <= 0.02:
+                break
+            elif (before_prune_weights_size-after_prune_weights_size)/original_size <= pruning_propotion:
+                pruning_filter_propotion = pruning_filter_propotion + 0.01
+                
+            elif (before_prune_weights_size-after_prune_weights_size)/original_size > pruning_propotion:
+                pruning_filter_propotion = pruning_filter_propotion - 0.01
+        
+        if pruning_propotion == 1:
+            break
+    
+    #========================================#
+    #  Build Connection Tree & Similar Depth #
+    #========================================#
+    print('Building Connection Tree ...')
+    similarity_dict_ = copy.deepcopy(similarity_dict)
+    connection = {}
+    similar_depth = {}
+    pruned_size = 0
+    pruned_similarity_num = 0
+    
+    if pruning_propotion == 1:
+        estimate_propotion = 1
+    else:
+        estimate_propotion = 0.8
+        
+    for similarity_iter, similarity in enumerate(sorted_similarities):
+        pruned_similarity_num = pruned_similarity_num + 1
+        for _, index in enumerate(similarity_dict_[str(similarity)].keys()):
+            if similarity_dict_[str(similarity)][index]['pruned']:
+                continue
+            is_pruned_size_change = False
+            similarity_dict_[str(similarity)][index].update({'pruned': True})
+            
+            # past layer
+            past_layer = similarity_dict_[str(similarity)][index]['past_layer']
+            past_mask = all_mask[past_layer]
+            
+            # current layer
+            layer = similarity_dict_[str(similarity)][index]['layer']
+            mask = all_mask[layer]
+            
+            # Depth
+            depth_i = similarity_dict_[str(similarity)][index]['depth_i']
+            depth_j = similarity_dict_[str(similarity)][index]['depth_j']
+            
+            layer_ = layer if not filter else past_layer # for switch filter pruning & channel pruning
+            
+            if all_be_pruned:
+                pruned_size = pruned_size + reduce(lambda x, y: x*y, np.shape(past_mask[:, :, :, depth_i]))
+                pruned_size = pruned_size + reduce(lambda x, y: x*y, np.shape(mask[:, :, depth_i, :]))
+                pruned_size = pruned_size + reduce(lambda x, y: x*y, np.shape(past_mask[:, :, :, depth_j]))
+                pruned_size = pruned_size + reduce(lambda x, y: x*y, np.shape(mask[:, :, depth_j, :]))
+                is_pruned_size_change = True
+            else:
+                # Connection & Similar Depth
+                if not bool(connection.get(layer_)):
+                    is_depth_i_in_connection = False
+                    is_depth_j_in_connection = False
+                    connection.update({layer_: {str(depth_i): 1, str(depth_j): 1}})
+                    similar_depth.update({layer_: {str(depth_i): [str(depth_j)], str(depth_j): [str(depth_i)]}})
+                else:
+                    is_depth_i_in_connection = bool(connection[layer_].get(str(depth_i)))
+                    is_depth_j_in_connection = bool(connection[layer_].get(str(depth_j)))
+                    
+                    # Connection
+                    if not is_depth_i_in_connection:
+                        connection[layer_].update({str(depth_i): 1})
+                    else:
+                        connection[layer_].update({str(depth_i): connection[layer_][str(depth_i)]+1})
+                    if not is_depth_j_in_connection:
+                        connection[layer_].update({str(depth_j): 1})
+                    else:
+                        connection[layer_].update({str(depth_j): connection[layer_][str(depth_j)]+1})
+                    
+                    # Similar Depth
+                    if not is_depth_i_in_connection and not is_depth_j_in_connection:
+                        similar_depth[layer_].update({str(depth_i): [str(depth_j)], str(depth_j): [str(depth_i)]})
+                    elif not is_depth_i_in_connection and is_depth_j_in_connection:
+                        similar_depth[layer_].update({str(depth_i): [str(depth_j)]})
+                        similar_depth[layer_][str(depth_j)].append(str(depth_i))
+                    elif is_depth_i_in_connection and not is_depth_j_in_connection:
+                        similar_depth[layer_][str(depth_i)].append(str(depth_j))
+                        similar_depth[layer_].update({str(depth_j): [str(depth_i)]})
+                    else:
+                        similar_depth[layer_][str(depth_i)].append(str(depth_j))
+                        similar_depth[layer_][str(depth_j)].append(str(depth_i))
+                        
+                # Estimated Prune Size
+                if not is_depth_i_in_connection or not is_depth_j_in_connection:
+                    is_pruned_size_change = True
+                    if not is_denseNet:
+                        pruned_size = pruned_size + reduce(lambda x, y: x*y, np.shape(past_mask[:, :, :, depth_i]))
+                        pruned_size = pruned_size + reduce(lambda x, y: x*y, np.shape(mask[:, :, depth_i, :]))
+                    else:
+                        if filter:
+                            pruned_size = pruned_size + reduce(lambda x, y: x*y, np.shape(past_mask[:, :, :, depth_i]))
+                            # Pruned the Children Channel
+                            if bool(all_children.get(layer_)):
+                                for _, child in enumerate(all_children[layer_].keys()):
+                                    child_mask = all_mask[child]
+                                    pruned_size = pruned_size + reduce(lambda x, y: x*y, np.shape(child_mask[:, :, 0, :]))
+        
+        # Exact Pruned Size
+        if pruned_size >= original_size * pruning_propotion * estimate_propotion and is_pruned_size_change:
+            # Build the connection_num directory
+            if cut_connection_less_to_more:
+                similarity_dict_ = copy.deepcopy(similarity_dict)
+                pruned_dict_ = copy.deepcopy(pruned_dict)
+                connection_similarity_dict = {} # Record the similarities in each connection
+                for pruned_similarity_iter in range(pruned_similarity_num):
+                    similarity = sorted_similarities[pruned_similarity_iter]
+                    for _, index in enumerate(similarity_dict_[str(similarity)].keys()):
+                        if similarity_dict_[str(similarity)][index]['pruned']:
+                            continue
+                        similarity_dict_[str(similarity)][index].update({'pruned': True})
+                        
+                        # current layer
+                        layer = similarity_dict_[str(similarity)][index]['layer']
+                        
+                        # past layer
+                        past_layer = similarity_dict_[str(similarity)][index]['past_layer']
+                        
+                        layer_ = layer if not filter else past_layer # for switch filter pruning & channel pruning
+                        
+                        # depth
+                        depth_i = similarity_dict_[str(similarity)][index]['depth_i']
+                        depth_j = similarity_dict_[str(similarity)][index]['depth_j']
+                        connection_i = connection[layer_][str(depth_i)]
+                        connection_j = connection[layer_][str(depth_j)]
+                        max_connection = max(connection_i, connection_j)
+                        
+                        # connection_similarity_dict
+                        if not bool(connection_similarity_dict.get(str(max_connection))):
+                            connection_similarity_dict.update({str(max_connection): [similarity]})
+                        else:
+                            similarity_list = connection_similarity_dict[str(max_connection)]
+                            similarity_list.append(similarity)
+                            similarity_list = sorted(similarity_list)[::-1]
+                            connection_similarity_dict.update({str(max_connection): similarity_list})
+                
+                # similarities_to_be_pruned : 
+                # Record the similarities to be pruned in the order of connection number
+                similarities_to_be_pruned = []
+                keys = [int(c) for c in connection_similarity_dict.keys()]
+                sorted_connection_num = sorted(keys)
+                for c in sorted_connection_num:
+                    for s in connection_similarity_dict[str(c)]:
+                        similarities_to_be_pruned.append(s)
+            
+            # Normal Way Pruning
+            similarity_dict_ = copy.deepcopy(similarity_dict)
+            pruned_dict_ = copy.deepcopy(pruned_dict)
+            all_mask_ = copy.deepcopy(all_mask)
+            depth_can_not_be_pruned = {}
+            for layer_iter, layer in enumerate(sorted_layer):
+                depth_can_not_be_pruned.update({layer: []})
+            for pruned_similarity_iter in range(pruned_similarity_num):
+                # Similarity Selection
+                if cut_connection_less_to_more:
+                    similarity = similarities_to_be_pruned[pruned_similarity_iter]
+                else:
+                    similarity = sorted_similarities[pruned_similarity_iter]
+                
+                for _, index in enumerate(similarity_dict_[str(similarity)].keys()):
+                    if similarity_dict_[str(similarity)][index]['pruned']:
+                        continue
+                    similarity_dict_[str(similarity)][index].update({'pruned': True})
+                    
+                    # past layer
+                    past_layer = similarity_dict_[str(similarity)][index]['past_layer']
+                    past_mask  = all_mask_[past_layer]
+                    past_weight = all_weight[past_layer]
+                    past_output_shape = all_output_shape[past_layer]
+                    
+                    # current layer
+                    layer = similarity_dict_[str(similarity)][index]['layer']
+                    mask  = all_mask_[layer]
+                    weight = all_weight[layer]
+                    output_shape = all_output_shape[layer]
+                                        
+                    layer_ = layer if not filter else past_layer # for switch filter pruning & channel pruning
+                    
+                    # (Option) Beta
+                    if is_beta:
+                        beta = all_beta[layer]
+                    
+                    # depth
+                    depth_i = similarity_dict_[str(similarity)][index]['depth_i']
+                    depth_j = similarity_dict_[str(similarity)][index]['depth_j']
+                    is_depth_i_pruned = pruned_dict_[past_layer][str(depth_i)]
+                    is_depth_j_pruned = pruned_dict_[past_layer][str(depth_j)]
+                    
+                    # Detemine which channel to be pruned
+                    if all_be_pruned:
+                        # Assign Zero to mask
+                        pruned_dict_[past_layer].update({str(depth_i): True})
+                        past_mask[:, :, :, depth_i] = 0
+                        mask[:, :, depth_i, :] = 0
+                        pruned_dict_[past_layer].update({str(depth_j): True})
+                        past_mask[:, :, :, depth_j] = 0
+                        mask[:, :, depth_j, :] = 0
+                    else:
+                        if not is_depth_i_pruned and not is_depth_j_pruned:
+                            if not discard_feature and depth_j in depth_can_not_be_pruned[layer_]:
+                                pruned_depth = depth_i
+                            elif not discard_feature and depth_i in depth_can_not_be_pruned[layer_]:
+                                pruned_depth = depth_j
+                            else:
+                                # -- Compare Connection --
+                                if is_connection and connection[layer_][str(depth_i)] < connection[layer_][str(depth_j)]: # Prune depth_i
+                                    #if not discard_feature and depth_i in depth_can_not_be_pruned[layer_]: # depth_i can not be pruned
+                                    #    break # break for depth_j has more connection, and we don't want to prune it.
+                                    pruned_depth = depth_i
+                                elif is_connection and connection[layer_][str(depth_i)] > connection[layer_][str(depth_j)]: # Prune depth_j
+                                    #if not discard_feature and depth_j in depth_can_not_be_pruned[layer_]: # depth_j can not be pruned
+                                    #    break # break for depth_i has more connection, and we don't want to prune it.
+                                    pruned_depth = depth_j
+                                else:
+                                    # -- Beta -- 
+                                    if is_beta and np.abs(beta[depth_i]) < beta_threshold and np.abs(beta[depth_j]) >= beta_threshold:
+                                        pruned_depth = depth_i
+                                    elif is_beta and np.abs(beta[depth_i]) >= beta_threshold and np.abs(beta[depth_j]) < beta_threshold:
+                                        pruned_depth = depth_j
+                                    else:   
+                                        # -- Magnitude --
+                                        sum_of_past_layer_filter_i = np.sum(np.abs(past_weight[:, :, :, depth_i] * past_mask[:, :, :, depth_i]))
+                                        sum_of_past_layer_filter_j = np.sum(np.abs(past_weight[:, :, :, depth_j] * past_mask[:, :, :, depth_j]))
+                                        sum_of_depth_i = np.sum(np.abs(weight[:, :, depth_i, :] * mask[:, :, depth_i, :]))
+                                        sum_of_depth_j = np.sum(np.abs(weight[:, :, depth_j, :] * mask[:, :, depth_j, :]))
+                                        sum_of_pruned_depth_i = sum_of_past_layer_filter_i + sum_of_depth_i
+                                        sum_of_pruned_depth_j = sum_of_past_layer_filter_j + sum_of_depth_j
+                                        if sum_of_pruned_depth_i <= sum_of_pruned_depth_j:
+                                            pruned_depth = depth_i
+                                        else:
+                                            pruned_depth = depth_j
+                            
+                            # Update Dict: depth_can_not_be_pruned
+                            if not discard_feature:
+                                unpruned_similar_depth = [] # Check the simlilar depths of the pruned_depth is unpruned or pruned
+                                for depth in similar_depth[layer_][str(pruned_depth)]:
+                                    if not pruned_dict_[past_layer][depth]:
+                                        unpruned_similar_depth.append(depth) # The depth that are not pruned yet
+                                if len(unpruned_similar_depth) == 1: # If only one depth is unpruned, we set this depth can not be pruned.
+                                    depth_can_not_be_pruned[layer_].append(unpruned_similar_depth[0])
+                                    #print("{} -> {}" .format(layer, depth_can_not_be_pruned[layer]))
+                            
+                            # Assign Zero to mask
+                            pruned_dict_[past_layer].update({str(pruned_depth): True})
+                            if not is_denseNet:
+                                past_mask[:, :, :, pruned_depth] = 0
+                                mask[:, :, pruned_depth, :] = 0
+                            else:
+                                if filter:
+                                    past_mask[:, :, :, pruned_depth] = 0
+                                    # Pruned the Children Channel
+                                    if bool(all_children.get(past_layer)):
+                                        for _, child in enumerate(all_children[past_layer].keys()):
+                                            child_mask = all_mask_[child]
+                                            interval = all_children[past_layer][child]
+                                            child_mask[:, :, interval + pruned_depth, :] = 0
+            # Calculate pruned_size
+            # after_prune_weights_size
+            after_prune_weights_size = 0
+            for layer_iter, layer in enumerate(sorted_layer):
+                after_prune_weights_size += np.sum(all_mask_[layer])
+            #print("%f, %f" %(before_prune_weights_size-after_prune_weights_size, original_size*pruning_propotion))
+            if (before_prune_weights_size-after_prune_weights_size) >= original_size*pruning_propotion:
+                print("({} / {})" .format(before_prune_weights_size-after_prune_weights_size, original_size * pruning_propotion))
+                break
+            else:
+                print("({} / {})" .format(before_prune_weights_size-after_prune_weights_size, original_size * pruning_propotion))
+                if original_size - (before_prune_weights_size-after_prune_weights_size) > 20000:
+                    estimate_propotion = estimate_propotion + 0.03
+    
+    #==============================#
+    #   Connection_num Directory   #
+    #==============================#
+    # Build the connection_num directory
+    if cut_connection_less_to_more:
+        similarity_dict_ = copy.deepcopy(similarity_dict)
+        pruned_dict_ = copy.deepcopy(pruned_dict)
+        connection_similarity_dict = {} # Record the similarities in each connection
+        for pruned_similarity_iter in range(pruned_similarity_num):
+            similarity = sorted_similarities[pruned_similarity_iter]
+            for _, index in enumerate(similarity_dict_[str(similarity)].keys()):
+                if similarity_dict_[str(similarity)][index]['pruned']:
+                    continue
+                similarity_dict_[str(similarity)][index].update({'pruned': True})
+                
+                # current layer
+                layer = similarity_dict_[str(similarity)][index]['layer']
+                
+                # past layer
+                past_layer = similarity_dict_[str(similarity)][index]['past_layer']
+                
+                layer_ = layer if not filter else past_layer # for switch filter pruning & channel pruning
+                
+                # depth
+                depth_i = similarity_dict_[str(similarity)][index]['depth_i']
+                depth_j = similarity_dict_[str(similarity)][index]['depth_j']
+                connection_i = connection[layer_][str(depth_i)]
+                connection_j = connection[layer_][str(depth_j)]
+                max_connection = max(connection_i, connection_j)
+                
+                if not bool(connection_similarity_dict.get(str(max_connection))):
+                    connection_similarity_dict.update({str(max_connection): [similarity]})
+                else:
+                    similarity_list = connection_similarity_dict[str(max_connection)]
+                    similarity_list.append(similarity)
+                    similarity_list = sorted(similarity_list)[::-1]
+                    connection_similarity_dict.update({str(max_connection): similarity_list})
+                    
+        similarities_to_be_pruned = []
+        keys = [int(c) for c in connection_similarity_dict.keys()]
+        sorted_connection_num = sorted(keys)
+        
+        for c in sorted_connection_num:
+            for s in connection_similarity_dict[str(c)]:
+                similarities_to_be_pruned.append(s)
+    
+    #=================#
+    #  Prune Weights  #
+    #=================#
+    t = PrettyTable(['Similarity', 'Layer', 'Filter/Channel', 'Computation'])
+    t.align = 'l'
+    pruned_num = 0
+    depth_can_not_be_pruned = {}
+    for layer_iter, layer in enumerate(sorted_layer):
+        depth_can_not_be_pruned.update({layer: []})
+    for pruned_similarity_iter in range(pruned_similarity_num):
+        # similarity
+        if cut_connection_less_to_more:
+            similarity = similarities_to_be_pruned[pruned_similarity_iter]
+        else:
+            similarity = sorted_similarities[pruned_similarity_iter]
+        
+        for _, index in enumerate(similarity_dict[str(similarity)].keys()):
+            if similarity_dict[str(similarity)][index]['pruned']:
+                continue
+            # past layer
+            past_layer = similarity_dict[str(similarity)][index]['past_layer']
+            past_mask = all_mask[past_layer]    
+            past_weight = all_weight[past_layer]
+            past_output_shape = all_output_shape[past_layer]
+            
+            # current layer
+            layer = similarity_dict[str(similarity)][index]['layer']
+            mask = all_mask[layer]
+            weight = all_weight[layer]
+            output_shape = all_output_shape[layer]
+            
+            # (Option) Beta
+            if is_beta:
+                beta = all_beta[layer]
+            
+            layer_ = layer if not filter else past_layer # for switch filter pruning & channel pruning
+            
+            # depth
+            depth_i = similarity_dict[str(similarity)][index]['depth_i']
+            depth_j = similarity_dict[str(similarity)][index]['depth_j']
+            is_depth_i_pruned = pruned_dict[past_layer][str(depth_i)]
+            is_depth_j_pruned = pruned_dict[past_layer][str(depth_j)]
+            
+            # Detemine which channel to be pruned
+            if all_be_pruned:
+                for pruned_depth in [depth_i, depth_j]:
+                    # Assign Zero to mask
+                    pruned_dict[past_layer].update({str(pruned_depth): True})
+                    past_mask[:, :, :, pruned_depth] = 0
+                    mask[:, :, pruned_depth, :] = 0
+                    
+                    # Compute Reduced Computation
+                    computation = 0
+                    # Past Layer
+                    # Remove the past pruned mask (for computing computation)
+                    #--------------------------------------------------------
+                    past_unpruned_mask = past_mask
+                    past_channel_num = np.shape(past_mask)[3]
+                    past_depth = np.shape(past_mask)[2]
+                    past_pruned_channels = []
+                    past_pruned_depth = []
+                    # (channel)
+                    for i in range(past_channel_num):
+                        if np.sum(past_mask[:, :, :, i]) == 0:
+                            past_pruned_channels = np.append(past_pruned_channels, [i])
+                    past_unpruned_mask = np.delete(past_unpruned_mask, past_pruned_channels, axis = 3)
+                    # (depth)
+                    for i in range(past_depth):
+                        if np.sum(past_mask[:, :, i, :]) == 0:
+                            past_pruned_depth = np.append(past_pruned_depth, [i])
+                    past_unpruned_mask = np.delete(past_unpruned_mask, past_pruned_depth, axis = 2)
+                    #--------------------------------------------------------
+                    past_weight_shape = np.shape(past_unpruned_mask)
+                    computation = computation + past_weight_shape[0] * past_weight_shape[1] * past_weight_shape[2] * past_output_shape[2] * past_output_shape[3]
+                    # Current Layer
+                    # Remove the current pruned mask (for computing computation)
+                    #-----------------------------------------------------------
+                    current_unpruned_mask = mask
+                    current_channel_num = np.shape(mask)[3]
+                    current_depth = np.shape(mask)[2]
+                    current_pruned_channels = []
+                    current_pruned_depth = []
+                    # (channel)
+                    for i in range(current_channel_num):
+                        if np.sum(mask[:, :, :, i]) == 0:
+                            current_pruned_channels = np.append(current_pruned_channels, [i])
+                    current_unpruned_mask = np.delete(current_unpruned_mask, current_pruned_channels, axis = 3)
+                    # (depth)
+                    for i in range(current_depth):
+                        if np.sum(mask[:, :, i, :]) == 0:
+                            current_pruned_depth = np.append(current_pruned_depth, [i])
+                    current_unpruned_mask = np.delete(current_unpruned_mask, current_pruned_depth, axis = 2)
+                    #-----------------------------------------------------------
+                    weight_shape = np.shape(current_unpruned_mask)
+                    computation = computation + weight_shape[0] * weight_shape[1] * weight_shape[3] * output_shape[2] * output_shape[3]
+                    
+                    # Update List: pruned_weights_info
+                    info = {past_layer: {'channel': pruned_depth}, layer: {'depth': pruned_depth}, 'computation': computation}
+                    pruned_weights_info.append(info)
+                    t.add_row([similarity*1e-8, layer, 'depth' + str(pruned_depth), computation])
+            else:
+                if not is_depth_i_pruned and not is_depth_j_pruned:
+                    similarity_dict[str(similarity)][index].update({'pruned': True})
+                    # Get Pruned Depth
+                    # -- Can Not be Pruned --
+                    if not discard_feature and depth_j in depth_can_not_be_pruned[layer_]:
+                        pruned_depth = depth_i
+                    elif not discard_feature and depth_i in depth_can_not_be_pruned[layer]:
+                        pruned_depth = depth_j
+                    else:
+                        # -- Compare Connection --
+                        if is_connection and connection[layer_][str(depth_i)] < connection[layer_][str(depth_j)]:
+                            #if not discard_feature and depth_i in depth_can_not_be_pruned[layer_]:
+                            #    break
+                            pruned_depth = depth_i
+                        elif is_connection and connection[layer_][str(depth_i)] > connection[layer_][str(depth_j)]:
+                            #if not discard_feature and depth_j in depth_can_not_be_pruned[layer_]:
+                            #    break
+                            pruned_depth = depth_j
+                        else:
+                            # -- Beta -- 
+                            if is_beta and np.abs(beta[depth_i]) < beta_threshold and np.abs(beta[depth_j]) >= beta_threshold:
+                                pruned_depth = depth_i
+                            elif is_beta and np.abs(beta[depth_i]) >= beta_threshold and np.abs(beta[depth_j]) < beta_threshold:
+                                pruned_depth = depth_j
+                            else:   
+                                # -- Magnitude --
+                                sum_of_past_layer_filter_i = np.sum(np.abs(past_weight[:, :, :, depth_i] * past_mask[:, :, :, depth_i]))
+                                sum_of_past_layer_filter_j = np.sum(np.abs(past_weight[:, :, :, depth_j] * past_mask[:, :, :, depth_j]))
+                                sum_of_depth_i = np.sum(np.abs(weight[:, :, depth_i, :] * mask[:, :, depth_i, :]))
+                                sum_of_depth_j = np.sum(np.abs(weight[:, :, depth_j, :] * mask[:, :, depth_j, :]))
+                                sum_of_pruned_depth_i = sum_of_past_layer_filter_i + sum_of_depth_i
+                                sum_of_pruned_depth_j = sum_of_past_layer_filter_j + sum_of_depth_j
+                                
+                                if sum_of_pruned_depth_i <= sum_of_pruned_depth_j:
+                                    pruned_depth = depth_i
+                                else:
+                                    pruned_depth = depth_j
+                    
+                    # Update Dict: depth_can_not_be_pruned
+                    if not discard_feature:
+                        unpruned_similar_depth = []
+                        for depth in similar_depth[layer_][str(pruned_depth)]:
+                            if not pruned_dict[past_layer][depth]:
                                 unpruned_similar_depth.append(depth)
                         if len(unpruned_similar_depth) == 1:
                             depth_can_not_be_pruned[layer_].append(unpruned_similar_depth[0])
@@ -8283,6 +9932,7 @@ def filter_prune_by_similarity( # Integration Version of All the Following Filte
 def filter_prune_by_magnitude( # Integration Version of All the Following Filter Pruning Methods
     prune_info_dict,
     pruning_propotion,
+    pruning_threshold,
     pruned_weights_info,
     pruning_iter,
     sess,
@@ -8294,6 +9944,11 @@ def filter_prune_by_magnitude( # Integration Version of All the Following Filter
     discard_feature = False,
     all_be_pruned = False,
     cut_connection_less_to_more = False,
+    is_entire_model = False,
+    is_similarity = False,
+    is_filter = False,
+    filter_and_channel = False,
+    random_filter = False
     ):
     #================#
     #  Sorted Layer  #
@@ -8432,112 +10087,384 @@ def filter_prune_by_magnitude( # Integration Version of All the Following Filter
         tEnd = time.time()
         print("(cost %f seconds)" %(tEnd - tStart))
     
-    #======================#
-    #  Retrain Each Layer  #
-    #======================#
-    t = PrettyTable(['Magnitude', 'Layer', 'Filter', 'Computation'])
-    t.align = 'l'
-    # Current Layer
-    layer = sorted_layer[pruning_iter]
-    if layer in skip_layers:
-        is_skip = True
-        print("\033[0;33mWARNING\033[0m %s is skipped!" %(layer))
-        return pruned_weights_info, is_skip
-    else:
-        is_skip = False
-    weight = all_weight[layer]
-    mask = all_mask[layer]
-    output_shape = all_output_shape[layer]
-    magnitudes = layer_magnitudes_dict[layer]
-    # Next layer
-    next_layer = sorted_layer[pruning_iter+1]
-    next_weight = all_weight[next_layer]
-    next_mask = all_mask[next_layer]
-    next_output_shape = all_output_shape[next_layer]
-    # Calculate Sum of Absolute Value
-    filter = np.shape(weight)[3]
-    pruned_filter_num = 0
-    for magnitude_iter, magnitude in enumerate(magnitudes):
-        for _, index in enumerate(magnitude_dict[str(magnitude)].keys()):
-            if magnitude_dict[str(magnitude)][index]['pruned']:
+    #=========================#
+    #  Build similarity_dict  #
+    #=========================#
+    if is_similarity:
+        print('Building similarity_dict ... ')
+        similarity_dict = {}
+        iter = 0
+        for layer_iter, layer in enumerate(sorted_layer):
+            # Skip Specific Layers
+            if layer == sorted_layer[0]:
                 continue
-            # filter
-            filter_i = magnitude_dict[str(magnitude)][index]['filter_i']
-            is_filter_i_pruned = pruned_dict[layer][str(filter_i)]
+            else:
+                print(layer, end=" ")
+                tStart = time.time()
             
-            # Detemine which channel to be pruned
-            if not is_filter_i_pruned:
-                print(magnitude)
-                magnitude_dict[str(magnitude)][index].update({'pruned': True})
-                pruned_filter = filter_i
-                
-                # Assign Zero to mask
-                pruned_dict[layer].update({str(pruned_filter): True})
-                mask[:, :, :, pruned_filter] = 0
-                next_mask[:, :, pruned_filter, :] = 0
-                
-                # Compute Reduced Computation
-                computation = 0
-                # Current Layer
-                # Remove the current pruned mask (for computing computation)
-                #--------------------------------------------------------
-                current_unpruned_mask = mask
-                current_filter = np.shape(mask)[3]
-                current_channel = np.shape(mask)[2]
-                current_pruned_filters = []
-                current_pruned_channels = []
-                # (filter)
-                for i in range(current_filter):
-                    if np.sum(mask[:, :, :, i]) == 0:
-                        current_pruned_filters = np.append(current_pruned_filters, [i])
-                current_unpruned_mask = np.delete(current_unpruned_mask, current_pruned_filters, axis = 3)
-                # (channel)
-                for i in range(current_channel):
-                    if np.sum(mask[:, :, i, :]) == 0:
-                        current_pruned_channels = np.append(current_pruned_channels, [i])
-                current_unpruned_mask = np.delete(current_unpruned_mask, current_pruned_channels, axis = 2)
-                #--------------------------------------------------------
-                current_weight_shape = np.shape(current_unpruned_mask)
-                computation = computation + current_weight_shape[0] * current_weight_shape[1] * current_weight_shape[2] * output_shape[2] * output_shape[3]
-                # Next Layer
-                # Remove the next pruned mask (for computing computation)
-                #-----------------------------------------------------------
-                next_unpruned_mask = next_mask
-                next_filter = np.shape(next_mask)[3]
-                next_channel = np.shape(next_mask)[2]
-                next_pruned_filters = []
-                next_pruned_channels = []
-                # (filter)
-                for i in range(next_filter):
-                    if np.sum(next_mask[:, :, :, i]) == 0:
-                        next_pruned_filters = np.append(next_pruned_filters, [i])
-                next_unpruned_mask = np.delete(next_unpruned_mask, next_pruned_filters, axis = 3)
-                # (channel)
-                for i in range(next_channel):
-                    if np.sum(next_mask[:, :, i, :]) == 0:
-                        next_pruned_channels = np.append(next_pruned_channels, [i])
-                next_unpruned_mask = np.delete(next_unpruned_mask, next_pruned_channels, axis = 2)
-                #-----------------------------------------------------------
-                next_weight_shape = np.shape(next_unpruned_mask)
-                computation = computation + next_weight_shape[0] * next_weight_shape[1] * next_weight_shape[3] * next_output_shape[2] * next_output_shape[3]
-                
-                # Update List: pruned_weights_info
-                info = {layer: {'filter': pruned_filter}, layer: {'channel': pruned_filter}, 'computation': computation}
-                pruned_weights_info.append(info)
-                t.add_row([magnitude*1e-8, layer, 'filter' + str(pruned_filter), computation])
-                
-                pruned_filter_num = pruned_filter_num + 1
-            break
-        if pruned_filter_num == int(filter * pruning_propotion):
-            break
+            # Current Layer
+            weight = all_weight[layer]
+            mask = all_mask[layer]
+            
+            # past layer
+            past_layer = sorted_layer[layer_iter-1]
+            past_weight = all_weight[past_layer]
+            past_mask = all_mask[past_layer]
+            
+            # (Option) Beta
+            if is_beta:
+                beta = all_beta[layer]
+            
+            # Calculate Cosine Similarities
+            depth = np.shape(weight)[2] # Default is the Channel Pruning
+            if is_filter or filter_and_channel: # For Filter Pruning
+                depth = np.shape(past_weight)[3]
+            depth_i_iter = 0
+            for depth_i in range(depth):
+                depth_j_iter = 0
+                for depth_j in range(depth_i+1, depth):
+                    # If the depth_i or depth_j has been pruned, we don't calculate its angle to others
+                    # By doing so, we will not prune the kernel which has been pruned before.
+                    if is_filter:
+                        is_depth_i_pruned = np.sum(past_mask[:, :, :, depth_i]) == 0
+                        is_depth_j_pruned = np.sum(past_mask[:, :, :, depth_j]) == 0
+                    else:
+                        is_depth_i_pruned = np.sum(mask[:, :, depth_i, :]) == 0
+                        is_depth_j_pruned = np.sum(mask[:, :, depth_j, :]) == 0
+                    if not is_depth_i_pruned and not is_depth_j_pruned:
+                        # Channel Similarity (Default)
+                        # Vector
+                        x = weight[:, :, depth_i, :] * mask[:, :, depth_i, :]
+                        y = weight[:, :, depth_j, :] * mask[:, :, depth_j, :]
+                        x = np.reshape(x, [np.size(x)])
+                        y = np.reshape(y, [np.size(y)])
     
+                        # Cosine Similarity
+                        if np.sum(np.square(x))==0:
+                            similarity = 0.0
+                            print('\033[0;33mWarning\033[0m: Origin Point in {}, {}' .format(layer, 'depth'+str(i)))
+                        elif np.sum(np.square(y))==0:
+                            similarity = 0.0
+                            print('\033[0;33mWarning\033[0m: Origin Point in {}, {}' .format(layer, 'depth'+str(i)))
+                        else:
+                            similarity = np.abs(np.sum(x*y)/(np.sqrt(np.sum(np.square(x)))*np.sqrt(np.sum(np.square(y)))))
+                        
+                        assert np.abs(similarity) <= 1.0, '|Similarity| <= 1.0'
+                        
+                        # Filter Similarity
+                        if is_filter or filter_and_channel:
+                            # Vector
+                            past_x = past_weight[:, :, :, depth_i] * past_mask[:, :, :, depth_i]
+                            past_y = past_weight[:, :, :, depth_j] * past_mask[:, :, :, depth_j]
+                            past_x = np.reshape(past_x, [np.size(past_x)])
+                            past_y = np.reshape(past_y, [np.size(past_y)])
+                            
+                            # Cosine Similarity
+                            if np.sum(np.square(past_x))==0:
+                                past_similarity = 0.0
+                                print('\033[0;33mWarning\033[0m: Origin Point in {}, {}' .format(layer, 'depth'+str(i)))
+                            elif np.sum(np.square(past_y))==0:
+                                past_similarity = 0.0
+                                print('\033[0;33mWarning\033[0m: Origin Point in {}, {}' .format(layer, 'depth'+str(i)))
+                            else:
+                                past_similarity = np.abs(np.sum(past_x*past_y)/(np.sqrt(np.sum(np.square(past_x)))*np.sqrt(np.sum(np.square(past_y)))))
+                        
+                            assert np.abs(past_similarity) <= 1.0, '|Similarity| <= 1.0'
+                            
+                        if is_filter:
+                            similarity = past_similarity
+                        elif filter_and_channel:
+                            similarity = similarity + past_similarity
+                            
+                        # (Option) Beta
+                        if is_beta and (np.abs(beta[depth_i]) < beta_threshold or np.abs(beta[depth_j]) < beta_threshold):
+                            similarity = similarity * 1.5
+                        
+                        # [Warning] Fixed Point similarity (Something Wrong without This Step!)
+                        similarity = int(similarity * 1e8)
+    
+                        # similarity_dict
+                        if not bool(similarity_dict.get(layer)):
+                            similarity_dict.update({layer: {str(depth_i):{str(depth_j): similarity}}})
+                            similarity_dict[layer].update({str(depth_j): {str(depth_i): similarity}})
+                        else:
+                            if not bool(similarity_dict[layer].get(str(depth_i))):
+                                similarity_dict[layer].update({str(depth_i): {str(depth_j): similarity}})
+                            else:
+                                similarity_dict[layer][str(depth_i)].update({str(depth_j): similarity})
+                            
+                            if not bool(similarity_dict[layer].get(str(depth_j))):
+                                similarity_dict[layer].update({str(depth_j): {str(depth_i): similarity}})
+                            else:
+                                similarity_dict[layer][str(depth_j)].update({str(depth_i): similarity})
+            tEnd = time.time()
+            print("(cost %f seconds)" %(tEnd - tStart))
+    
+    #====================#
+    #  Prune Each Layer  #
+    #====================#
+    if pruning_propotion == 1:
+        pruning_filter_propotion = 1
+    else:
+        pruning_filter_propotion = pruning_propotion * 0.8  
+    
+    pruned_weights_info_ = copy.deepcopy(pruned_weights_info)
+    while(1):
+        pruned_weights_info = copy.deepcopy(pruned_weights_info_)
+        print(pruning_filter_propotion)
+        t = PrettyTable(['Magnitude', 'Layer', 'Filter', 'Computation'])
+        t.align = 'l'
+        
+        all_weight_ = copy.deepcopy(all_weight)
+        all_mask_ = copy.deepcopy(all_mask)
+        all_output_shape_ = copy.deepcopy(all_output_shape)
+        magnitude_dict_ = copy.deepcopy(magnitude_dict)
+        layer_magnitudes_dict_ = copy.deepcopy(layer_magnitudes_dict)
+        pruned_dict_ = copy.deepcopy(pruned_dict)
+        for iter in range(len(sorted_layer)):
+            if is_entire_model:
+                pruning_iter = iter
+            # Current Layer
+            layer = sorted_layer[pruning_iter]
+            #print(layer)
+            if layer in skip_layers:
+                print("\033[0;33mWARNING\033[0m %s is skipped!" %(layer))
+                if is_entire_model:
+                    is_skip = False
+                    continue
+                else:
+                    is_skip = True
+                    return pruned_weights_info, is_skip
+            else:
+                is_skip = False
+            
+            weight = all_weight_[layer]
+            mask = all_mask_[layer]
+            output_shape = all_output_shape_[layer]
+            magnitudes = np.array(layer_magnitudes_dict_[layer])
+            
+            # Shuffle magnitudes, not sorted
+            if random_filter:
+                np.random.shuffle(magnitudes)
+            
+            # Next layer
+            next_layer = sorted_layer[pruning_iter+1]
+            next_weight = all_weight_[next_layer]
+            next_mask = all_mask_[next_layer]
+            next_output_shape = all_output_shape_[next_layer]
+            
+            # Calculate Sum of Absolute Value
+            filter = np.shape(weight)[3]
+            
+            if int(filter * pruning_filter_propotion)==0 or len(magnitudes) == 1:
+                print(filter, int(filter * pruning_filter_propotion))
+                #print("{} -> {}" .format(layer, int(filter * pruning_filter_propotion)))
+                continue
+            
+            # prune by threshold
+            if pruning_propotion == 1:
+                threshold = pruning_threshold
+                magnitudes = magnitudes[np.where(magnitudes < threshold * 1e8)[0]]
+            
+            pruned_filter_num = 0
+            
+            if is_similarity:
+                alpha = 1.0
+                while(1):
+                    p_value_list = []
+                    p_value_dict = {}
+                    # Find the filter to be pruned
+                    for magnitude_iter, magnitude in enumerate(magnitudes):
+                        for _, index in enumerate(magnitude_dict_[str(magnitude)].keys()):
+                            if magnitude_dict_[str(magnitude)][index]['pruned']:
+                                continue
+                            # filter
+                            filter_i = magnitude_dict_[str(magnitude)][index]['filter_i']
+                            is_filter_i_pruned = pruned_dict_[layer][str(filter_i)]
+                            if not is_filter_i_pruned:
+                                p_value = magnitude
+                                #if filter_i == 23:
+                                #    pdb.set_trace()
+                                #    print('...')
+                                for filter_j in similarity_dict[next_layer][str(filter_i)].keys():
+                                    if not pruned_dict_[layer][str(filter_j)]:
+                                        p_value = p_value - similarity_dict[next_layer][str(filter_i)][filter_j] / alpha
+                                        #print("\033[0;32m%s\033[0m <-> %s : %f" %(filter_i, filter_j, p_value*1e-8))
+                                p_value_list.append(p_value)
+                                p_value_dict.update({str(p_value): {'filter_i': filter_i, 'magnitude': magnitude}})
+                    
+                    p_value_list = sorted(p_value_list)
+                    magnitude = p_value_dict[str(p_value_list[0])]['magnitude']
+                    magnitude_dict_[str(magnitude)][index].update({'pruned': True})
+                    pruned_filter = p_value_dict[str(p_value_list[0])]['filter_i']
+                    #print(pruned_filter)
+                    # Assign Zero to mask
+                    pruned_dict_[layer].update({str(pruned_filter): True})
+                    #print(pruned_filter)
+                    mask[:, :, :, pruned_filter] = 0
+                    next_mask[:, :, pruned_filter, :] = 0
+                    
+                    # Compute Reduced Computation
+                    computation = 0
+                    # Current Layer
+                    # Remove the current pruned mask (for computing computation)
+                    #--------------------------------------------------------
+                    current_unpruned_mask = mask
+                    current_filter = np.shape(mask)[3]
+                    current_channel = np.shape(mask)[2]
+                    current_pruned_filters = []
+                    current_pruned_channels = []
+                    # (filter)
+                    for i in range(current_filter):
+                        if np.sum(mask[:, :, :, i]) == 0:
+                            current_pruned_filters = np.append(current_pruned_filters, [i])
+                    current_unpruned_mask = np.delete(current_unpruned_mask, current_pruned_filters, axis = 3)
+                    # (channel)
+                    for i in range(current_channel):
+                        if np.sum(mask[:, :, i, :]) == 0:
+                            current_pruned_channels = np.append(current_pruned_channels, [i])
+                    current_unpruned_mask = np.delete(current_unpruned_mask, current_pruned_channels, axis = 2)
+                    #--------------------------------------------------------
+                    current_weight_shape = np.shape(current_unpruned_mask)
+                    computation = computation + current_weight_shape[0] * current_weight_shape[1] * current_weight_shape[2] * output_shape[2] * output_shape[3]
+                    # Next Layer
+                    # Remove the next pruned mask (for computing computation)
+                    #-----------------------------------------------------------
+                    next_unpruned_mask = next_mask
+                    next_filter = np.shape(next_mask)[3]
+                    next_channel = np.shape(next_mask)[2]
+                    next_pruned_filters = []
+                    next_pruned_channels = []
+                    # (filter)
+                    for i in range(next_filter):
+                        if np.sum(next_mask[:, :, :, i]) == 0:
+                            next_pruned_filters = np.append(next_pruned_filters, [i])
+                    next_unpruned_mask = np.delete(next_unpruned_mask, next_pruned_filters, axis = 3)
+                    # (channel)
+                    for i in range(next_channel):
+                        if np.sum(next_mask[:, :, i, :]) == 0:
+                            next_pruned_channels = np.append(next_pruned_channels, [i])
+                    next_unpruned_mask = np.delete(next_unpruned_mask, next_pruned_channels, axis = 2)
+                    #-----------------------------------------------------------
+                    next_weight_shape = np.shape(next_unpruned_mask)
+                    computation = computation + next_weight_shape[0] * next_weight_shape[1] * next_weight_shape[3] * next_output_shape[2] * next_output_shape[3]
+                    
+                    # Update List: pruned_weights_info
+                    info = {layer: {'filter': pruned_filter}, layer: {'channel': pruned_filter}, 'computation': computation}
+                    pruned_weights_info.append(info)
+                    t.add_row([magnitude*1e-8, layer, 'filter' + str(pruned_filter), computation])
+                    
+                    pruned_filter_num = pruned_filter_num + 1
+                    if pruned_filter_num == int(filter * pruning_filter_propotion) or (len(magnitudes) - pruned_filter_num) == 1:
+                        #print("{} -> {}" .format(layer, pruned_filter_num))
+                        break
+            else:
+                for magnitude_iter, magnitude in enumerate(magnitudes):
+                    for _, index in enumerate(magnitude_dict_[str(magnitude)].keys()):
+                        if magnitude_dict_[str(magnitude)][index]['pruned']:
+                            continue
+                        # filter
+                        filter_i = magnitude_dict_[str(magnitude)][index]['filter_i']
+                        is_filter_i_pruned = pruned_dict_[layer][str(filter_i)]
+                        
+                        # Detemine which channel to be pruned
+                        if not is_filter_i_pruned:
+                            #print(magnitude)
+                            magnitude_dict_[str(magnitude)][index].update({'pruned': True})
+                            pruned_filter = filter_i
+                            
+                            # Assign Zero to mask
+                            pruned_dict_[layer].update({str(pruned_filter): True})
+                            #print(pruned_filter)
+                            mask[:, :, :, pruned_filter] = 0
+                            next_mask[:, :, pruned_filter, :] = 0
+                            
+                            # Compute Reduced Computation
+                            computation = 0
+                            # Current Layer
+                            # Remove the current pruned mask (for computing computation)
+                            #--------------------------------------------------------
+                            current_unpruned_mask = mask
+                            current_filter = np.shape(mask)[3]
+                            current_channel = np.shape(mask)[2]
+                            current_pruned_filters = []
+                            current_pruned_channels = []
+                            # (filter)
+                            for i in range(current_filter):
+                                if np.sum(mask[:, :, :, i]) == 0:
+                                    current_pruned_filters = np.append(current_pruned_filters, [i])
+                            current_unpruned_mask = np.delete(current_unpruned_mask, current_pruned_filters, axis = 3)
+                            # (channel)
+                            for i in range(current_channel):
+                                if np.sum(mask[:, :, i, :]) == 0:
+                                    current_pruned_channels = np.append(current_pruned_channels, [i])
+                            current_unpruned_mask = np.delete(current_unpruned_mask, current_pruned_channels, axis = 2)
+                            #--------------------------------------------------------
+                            current_weight_shape = np.shape(current_unpruned_mask)
+                            computation = computation + current_weight_shape[0] * current_weight_shape[1] * current_weight_shape[2] * output_shape[2] * output_shape[3]
+                            # Next Layer
+                            # Remove the next pruned mask (for computing computation)
+                            #-----------------------------------------------------------
+                            next_unpruned_mask = next_mask
+                            next_filter = np.shape(next_mask)[3]
+                            next_channel = np.shape(next_mask)[2]
+                            next_pruned_filters = []
+                            next_pruned_channels = []
+                            # (filter)
+                            for i in range(next_filter):
+                                if np.sum(next_mask[:, :, :, i]) == 0:
+                                    next_pruned_filters = np.append(next_pruned_filters, [i])
+                            next_unpruned_mask = np.delete(next_unpruned_mask, next_pruned_filters, axis = 3)
+                            # (channel)
+                            for i in range(next_channel):
+                                if np.sum(next_mask[:, :, i, :]) == 0:
+                                    next_pruned_channels = np.append(next_pruned_channels, [i])
+                            next_unpruned_mask = np.delete(next_unpruned_mask, next_pruned_channels, axis = 2)
+                            #-----------------------------------------------------------
+                            next_weight_shape = np.shape(next_unpruned_mask)
+                            computation = computation + next_weight_shape[0] * next_weight_shape[1] * next_weight_shape[3] * next_output_shape[2] * next_output_shape[3]
+                            
+                            # Update List: pruned_weights_info
+                            info = {layer: {'channel': pruned_filter}, next_layer: {'depth': pruned_filter}, 'computation': computation}
+                            pruned_weights_info.append(info)
+                            t.add_row([magnitude*1e-8, layer, 'filter' + str(pruned_filter), computation])
+                            
+                            pruned_filter_num = pruned_filter_num + 1
+                        break
+                    if pruned_filter_num == int(filter * pruning_filter_propotion) or (len(magnitudes) - pruned_filter_num) == 1:
+                        #print("{} -> {}" .format(layer, pruned_filter_num))
+                        break
+            if not is_entire_model:
+                break
+        
+        # -- Exact Pruned Model Size --
+        if not pruning_propotion == 1:
+            # after_prune_weights_size
+            after_prune_weights_size = 0
+            for layer_iter, layer in enumerate(sorted_layer):
+                after_prune_weights_size += np.sum(all_mask_[layer])
+            print("({} / {})" .format((before_prune_weights_size-after_prune_weights_size)/original_size, pruning_propotion))
+            if abs((before_prune_weights_size-after_prune_weights_size)/original_size - pruning_propotion) <= 0.02:
+                break
+            elif (before_prune_weights_size-after_prune_weights_size)/original_size <= pruning_propotion:
+                pruning_filter_propotion = pruning_filter_propotion + 0.01
+                
+            elif (before_prune_weights_size-after_prune_weights_size)/original_size > pruning_propotion:
+                pruning_filter_propotion = pruning_filter_propotion - 0.01
+        
+        if pruning_propotion == 1:
+            break
+        
     #===============#
     #  Update Mask  #
     #===============#
     print('Updating Masks ... ')
     for layer_iter, layer in enumerate(sorted_layer):
-        sess.run(tf.assign(prune_info_dict[layer]['mask'], all_mask[layer]))
-        
+        sess.run(tf.assign(prune_info_dict[layer]['mask'], all_mask_[layer]))
+    
+    ##...##
+    kernal_shape_list = []
+    
     #===================#
     #  Show the Result  #
     #===================#
@@ -8562,6 +10489,11 @@ def filter_prune_by_magnitude( # Integration Version of All the Following Filter
         unpruned_mask = np.delete(unpruned_mask, pruned_depths, axis = 2)
         print('{} : \033[0;32m{}\033[0m -> \033[0;32m{}\033[0m' 
         .format(layer, np.shape(mask), np.shape(unpruned_mask)))
+        ##...##
+        kernal_shape_list.append(np.shape(unpruned_mask))
+    ##...##
+    np.savetxt('kernal_shape.csv', kernal_shape_list, delimiter = ',', fmt = '%d')
+    exit()
     print("Prune Over!")
     
     return pruned_weights_info, is_skip
@@ -12594,9 +14526,9 @@ def compute_accuracy(
         #else:
         #    result = np.concatenate([result, np.multiply(~correct_prediction_top3, top1) + np.multiply(correct_prediction_top3, np.argmax(v_ys_part, -1))], axis=0)
         #print(accuracy_top1)
-        ##print("\r{} / {} -> \033[1;32mAccuracy\033[0m: {}" .format((i+1)*test_batch_size, data_num, accuracy_top1), end = "") 
+        #print("\r{} / {} -> \033[1;32mAccuracy\033[0m: {}" .format((i+1)*test_batch_size, data_num, accuracy_top1), end = "") 
 
-    ##print("")    
+    print(" ")    
     return result, accuracy_top1, accuracy_top2, accuracy_top3, Y_pre_total
 
 def color_result(
@@ -12698,14 +14630,71 @@ def Save_result_as_npz(
 #    Rebuilding Components    #
 #=============================#
 def middle_floor_decision(
-    pruned_weights_info, 
-    Model_Path_base
+    pruned_weights_info,
+    model_info,
+    Model_Path_base,
+    computation_ori
     ):
-    # Original Computation
+    ## Original Computation after pruning
+    """
     with open(Model_Path_base + 'computation.csv') as csvfile:
         reader = csv.reader(csvfile, delimiter=',', quotechar='|')
         for _, row in enumerate(reader):
             original_computation = int(row[0])
+    """
+    
+    ## Model Info
+    all_mask = model_info['all_mask']
+    all_stride = model_info['all_stride']
+    all_output_shape = model_info['all_output_shape']
+    
+    ## Update pruned_weights_info[i]['computation']
+    for i in range(len(pruned_weights_info))[::-1]:
+        computation_tmp = 0
+        for layer in pruned_weights_info[i].keys():
+            if layer == 'computation':
+                continue
+            # Remove the pruned mask (for computing computation)
+            #--------------------------------------------------------
+            mask = all_mask[layer]
+            output_shape = all_output_shape[layer]
+            unpruned_mask = mask
+            channel_num = np.shape(mask)[3]
+            depth = np.shape(mask)[2]
+            pruned_channels = []
+            pruned_depth = []
+            # (channel)
+            for c in range(channel_num):
+                if np.sum(mask[:, :, :, c]) == 0:
+                    pruned_channels = np.append(pruned_channels, [c])
+            unpruned_mask = np.delete(unpruned_mask, pruned_channels, axis = 3)
+            # (depth)
+            for d in range(depth):
+                if np.sum(mask[:, :, d, :]) == 0:
+                    pruned_depth = np.append(pruned_depth, [d])
+            unpruned_mask = np.delete(unpruned_mask, pruned_depth, axis = 2)
+            #--------------------------------------------------------
+            weight_shape = np.shape(unpruned_mask)
+            
+            assert np.mean(unpruned_mask) == 1.0, "Mask is not update sucessfully!"
+            
+            if pruned_weights_info[i][layer].keys()[0] == 'channel':
+                computation_tmp = computation_tmp + weight_shape[0] * weight_shape[1] * weight_shape[2] * output_shape[2] * output_shape[3]
+                #increase_computation = increase_computation + weight_shape[0] * weight_shape[1] * weight_shape[2] * output_shape[2] * output_shape[3]
+                rebuild_channel = pruned_weights_info[i][layer]['channel']
+                all_mask[layer][:, :, :, rebuild_channel] = 1
+                all_mask[layer][:, :, [int(d) for d in pruned_depth], rebuild_channel] = 0
+            elif pruned_weights_info[i][layer].keys()[0] == 'depth':
+                computation_tmp = computation_tmp + weight_shape[0] * weight_shape[1] * weight_shape[3] * output_shape[2] * output_shape[3]
+                #increase_computation = increase_computation + weight_shape[0] * weight_shape[1] * weight_shape[3] * output_shape[2] * output_shape[3]
+                rebuild_depth = pruned_weights_info[i][layer]['depth']
+                all_mask[layer][:, :, rebuild_depth, :] = 1
+                all_mask[layer][:, :, rebuild_depth, [int(c) for c in pruned_channels]] = 0
+        pruned_weights_info[i]['computation'] = computation_tmp
+    
+    ## Original Computation before pruning
+    original_computation = computation_ori
+    
     # Decide Middle Floors
     delete_num = 0
     selected_index = []

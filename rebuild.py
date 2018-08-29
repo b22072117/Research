@@ -7,6 +7,7 @@ from PIL import Image
 from scipy import misc
 import argparse
 import csv
+import random
 
 import utils_binary as utils
 import Model_binary as Model
@@ -27,6 +28,8 @@ parser.add_argument('--BatchSize'       , type = int, default = 128)
 parser.add_argument('--Epoch'           , type = int, default = 160)
 parser.add_argument('--epochs_per_eval' , type = int, default = 1)
 parser.add_argument('--mode'            , type = int, default = 1)
+parser.add_argument('--Computation_ori' , type = int, default = 0)
+
 FLAGs = parser.parse_args()
 
 Model_Name = FLAGs.Model_1st + '_' + FLAGs.Model_2nd
@@ -64,11 +67,11 @@ def main(argv):
     # -- Training --
     ## ResNet-110
     if FLAGs.Model_2nd == '110_cifar10_0':
-        Model_Path_base = None
+        Model_Path_base = 'Model/ResNet_Model/ResNet_110_cifar10_0_99_2018.02.08_Filter_Similar90_90/'
         Model_Paths     = []
     ## ResNet-56
     if FLAGs.Model_2nd == '56_cifar10_0':
-        Model_Path_base = None
+        Model_Path_base = 'Model/ResNet_Model/ResNet_56_cifar10_0_99_2018.02.09_Filter_Similar60_59/'
         Model_Paths     = []
     ## ResNet-32
     if FLAGs.Model_2nd == '32_cifar10_0':
@@ -76,37 +79,44 @@ def main(argv):
         Model_Paths     = []
     ## ResNet-20
     if FLAGs.Model_2nd == '20_cifar10_2':
-        Model_Path_base = 'Model/ResNet_Model/ResNet_20_cifar10_2_99_2018.02.06_Filter_Similar10_59/'
+        Model_Path_base = 'Model/ResNet_Model/ResNet_20_cifar10_2_99_2018.02.06_Filter_Similar90_88/'
         Model_Paths     = ['Model/ResNet_Model/ResNet_20_cifar10_2_99_2018.02.06_Filter_Similar10_50/',
                            'Model/ResNet_Model/ResNet_20_cifar10_2_99_2018.02.06_Filter_Similar10_40/',
                            'Model/ResNet_Model/ResNet_20_cifar10_2_99_2018.02.06_Filter_Similar10_30/',
                            'Model/ResNet_Model/ResNet_20_cifar10_2_99_2018.02.06_Filter_Similar10_20/',
                            'Model/ResNet_Model/ResNet_20_cifar10_2_99_2018.02.06_Filter_Similar10_10/',
-                           'Model/ResNet_Model/ResNet_20_cifar10_2_99_2018.02.06']
+                           'Model/ResNet_Model/ResNet_20_cifar10_2_99_2018.02.06/']
     
     # Model_base
+    Model_base = "100.ckpt"
+    """
     with open(Model_Path_base + 'info.csv') as csvfile:
         reader = csv.reader(csvfile, delimiter=',', quotechar='|')
         for i, row in enumerate(reader):
             if i == 1:
                 Model_base = row[0].split('/')[-1]
+    """
     # Models
-    Models = []
-    for Model_Path in Model_Paths:
-        with open(Model_Path + 'info.csv') as csvfile:
-            reader = csv.reader(csvfile, delimiter=',', quotechar='|')
-            for i, row in enumerate(reader):
-                if i == 1:
-                    Models.append(row[0].split('/')[-1])
-    Models.append('10.ckpt')
+    if FLAGs.mode == 0:
+        Models = []
+        for Model_Path in Model_Paths:
+            with open(Model_Path + 'info.csv') as csvfile:
+                reader = csv.reader(csvfile, delimiter=',', quotechar='|')
+                for i, row in enumerate(reader):
+                    if i == 1:
+                        Models.append(row[0].split('/')[-1])
+        Models.append('100.ckpt')
     #--------------------------------#
     #    Decision of Middle Floor    #
     #--------------------------------#
     if FLAGs.mode == 0:
         None
     if FLAGs.mode == 1:
-        pruned_weights_info = utils.load_obj(Model_Path_base, "pruned_info")
-        selected_index = utils.middle_floor_decision(pruned_weights_info, Model_Path_base)
+        pruned_weights_info = utils.load_obj(Model_Path_base, "pruned_info")[::-1]
+        random.shuffle(pruned_weights_info)
+        model_info = utils.load_obj(Model_Path_base, "model_info")
+        computation_ori = FLAGs.Computation_ori
+        selected_index = utils.middle_floor_decision(pruned_weights_info, model_info, Model_Path_base, computation_ori)
         Model_Path = Model_Path_base
         Model = Model_base
     
@@ -125,9 +135,11 @@ def main(argv):
     # rebuild_times
     if FLAGs.mode == 0:
         rebuild_times = len(Model_Paths)
-    elif FLAGs.mode == 1 or FLAGs.mode == 2:
+    elif FLAGs.mode == 1:
         rebuild_times = len(selected_index)
-    
+    elif FLAGs.mode == 2:
+        rebuild_times = len(selected_index)-1
+        
     # Rebuild
     for iter in range(0, rebuild_times):
         Global_Epoch = 0
@@ -136,7 +148,7 @@ def main(argv):
             Model_Path = Model_Paths[iter]
             Model = Models[iter]
             index_now = None
-        elif FLAGs.mode == 1 or FLAGs.mode == 2:
+        elif FLAGs.mode == 1:
             index_now = []
             # Start Index
             if iter == 0:
@@ -148,13 +160,20 @@ def main(argv):
             # End Index
             index_now.append(int(selected_index[iter]))
             print("\033[1;32mReuilding Range\033[0m : {}" .format(index_now))
+        elif FLAGs.mode == 2:
+            index_now = []
+            # Start Index
+            index_now.append(int(selected_index[iter])-1)
+            # End Index
+            index_now.append(int(selected_index[iter+1]))
+            print("\033[1;32mReuilding Range\033[0m : {}" .format(index_now))
             
         # Training
         while(1):
-            if Global_Epoch < FLAGs.Epoch * 0.7 and FLAGs.Epoch >= 10:
+            if Global_Epoch < FLAGs.Epoch * 0.9 and FLAGs.Epoch >= 10:
                 epochs_per_eval = 10
             else:
-                epochs_per_eval = FLAGs.epochs_per_eval
+                epochs_per_eval = 10 #FLAGs.epochs_per_eval
                 
             Model_Path, Model, Global_Epoch = utils.run_rebuilding(
                 FLAGs                      = FLAGs              ,
@@ -188,6 +207,7 @@ def main(argv):
             
             print("\033[0;33mGlobal Epoch{}\033[0m" .format(Global_Epoch))
             if Global_Epoch >= FLAGs.Epoch:
+                Global_Epoch = 0
                 break
         
         Model_Path_base = Model_Path

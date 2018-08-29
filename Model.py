@@ -129,7 +129,6 @@ def ternarize_weights(
     float32_weights, 
     ternary_weights_bd
     ):
-    
     ternary_weights = tf.multiply(tf.cast(tf.less_equal(float32_weights, ternary_weights_bd[0]), tf.float32), tf.constant(-1, tf.float32))
     ternary_weights = tf.add(ternary_weights, tf.multiply(tf.cast(tf.greater(float32_weights, ternary_weights_bd[1]), tf.float32), tf.constant( 1, tf.float32)))
     
@@ -403,18 +402,38 @@ def conv2D_Variable(
     
     # float32 Variable
     if is_depthwise:
-        float32_weights = tf.get_variable("float32_weights", [kernel_size, kernel_size, input_channel, 1], tf.float32, initializer = initializer)
+        float32_weights = tf.get_variable(
+            name        = "float32_weights", 
+            shape       = [kernel_size, kernel_size, input_channel, 1], 
+            dtype       = tf.float32,
+            initializer = initializer)
         if is_add_biases:
-            float32_biases = tf.get_variable("float32_biases" , [input_channel], tf.float32, initializer = initializer)
+            float32_biases = tf.get_variable(
+                name        = "float32_biases", 
+                shape       = [input_channel], 
+                dtype       = tf.float32, 
+                initializer = initializer)
         else:
             float32_biases = None
     else:
         if data_format == "NHWC":
-            float32_weights = tf.get_variable("float32_weights", [kernel_size, kernel_size, input_channel, output_channel], tf.float32, initializer = initializer)
+            float32_weights = tf.get_variable(
+                name        = "float32_weights", 
+                shape       = [kernel_size, kernel_size, input_channel, output_channel], 
+                dtype       = tf.float32, 
+                initializer = initializer)
         elif data_format == "NCHW":
-            float32_weights = tf.get_variable("float32_weights", [kernel_size, kernel_size, input_channel, output_channel], tf.float32, initializer = initializer)
+            float32_weights = tf.get_variable(
+                name        = "float32_weights", 
+                shape       = [kernel_size, kernel_size, input_channel, output_channel], 
+                dtype       = tf.float32, 
+                initializer = initializer)
         if is_add_biases:
-            float32_biases = tf.get_variable("float32_biases" , [output_channel], tf.float32, initializer = initializer)
+            float32_biases = tf.get_variable(
+                name        = "float32_biases", 
+                shape       = [output_channel], 
+                dtype       = tf.float32, 
+                initializer = initializer)
         else:
             float32_biases = None
 
@@ -479,45 +498,79 @@ def conv2D_Variable(
     #-------------------------#
     if IS_TERNARY:
         # Ternary boundary of weights and biases 
-        ternary_weights_bd = tf.get_variable("ternary_weights_bd", [2], tf.float32, initializer = initializer)
+        ternary_weights_bd = tf.get_variable(
+            name        = "ternary_weights_bd", 
+            shape       = [2], 
+            dtype       = tf.float32, 
+            trainable   = False,
+            initializer = initializer)
+            
         if is_add_biases:
-            ternary_biases_bd  = tf.get_variable("ternary_biases_bd" , [2], tf.float32, initializer = initializer)
+            ternary_biases_bd  = tf.get_variable(
+                name        = "ternary_biases_bd" , 
+                shape       = [2], 
+                dtype       = tf.float32, 
+                trainable   = False,
+                initializer = initializer)
+                
         tf.add_to_collection("ternary_weights_bd", ternary_weights_bd)
         if is_add_biases:
             tf.add_to_collection("ternary_biases_bd" , ternary_biases_bd)
         
         # Choose Precision
-        weights_tmp = tf.cond(is_ternary, lambda: ternarize_weights(float32_weights, ternary_weights_bd), lambda: float32_weights)
+        weights_tmp = tf.cond(is_ternary, 
+                                lambda: ternarize_weights(float32_weights, ternary_weights_bd), 
+                                lambda: float32_weights)
         if is_add_biases:
-            biases_tmp = tf.cond(is_ternary, lambda: ternarize_biases (float32_biases , ternary_biases_bd) , lambda: float32_biases )
+            biases_tmp = tf.cond(is_ternary, 
+                                lambda: ternarize_biases(float32_biases , ternary_biases_bd),
+                                lambda: float32_biases)
     
         if is_depthwise:
-            final_weights = tf.get_variable("final_weights", [kernel_size, kernel_size, input_channel, 1], tf.float32, initializer=initializer)
+            final_weights = tf.get_variable(
+                name        = "final_weights", 
+                shape       = [kernel_size, kernel_size, input_channel, 1], 
+                dtype       = tf.float32, 
+                trainable   = True, 
+                initializer = initializer)
             if is_add_biases:
-                final_biases = tf.get_variable("final_biases" , [input_channel], tf.float32, initializer = initializer)
+                final_biases = tf.get_variable(
+                    name        = "final_biases", 
+                    shape       = [input_channel], 
+                    dtype       = tf.float32, 
+                    trainable   = True,
+                    initializer = initializer)
             else:
                 final_biases = None
         else:
-            final_weights = tf.get_variable("final_weights", [kernel_size, kernel_size, input_channel, output_channel], tf.float32, initializer=initializer)
+            final_weights = tf.get_variable(
+                name        = "final_weights", 
+                shape       = [kernel_size, kernel_size, input_channel, output_channel], 
+                dtype       = tf.float32,
+                trainable   = True,
+                initializer = initializer)
             if is_add_biases:
                 final_biases = tf.get_variable("final_biases" , [output_channel], tf.float32, initializer = initializer)
             else:
                 final_biases = None
-            
-        ## var_list : Record the variables which will be computed gradients
-        #tf.add_to_collection("var_list", final_weights)
-        #if is_add_biases:
-        #    tf.add_to_collection("var_list", final_biases)
         
+        # Assign ternarized weights to final weights
         assign_final_weights = tf.assign(final_weights, weights_tmp)
         if is_add_biases:
             assign_final_biases = tf.assign(final_biases , biases_tmp)
-            
         tf.add_to_collection("assign_var_list", assign_final_weights)
         if is_add_biases:
             tf.add_to_collection("assign_var_list", assign_final_biases)
         
-        return final_weights, final_biases
+        # Multiply with mask
+        weights_ = tf.add(tf.multiply(tf.multiply(final_weights, float32_weights_mask), is_train_float32_weights_mask), constant_float32_weights)
+        if is_add_biases:
+            biases_ = tf.add(tf.multiply(tf.multiply(final_biases, float32_biases_mask), is_train_float32_biases_mask), constant_float32_biases)
+
+        if is_add_biases:
+            return weights_, biases_
+        else:
+            return weights_, None
     else:
         ## var_list : Record the variables which will be computed gradients
         #tf.add_to_collection("var_list", float32_weights)
